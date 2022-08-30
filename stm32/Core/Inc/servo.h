@@ -11,15 +11,19 @@
 #ifndef INC_SERVO_H_
 #define INC_SERVO_H_
 
-#define SERVO_CENTER 144
-#define SERVO_OFFSET 40 // Center-to-side offset. Still in trial and err phase
+// Servo direction control variable
+typedef enum {
+	ServoDirLeft,
+	ServoDirRight
+} ServoDirection;
 
-// left and right offsets are not the same
-#define SERVO_LEFT_LIMIT 50
-#define SERVO_RIGHT_LIMIT 74
-
-#define SERVO_LEFT_MAX (SERVO_CENTER - SERVO_LEFT_LIMIT)
-#define SERVO_RIGHT_MAX (SERVO_CENTER + SERVO_RIGHT_LIMIT)
+// Servo magnitude control variable
+typedef enum {
+	ServoMag1,
+	ServoMag2,
+	ServoMag3,
+	ServoMag4
+} ServoMagnitude;
 
 // init and showcase functions
 void servo_init(TIM_HandleTypeDef *htim, uint32_t Channel);
@@ -27,9 +31,9 @@ void servo_test_startup();
 void servo_showcase();
 
 // directions
-void servo_point();
+void servo_point(ServoDirection dir, ServoMagnitude mag);
+void servo_point_center();
 void servo_point_left_full();
 void servo_point_right_full();
-void servo_point_center();
 
 #endif /* INC_SERVO_H_ */

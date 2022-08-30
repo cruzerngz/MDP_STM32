@@ -7,144 +7,161 @@
 
 #include "servo.h"
 
+// private macros
+// ++ adjusts to the right
+// -- adjusts to the left
+#define SERVO_CENTER 143 // locked
+
+// left and right offsets are not the same
+#define SERVO_LEFT_LIMIT 50
+#define SERVO_RIGHT_LIMIT 74
+
+#define SERVO_LEFT_MAX (SERVO_CENTER - SERVO_LEFT_LIMIT)
+#define SERVO_RIGHT_MAX (SERVO_CENTER + SERVO_RIGHT_LIMIT)
+
+#define SERVO_MIN_DELAY_TICKS 100
+
 // private static variables, initialized with servo_init();
 
+// Pointer to the timer handler initialized in main
 static TIM_HandleTypeDef *SERVO_PWM_TIMER;
 
-// channel is (0-indexed) * 4
+// channel is (int) (0-indexed) * 4
 // channel 1: 0,
 // channel 2: 4, etc.
 static uint32_t SERVO_CHANNEL;
 
-//static TIM_TypeDef *SERVO_TIM_DEF;
-
+// Address to the register responsible for controlling the servo's direction
+// Must be declared as volatile or the compiler will optimize stuff and cause problems
+// This is taken care of by prefixing "__IO" before type declaration
+static __IO uint32_t *SERVO_PWM_REGISTER;
 
 // private function prototypes
-
-
-
-// init and showcase functions
 
 /**
  * Bring the relavant servo control variables into scope.
  * Same params as HAL_TIM_PWM_Start()
  */
 void servo_init(TIM_HandleTypeDef *htim, uint32_t Channel) {
+	// assign private globals
 	SERVO_PWM_TIMER = htim;
 	SERVO_CHANNEL = Channel;
 
-	// set the channel once here
-//	switch (SERVO_CHANNEL) {
-//	case 0:
-//		SERVO_TIM_DEF = SERVO_PWM_TIMER->Instance->CCR1;
-//		break;
-//	case 4:
-//		SERVO_TIM_DEF = SERVO_PWM_TIMER->Instance->CCR2;
-//		break;
-//	case 8:
-//		SERVO_TIM_DEF = SERVO_PWM_TIMER->Instance->CCR3;
-//		break;
-//	case 12:
-//		SERVO_TIM_DEF = SERVO_PWM_TIMER->Instance->CCR4;
-//		break;
-//	default:
-//		SERVO_TIM_DEF = NULL;
-//	}
+	// set the servo register once here
+	switch (SERVO_CHANNEL) {
+	case TIM_CHANNEL_1:
+		SERVO_PWM_REGISTER = &(SERVO_PWM_TIMER->Instance->CCR1);
+		break;
+	case TIM_CHANNEL_2:
+		SERVO_PWM_REGISTER = &(SERVO_PWM_TIMER->Instance->CCR2);
+		break;
+	case TIM_CHANNEL_3:
+		SERVO_PWM_REGISTER = &(SERVO_PWM_TIMER->Instance->CCR3);
+		break;
+	case TIM_CHANNEL_4:
+		SERVO_PWM_REGISTER = &(SERVO_PWM_TIMER->Instance->CCR4);
+		break;
+	default:
+		SERVO_PWM_REGISTER = NULL;
+		break;
+	}
 
 	HAL_TIM_PWM_Start(SERVO_PWM_TIMER, SERVO_CHANNEL);
 }
 
 /**
- *
+ * Sequence of moves to visually check that the servo is functioning
  */
 void servo_test_startup() {
 	servo_point_center();
-	HAL_Delay(700);
-	servo_point_right_full();
-	HAL_Delay(700);
-	servo_point_left_full();
-	HAL_Delay(700);
+	HAL_Delay(SERVO_MIN_DELAY_TICKS << 2);
+	servo_point(ServoDirLeft, ServoMag1);
+	HAL_Delay(SERVO_MIN_DELAY_TICKS);
+	servo_point(ServoDirLeft, ServoMag2);
+	HAL_Delay(SERVO_MIN_DELAY_TICKS);
+	servo_point(ServoDirLeft, ServoMag3);
+	HAL_Delay(SERVO_MIN_DELAY_TICKS);
+	servo_point(ServoDirLeft, ServoMag4);
+	HAL_Delay(SERVO_MIN_DELAY_TICKS);
+	servo_point(ServoDirLeft, ServoMag3);
+	HAL_Delay(SERVO_MIN_DELAY_TICKS);
+	servo_point(ServoDirLeft, ServoMag2);
+	HAL_Delay(SERVO_MIN_DELAY_TICKS);
+	servo_point(ServoDirLeft, ServoMag1);
+	HAL_Delay(SERVO_MIN_DELAY_TICKS);
 	servo_point_center();
+	HAL_Delay(SERVO_MIN_DELAY_TICKS);
+	servo_point(ServoDirRight, ServoMag1);
+	HAL_Delay(SERVO_MIN_DELAY_TICKS);
+	servo_point(ServoDirRight, ServoMag2);
+	HAL_Delay(SERVO_MIN_DELAY_TICKS);
+	servo_point(ServoDirRight, ServoMag3);
+	HAL_Delay(SERVO_MIN_DELAY_TICKS);
+	servo_point(ServoDirRight, ServoMag4);
+	HAL_Delay(SERVO_MIN_DELAY_TICKS);
+	servo_point(ServoDirRight, ServoMag3);
+	HAL_Delay(SERVO_MIN_DELAY_TICKS);
+	servo_point(ServoDirRight, ServoMag2);
+	HAL_Delay(SERVO_MIN_DELAY_TICKS);
+	servo_point(ServoDirRight, ServoMag1);
+	HAL_Delay(SERVO_MIN_DELAY_TICKS);
+	servo_point_center();
+	HAL_Delay(SERVO_MIN_DELAY_TICKS << 2);
+	servo_point_left_full();
+	HAL_Delay(SERVO_MIN_DELAY_TICKS << 3);
+	servo_point_right_full();
+	HAL_Delay(SERVO_MIN_DELAY_TICKS << 3);
+	servo_point_center();
+	HAL_Delay(SERVO_MIN_DELAY_TICKS << 3);
 }
 
 /**
  * Go through all servo movements
  */
 void servo_showcase() {
-
+	//TODO!
 }
 
 // directions
 
 /**
- * Point the wheels at a certain direction with a specified magnitude
+ * Point the wheels at a certain direction with a specific magnitude
  */
-void servo_point() {
+void servo_point(ServoDirection dir, ServoMagnitude mag) {
+	int16_t offset = ((uint16_t) mag + 1) << 3;
 
+	switch (dir) {
+	case ServoDirLeft:
+		offset = 0 - offset;
+		break;
+
+	case ServoDirRight:
+		break;
+
+	default:
+		break;
+	}
+
+	*SERVO_PWM_REGISTER = SERVO_CENTER + offset;
 }
 
 /**
  * Point the wheels all the way to the left
  */
 void servo_point_left_full(){
-	switch (SERVO_CHANNEL) {
-	case 0:
-		SERVO_PWM_TIMER->Instance->CCR1 = SERVO_LEFT_MAX;
-		break;
-	case 4:
-		SERVO_PWM_TIMER->Instance->CCR2 = SERVO_LEFT_MAX;
-		break;
-	case 8:
-		SERVO_PWM_TIMER->Instance->CCR3 = SERVO_LEFT_MAX;
-		break;
-	case 12:
-		SERVO_PWM_TIMER->Instance->CCR4 = SERVO_LEFT_MAX;
-		break;
-	default:
-		break;
-	}
+	*SERVO_PWM_REGISTER = SERVO_LEFT_MAX;
 }
 /**
  * Point the wheels all the way to the right
  */
 void servo_point_right_full(){
-	switch (SERVO_CHANNEL) {
-	case 0:
-		SERVO_PWM_TIMER->Instance->CCR1 = SERVO_RIGHT_MAX;
-		break;
-	case 4:
-		SERVO_PWM_TIMER->Instance->CCR2 = SERVO_RIGHT_MAX;
-		break;
-	case 8:
-		SERVO_PWM_TIMER->Instance->CCR3 = SERVO_RIGHT_MAX;
-		break;
-	case 12:
-		SERVO_PWM_TIMER->Instance->CCR4 = SERVO_RIGHT_MAX;
-		break;
-	default:
-		break;
-	}
-
+	*SERVO_PWM_REGISTER = SERVO_RIGHT_MAX;
 }
 
 /**
  * Center the wheels
  */
 void servo_point_center() {
-	switch (SERVO_CHANNEL) {
-	case 0:
-		SERVO_PWM_TIMER->Instance->CCR1 = SERVO_CENTER;
-		break;
-	case 4:
-		SERVO_PWM_TIMER->Instance->CCR2 = SERVO_CENTER;
-		break;
-	case 8:
-		SERVO_PWM_TIMER->Instance->CCR3 = SERVO_CENTER;
-		break;
-	case 12:
-		SERVO_PWM_TIMER->Instance->CCR4 = SERVO_CENTER;
-		break;
-	default:
-		break;
-	}
+	*SERVO_PWM_REGISTER = SERVO_CENTER;
 }
+

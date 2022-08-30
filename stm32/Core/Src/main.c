@@ -411,19 +411,29 @@ void StartDefaultTask(void *argument)
 void motor(void *argument)
 {
   /* USER CODE BEGIN motor */
-	uint16_t pwmVal = 100;
+	uint16_t pwmVal = 350;
 	HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
 
 //	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
 	servo_init(&htim1, TIM_CHANNEL_4);
 
+	uint8_t toggle = 0;
+
   /* Infinite loop */
   for(;;)
   {
 	  servo_test_startup();
+//	  toggle = 1 - toggle;
+//	  if(toggle) {
+//		  servo_point_right_full();
+//	  } else {
+//		  servo_point_left_full();
+//	  }
+
+//	  servo_point_left_full();
 	  // backwards
-	  while(pwmVal < 3000)
+	  while(pwmVal < 2500)
 	  {
 		  // htim1 100 is left
 		  // htim1 130-140 is mid
@@ -442,14 +452,14 @@ void motor(void *argument)
 		  // modify comparison value for the duty cycle
 		  __HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_1, pwmVal);
 		  __HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_2, pwmVal);
-		  osDelay(10);
+		  osDelay(3);
 	  }
 
-	  osDelay(2000);
+	  osDelay(1000);
 	  __HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_1, 0);
 	  __HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_2, 0);
 	  osDelay(2000);
-	  pwmVal = 0;
+	  pwmVal = 350;
   }
 
   /* USER CODE END motor */
