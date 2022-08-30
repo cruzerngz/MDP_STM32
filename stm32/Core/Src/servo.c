@@ -16,16 +16,14 @@ static TIM_HandleTypeDef *SERVO_PWM_TIMER;
 // channel 2: 4, etc.
 static uint32_t SERVO_CHANNEL;
 
-static TIM_TypeDef *SERVO_TIM_DEF;
+//static TIM_TypeDef *SERVO_TIM_DEF;
 
 
 // private function prototypes
 
-//TIM_TypeDef *get_timer();
+
 
 // init and showcase functions
-
-
 
 /**
  * Bring the relavant servo control variables into scope.
@@ -61,11 +59,11 @@ void servo_init(TIM_HandleTypeDef *htim, uint32_t Channel) {
  */
 void servo_test_startup() {
 	servo_point_center();
-	HAL_Delay(300);
+	HAL_Delay(700);
 	servo_point_right_full();
-	HAL_Delay(300);
+	HAL_Delay(700);
 	servo_point_left_full();
-	HAL_Delay(300);
+	HAL_Delay(700);
 	servo_point_center();
 }
 
@@ -105,7 +103,6 @@ void servo_point_left_full(){
 	default:
 		break;
 	}
-
 }
 /**
  * Point the wheels all the way to the right
@@ -134,8 +131,6 @@ void servo_point_right_full(){
  * Center the wheels
  */
 void servo_point_center() {
-
-
 	switch (SERVO_CHANNEL) {
 	case 0:
 		SERVO_PWM_TIMER->Instance->CCR1 = SERVO_CENTER;
