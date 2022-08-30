@@ -23,7 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "servo.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,6 +41,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim8;
 
 /* Definitions for defaultTask */
@@ -65,6 +66,7 @@ const osThreadAttr_t motorsTask_attributes = {
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM8_Init(void);
+static void MX_TIM1_Init(void);
 void StartDefaultTask(void *argument);
 void motor(void *argument);
 
@@ -106,6 +108,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_TIM8_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -199,6 +202,80 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief TIM1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM1_Init(void)
+{
+
+  /* USER CODE BEGIN TIM1_Init 0 */
+
+  /* USER CODE END TIM1_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+  TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
+
+  /* USER CODE BEGIN TIM1_Init 1 */
+
+  /* USER CODE END TIM1_Init 1 */
+  htim1.Instance = TIM1;
+  htim1.Init.Prescaler = 160;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim1.Init.Period = 1000;
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim1.Init.RepetitionCounter = 0;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
+  sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
+  sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
+  sBreakDeadTimeConfig.DeadTime = 0;
+  sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
+  sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
+  sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
+  if (HAL_TIMEx_ConfigBreakDeadTime(&htim1, &sBreakDeadTimeConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM1_Init 2 */
+
+  /* USER CODE END TIM1_Init 2 */
+  HAL_TIM_MspPostInit(&htim1);
+
+}
+
+/**
   * @brief TIM8 Initialization Function
   * @param None
   * @retval None
@@ -287,6 +364,7 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
@@ -333,16 +411,27 @@ void StartDefaultTask(void *argument)
 void motor(void *argument)
 {
   /* USER CODE BEGIN motor */
-	uint16_t pwmVal = 0;
+	uint16_t pwmVal = 100;
 	HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
+
+//	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
+	servo_init(&htim1, TIM_CHANNEL_4);
 
   /* Infinite loop */
   for(;;)
   {
+	  servo_test_startup();
 	  // backwards
-	  while(pwmVal < 2000)
-	  {		// AIN2_Pin | AIN1_Pin
+	  while(pwmVal < 3000)
+	  {
+		  // htim1 100 is left
+		  // htim1 130-140 is mid
+		  // htim1 180 is right
+//		  htim1.Instance->CCR4 = 144; // this is mid, literally
+
+
+		  // AIN2_Pin | AIN1_Pin
 		  // left wheel clockwise
 		  HAL_GPIO_WritePin(GPIOA, AIN2_Pin, GPIO_PIN_RESET);
 		  HAL_GPIO_WritePin(GPIOA, AIN1_Pin, GPIO_PIN_SET);
@@ -355,21 +444,7 @@ void motor(void *argument)
 		  __HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_2, pwmVal);
 		  osDelay(10);
 	  }
-//	  // forward
-//	  while(pwmVal > 0)
-//	  {		// AIN2_Pin | AIN1_Pin
-//		  // left wheel anti-clockwise
-//		  HAL_GPIO_WritePin(GPIOA, AIN2_Pin, GPIO_PIN_RESET);
-//		  HAL_GPIO_WritePin(GPIOA, AIN1_Pin, GPIO_PIN_SET);
-//		  // right wheel clockwise
-//		  HAL_GPIO_WritePin(GPIOA, BIN2_Pin, GPIO_PIN_RESET);
-//		  HAL_GPIO_WritePin(GPIOA, BIN1_Pin, GPIO_PIN_SET);
-//		  pwmVal--;
-//		  // modify comparison value for the duty cycle
-//		  __HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_1, pwmVal);
-//		  __HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_2, pwmVal);
-//		  osDelay(1);
-//	  }
+
 	  osDelay(2000);
 	  __HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_1, 0);
 	  __HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_2, 0);
