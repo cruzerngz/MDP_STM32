@@ -17,7 +17,7 @@ typedef enum {
 } MotorDirection;
 
 // Motor speed control variable
-typedef enum { // to be tested
+typedef enum { // TODO: to be tested
 	MotorSpeed1 = 750,
 	MotorSpeed2 = 1250,
 	MotorSpeed3 = 3000,

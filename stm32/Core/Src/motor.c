@@ -10,8 +10,9 @@
 
 // private macros
 
-#define MOTOR_MIN_DELAY_TICKS 300
+#define MOTOR_DELAY_TICKS 1000
 
+//TODO!
 // need a way to read instructions to stop
 // RPi command or boolean isStop() ??
 #define TEST_MOTOR_TIMER 800
