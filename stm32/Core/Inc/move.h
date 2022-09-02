@@ -21,6 +21,9 @@ void steer(ServoDirection dir, ServoMagnitude mag);
 void steer_straight();
 void stop();
 
+void forward_by(uint16_t dist);
+void backward_by(uint16_t dist);
+
 // combined moveset functions
 void forward_left(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag);
 void forward_right(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag);
