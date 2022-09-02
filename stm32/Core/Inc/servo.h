@@ -14,7 +14,8 @@
 // Servo direction control variable
 typedef enum {
 	ServoDirLeft,
-	ServoDirRight
+	ServoDirRight,
+	ServoDirCenter
 } ServoDirection;
 
 // Servo magnitude control variable

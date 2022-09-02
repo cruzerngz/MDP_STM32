@@ -10,7 +10,10 @@
 // private macros
 // ++ adjusts to the right
 // -- adjusts to the left
-#define SERVO_CENTER 143 // locked
+#define SERVO_CENTER 142 // locked
+
+// amount to offset when centering from (left/right)
+#define SERVO_CENTERING_OFFSET 1
 
 // left and right offsets are not the same
 #define SERVO_LEFT_LIMIT 50
@@ -35,6 +38,9 @@ static uint32_t SERVO_CHANNEL;
 // Must be declared as volatile or the compiler will optimize stuff and cause problems
 // This is taken care of by prefixing "__IO" before type declaration
 static __IO uint32_t *SERVO_PWM_REGISTER;
+
+// Global containing the current direction set in servo
+static ServoDirection SERVO_CURR_DIR;
 
 // private function prototypes
 
@@ -67,6 +73,7 @@ void servo_init(TIM_HandleTypeDef *htim, uint32_t Channel) {
 	}
 
 	HAL_TIM_PWM_Start(SERVO_PWM_TIMER, SERVO_CHANNEL);
+	SERVO_CURR_DIR = ServoDirCenter;
 }
 
 /**
@@ -133,12 +140,15 @@ void servo_point(ServoDirection dir, ServoMagnitude mag) {
 	switch (dir) {
 	case ServoDirLeft:
 		offset = 0 - offset;
+		SERVO_CURR_DIR = ServoDirLeft;
 		break;
 
 	case ServoDirRight:
+		SERVO_CURR_DIR = ServoDirRight;
 		break;
 
 	default:
+		SERVO_CURR_DIR = ServoDirCenter;
 		break;
 	}
 
@@ -150,18 +160,31 @@ void servo_point(ServoDirection dir, ServoMagnitude mag) {
  */
 void servo_point_left_full(){
 	*SERVO_PWM_REGISTER = SERVO_LEFT_MAX;
+	SERVO_CURR_DIR = ServoDirLeft;
 }
 /**
  * Point the wheels all the way to the right
  */
 void servo_point_right_full(){
 	*SERVO_PWM_REGISTER = SERVO_RIGHT_MAX;
+	SERVO_CURR_DIR = ServoDirRight;
 }
 
 /**
  * Center the wheels
  */
 void servo_point_center() {
-	*SERVO_PWM_REGISTER = SERVO_CENTER;
+	switch(SERVO_CURR_DIR) {
+	case ServoDirLeft:
+		*SERVO_PWM_REGISTER = SERVO_CENTER + SERVO_CENTERING_OFFSET;
+		break;
+	case ServoDirRight:
+		*SERVO_PWM_REGISTER = SERVO_CENTER - SERVO_CENTERING_OFFSET;
+		break;
+	case ServoDirCenter:
+		*SERVO_PWM_REGISTER = SERVO_CENTER;
+	}
+	SERVO_CURR_DIR = ServoDirCenter;
+//	*SERVO_PWM_REGISTER = SERVO_CENTER;
 }
 
