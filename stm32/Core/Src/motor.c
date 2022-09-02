@@ -185,67 +185,20 @@ void motor_test_startup() { // 500, 1000, 1500
 
 	motor_forward(MotorSpeed1);
 	HAL_Delay(1000);
-	motor_forward(MotorSpeed2);
-	HAL_Delay(1000);
-	motor_forward(MotorSpeed3);
-	HAL_Delay(1000);
+//	motor_forward(MotorSpeed2);
+//	HAL_Delay(1000);
+//	motor_forward(MotorSpeed3);
+//	HAL_Delay(1000);
 	motor_stop();
 	HAL_Delay(1000);
 	motor_backward(MotorSpeed1);
 	HAL_Delay(1000);
-	motor_backward(MotorSpeed2);
-	HAL_Delay(1000);
-	motor_backward(MotorSpeed3);
-	HAL_Delay(1000);
+//	motor_backward(MotorSpeed2);
+//	HAL_Delay(1000);
+//	motor_backward(MotorSpeed3);
+//	HAL_Delay(1000);
 	motor_stop();
 
-//	// forward with diff speed
-//	motor_forward(MotorSpeed1);
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//	motor_stop();
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//	motor_forward(MotorSpeed2);
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//	motor_stop();
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//	motor_forward(MotorSpeed3);
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//	motor_stop();
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//
-//	// backward with diff speed
-//	motor_backward(MotorSpeed1);
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//	motor_stop();
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//	motor_backward(MotorSpeed2);
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//	motor_stop();
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//	motor_backward(MotorSpeed3);
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//	motor_stop();
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//
-//	// forward with increasing speed
-//	motor_forward(MotorSpeed1);
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//	motor_forward(MotorSpeed2);
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//	motor_forward(MotorSpeed3);
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//	motor_stop();
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//
-//	// backward with increasing speed
-//	motor_backward(MotorSpeed1);
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//	motor_backward(MotorSpeed2);
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//	motor_backward(MotorSpeed3);
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
-//	motor_stop();
-//	HAL_Delay(MOTOR_MIN_DELAY_TICKS);
 }
 
 

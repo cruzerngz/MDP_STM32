@@ -421,14 +421,28 @@ void motor(void *argument)
 	motor_init_gpio_right(GPIOA, BIN1_Pin, BIN2_Pin);
 	servo_init(&htim1, TIM_CHANNEL_4);
 
-	uint16_t pwmVal = 350;
-	uint8_t toggle = 0;
+//	uint16_t pwmVal = 350;
+//	uint8_t toggle = 0;
+
+//	motor_test_startup();
+	servo_test_startup();
+
+	servo_point_center();
+	motor_stop();
+	HAL_Delay(500);
+
+	motor_forward(MotorSpeed1);
+	HAL_Delay(8000);
+	motor_stop(MotorSpeed1);
+	HAL_Delay(500);
+//	motor_backward(MotorSpeed1);
+//	HAL_Delay(8000);
+	motor_stop();
 
 	/* Infinite loop */
 	for (;;) {
-		motor_test_startup();
 
-		servo_test_startup();
+
 
 //	  toggle = 1 - toggle;
 //	  if(toggle) {
@@ -439,31 +453,31 @@ void motor(void *argument)
 
 //	  servo_point_left_full();
 
-		while (pwmVal < 2500) {
-			// htim1 100 is left
-			// htim1 130-140 is mid
-			// htim1 180 is right
-//		  htim1.Instance->CCR4 = 144; // this is mid, literally
-
-			// AIN2_Pin | AIN1_Pin
-			// left wheel clockwise
-			HAL_GPIO_WritePin(GPIOA, AIN2_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(GPIOA, AIN1_Pin, GPIO_PIN_SET);
-			// right wheel anti-clockwise
-			HAL_GPIO_WritePin(GPIOA, BIN2_Pin, GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(GPIOA, BIN1_Pin, GPIO_PIN_SET);
-			pwmVal++;
-			// modify comparison value for the duty cycle
-			__HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_1, pwmVal);
-			__HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_2, pwmVal);
-			osDelay(3);
-		}
-
-		osDelay(1000);
-		__HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_1, 0);
-		__HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_2, 0);
-		osDelay(2000);
-		pwmVal = 350;
+//		while (pwmVal < 2500) {
+//			// htim1 100 is left
+//			// htim1 130-140 is mid
+//			// htim1 180 is right
+////		  htim1.Instance->CCR4 = 144; // this is mid, literally
+//
+//			// AIN2_Pin | AIN1_Pin
+//			// left wheel clockwise
+//			HAL_GPIO_WritePin(GPIOA, AIN2_Pin, GPIO_PIN_RESET);
+//			HAL_GPIO_WritePin(GPIOA, AIN1_Pin, GPIO_PIN_SET);
+//			// right wheel anti-clockwise
+//			HAL_GPIO_WritePin(GPIOA, BIN2_Pin, GPIO_PIN_RESET);
+//			HAL_GPIO_WritePin(GPIOA, BIN1_Pin, GPIO_PIN_SET);
+//			pwmVal++;
+//			// modify comparison value for the duty cycle
+//			__HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_1, pwmVal);
+//			__HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_2, pwmVal);
+//			osDelay(3);
+//		}
+//
+//		osDelay(1000);
+//		__HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_1, 0);
+//		__HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_2, 0);
+//		osDelay(2000);
+//		pwmVal = 350;
 	}
 
   /* USER CODE END motor */
