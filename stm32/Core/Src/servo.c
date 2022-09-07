@@ -8,16 +8,14 @@
 #include "servo.h"
 
 // private macros
-// ++ adjusts to the right
-// -- adjusts to the left
-#define SERVO_CENTER 142 // locked
+// SERVO_CENTER moved into header file for move.c to use
 
 // amount to offset when centering from (left/right)
 #define SERVO_CENTERING_OFFSET 1
 
 // left and right offsets are not the same
 #define SERVO_LEFT_LIMIT 50
-#define SERVO_RIGHT_LIMIT 74
+#define SERVO_RIGHT_LIMIT 90
 
 #define SERVO_LEFT_MAX (SERVO_CENTER - SERVO_LEFT_LIMIT)
 #define SERVO_RIGHT_MAX (SERVO_CENTER + SERVO_RIGHT_LIMIT)

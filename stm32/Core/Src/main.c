@@ -23,8 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "motor.h"
-#include "servo.h"
+#include "move.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -427,17 +426,30 @@ void motor(void *argument)
 //	motor_test_startup();
 	servo_test_startup();
 
-	servo_point_center();
-	motor_stop();
-	HAL_Delay(500);
+	move_hard_left_180();
+	HAL_Delay(2000);
+	move_hard_right_180();
 
-	motor_forward(MotorSpeed1);
-	HAL_Delay(8000);
-	motor_stop(MotorSpeed1);
-	HAL_Delay(500);
-//	motor_backward(MotorSpeed1);
+
+
+//	motor_forward(MotorSpeed1);
 //	HAL_Delay(8000);
-	motor_stop();
+//	motor_stop();
+
+
+//	servo_point_center();
+//	motor_stop();
+//	HAL_Delay(500);
+//	servo_point_right_full();
+//	HAL_Delay(300);
+//	motor_forward(MotorSpeed2);
+//	HAL_Delay(2500);
+//	motor_stop();
+//	HAL_Delay(500);
+////	motor_backward(MotorSpeed1);
+////	HAL_Delay(8000);
+//	motor_stop();
+//	servo_point_center();
 
 	/* Infinite loop */
 	for (;;) {

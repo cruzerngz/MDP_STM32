@@ -11,6 +11,11 @@
 #ifndef INC_SERVO_H_
 #define INC_SERVO_H_
 
+// ++ adjusts to the right
+// -- adjusts to the left
+#define SERVO_CENTER 142 // locked
+
+
 // Servo direction control variable
 typedef enum {
 	ServoDirLeft,

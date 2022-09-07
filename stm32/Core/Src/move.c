@@ -5,7 +5,11 @@
  *      Author: jimmysqqr
  */
 
+#include "stm32f4xx_hal.h"
+
 #include "move.h"
+#include "servo.h"
+#include "motor.h"
 
 
 // private macros
@@ -15,6 +19,22 @@
 // RPi command or boolean isStop() ??
 #define TEST_MOVE_TIMER 800
 #define MOTOR_ADJUST_SPEED 300 // TODO: to be tested
+
+
+// private globals
+
+/*
+ * Global struct containing the current effector states
+ */
+static struct global_state {
+	uint32_t servo;
+	uint32_t motor_left;
+	uint32_t motor_right;
+} GLOBAL_EFFECTOR_STATE = {
+		.servo = SERVO_CENTER, // move SERVO_CENTER out of private namespace and use it here
+		.motor_left = 0,
+		.motor_right = 0
+};
 
 
 // private function prototypes
@@ -173,3 +193,86 @@ void backward_right(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag) {
 	backward(speed);
 }
 
+/*
+ * Start dynamic movement functions
+ * Primary means of movement for car
+ */
+
+
+// Move the car forward by a specified distance
+void move_forward_by(uint32_t centimeters) {
+
+
+}
+
+// Move the car back by a specified distance
+void move_backward_by(uint32_t centimeters) {
+
+}
+
+// Move the car forward AND turn it to a specified angle
+void move_turn_forward_by(MoveDirection direction, uint8_t degrees) {
+
+}
+
+// Move the car forward AND turn it to a specified angle
+void move_turn_backward_by(MoveDirection direction, uint8_t degrees) {
+
+}
+
+/*
+ * Start of hardcoded movement functions
+ * Note that car movement will vary depending on surface conditions.
+ */
+
+void move_hard_left_45() {
+	servo_point_left_full();
+	HAL_Delay(350);
+	motor_forward(MotorSpeed1);
+	HAL_Delay(2650);
+	motor_stop();
+	servo_point_center();
+}
+
+void move_hard_right_45() {
+	servo_point_right_full();
+	HAL_Delay(350);
+	motor_forward(MotorSpeed2);
+	HAL_Delay(2650);
+	motor_stop();
+	servo_point_center();
+}
+
+// Move and turn 90 degrees to the left
+void move_hard_left_90() {
+	servo_point_left_full();
+	HAL_Delay(350);
+	motor_forward(MotorSpeed2);
+	HAL_Delay(2650);
+	motor_stop();
+	servo_point_center();
+}
+void move_hard_right_90() {
+	servo_point_right_full();
+	HAL_Delay(350);
+	motor_forward(MotorSpeed2);
+	HAL_Delay(2650);
+	motor_stop();
+	servo_point_center();
+}
+void move_hard_left_180() {
+	servo_point_left_full();
+	HAL_Delay(350);
+	motor_forward(MotorSpeed2);
+	HAL_Delay(6000);
+	motor_stop();
+	servo_point_center();
+}
+void move_hard_right_180() {
+	servo_point_right_full();
+	HAL_Delay(350);
+	motor_forward(MotorSpeed2);
+	HAL_Delay(6000);
+	motor_stop();
+	servo_point_center();
+}
