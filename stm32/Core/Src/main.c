@@ -23,7 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "uart_state_machine.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,6 +60,13 @@ const osThreadAttr_t motorsTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for uart_state_mach */
+osThreadId_t uart_state_machHandle;
+const osThreadAttr_t uart_state_mach_attributes = {
+  .name = "uart_state_mach",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -72,6 +79,7 @@ static void MX_TIM1_Init(void);
 static void MX_USART3_UART_Init(void);
 void StartDefaultTask(void *argument);
 void motor(void *argument);
+void state_machine(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -79,8 +87,8 @@ void motor(void *argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t UART_RX_BUF[20]; // 20 char UART recieve buffer
-
+uint8_t UART_RX_BUF[20]; // 20 char UART receive buffer
+uint8_t UART_RX_CHAR; // single char receive buffer
 /* USER CODE END 0 */
 
 /**
@@ -116,7 +124,7 @@ int main(void)
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_UART_Receive_IT(&huart3, UART_RX_BUF, sizeof(UART_RX_BUF)/2);
+  HAL_UART_Receive_IT(&huart3, &UART_RX_CHAR, 1);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -144,6 +152,9 @@ int main(void)
 
   /* creation of motorsTask */
   motorsTaskHandle = osThreadNew(motor, NULL, &motorsTask_attributes);
+
+  /* creation of uart_state_mach */
+  uart_state_machHandle = osThreadNew(state_machine, NULL, &uart_state_mach_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -421,15 +432,20 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 // USART receive callback
-// State machine called here
+// State machine functions only called here
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
 	// prevent unused arg warning during compilation
 	UNUSED(huart);
 
-	//send back data in non-blocking mode
-	HAL_UART_Transmit(&huart3, (uint8_t *)UART_RX_BUF, sizeof(UART_RX_BUF)/2, 0xFFFF);
 
+
+	uint8_t response = state_machine_interpret_simple(&UART_RX_CHAR, sizeof(UART_RX_CHAR));
+
+	//send back data in non blocking mode
+	HAL_UART_Transmit_IT(&huart3, (uint8_t *)&response, 1);
+
+	HAL_UART_Receive_IT(&huart3, &UART_RX_CHAR, sizeof(UART_RX_CHAR));
 }
 
 /* USER CODE END 4 */
@@ -450,11 +466,11 @@ void StartDefaultTask(void *argument)
   for(;;)
   {
 
-	  HAL_UART_Transmit(&huart3, &ch, sizeof(ch), 0xFFFF);
-	  if(ch < 'Z') ch++;
-	  else ch = 'A';
-
-    osDelay(1000);
+//	  HAL_UART_Transmit(&huart3, &ch, sizeof(ch), 0xFFFF);
+//	  if(ch < 'Z') ch++;
+//	  else ch = 'A';
+//
+//    osDelay(1000);
   }
   /* USER CODE END 5 */
 }
@@ -514,6 +530,24 @@ void motor(void *argument)
   }
 
   /* USER CODE END motor */
+}
+
+/* USER CODE BEGIN Header_state_machine */
+/**
+* @brief Function implementing the uart_state_mach thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_state_machine */
+void state_machine(void *argument)
+{
+  /* USER CODE BEGIN state_machine */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END state_machine */
 }
 
 /**
