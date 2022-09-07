@@ -26,6 +26,7 @@
 #include "oled.h"
 #include "motor.h"
 #include "servo.h"
+#include "display.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -552,16 +553,26 @@ void motor(void *argument)
 //	uint8_t toggle = 0;
 
 //	motor_test_startup();
-	servo_test_startup();
+//	servo_test_startup();
 
 	servo_point_center();
 	motor_stop();
 	HAL_Delay(500);
 
 	motor_forward(MotorSpeed1);
-	HAL_Delay(8000);
-	motor_stop(MotorSpeed1);
-	HAL_Delay(500);
+	HAL_Delay(3000);
+	motor_backward(MotorSpeed1);
+	HAL_Delay(3000);
+
+	motor_forward(MotorSpeed2);
+	HAL_Delay(3000);
+	motor_backward(MotorSpeed2);
+	HAL_Delay(3000);
+
+	motor_forward(MotorSpeed3);
+	HAL_Delay(3000);
+	motor_backward(MotorSpeed3);
+	HAL_Delay(3000);
 //	motor_backward(MotorSpeed1);
 //	HAL_Delay(8000);
 	motor_stop();
@@ -620,57 +631,15 @@ void motor(void *argument)
 void encoder_task(void *argument)
 {
   /* USER CODE BEGIN encoder_task */
-  /* Infinite loop */
-	HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
-	// HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
 
-	int cnt1, cnt2, diff;
-	uint32_t tick;
+	encoder_init(&htim2, &htim3, TIM_CHANNEL_2, TIM_CHANNEL_3);
+	oled_init();
 
-	cnt1 = __HAL_TIM_GET_COUNTER(&htim2);
+	display_speed();
 
-	tick = HAL_GetTick();
-
-	uint8_t buffer[20];
-	uint16_t dir;
-
-	OLED_Display_On();
-	HAL_Delay(2000);
-
-	  for(;;)
-	  {
-//		if (HAL_GetTick() - tick > 1000L) {
-			cnt2 = __HAL_TIM_GET_COUNTER(&htim2);
-			if(__HAL_TIM_IS_TIM_COUNTING_DOWN(&htim2)) {
-				if(cnt2 < cnt1) {
-					diff = cnt1 - cnt2;
-				} else {
-					diff = (65535 - cnt2) + cnt1;
-				}
-			} else {
-				if(cnt2 > cnt1) {
-					diff = cnt2 - cnt1;
-				} else {
-					diff = (65535 - cnt1) + cnt2;
-				}
-			}
-			sprintf(buffer, "Speed: %5d\0", diff);
-			OLED_ShowString(10, 20, buffer);
-			OLED_Refresh_Gram();
-			dir = __HAL_TIM_IS_TIM_COUNTING_DOWN(&htim2);
-
-			sprintf(buffer, "Dir: %5d\0", dir);
-			OLED_ShowString(10, 30, buffer);
-			OLED_Refresh_Gram();
-
-			cnt1 = __HAL_TIM_GET_COUNTER(&htim2);
-
-			tick = HAL_GetTick();
-			HAL_Delay(100);
-//	  }
   /* USER CODE END encoder_task */
 }
-}
+
 
 /**
   * @brief  This function is executed in case of error occurrence.
