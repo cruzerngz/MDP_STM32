@@ -126,6 +126,11 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   HAL_UART_Receive_IT(&huart3, &UART_RX_CHAR, 1);
+
+	motor_init_timer(&htim8, TIM_CHANNEL_1, TIM_CHANNEL_2);
+	motor_init_gpio_left(GPIOA, AIN1_Pin, AIN2_Pin);
+	motor_init_gpio_right(GPIOA, BIN1_Pin, BIN2_Pin);
+	servo_init(&htim1, TIM_CHANNEL_4);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -491,20 +496,17 @@ void motor(void *argument)
 //	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
 
 
-	motor_init_timer(&htim8, TIM_CHANNEL_1, TIM_CHANNEL_2);
-	motor_init_gpio_left(GPIOA, AIN1_Pin, AIN2_Pin);
-	motor_init_gpio_right(GPIOA, BIN1_Pin, BIN2_Pin);
-	servo_init(&htim1, TIM_CHANNEL_4);
+
 
 //	uint16_t pwmVal = 350;
 //	uint8_t toggle = 0;
 
 //	motor_test_startup();
-	servo_test_startup();
-
-	move_hard_left_180();
-	HAL_Delay(2000);
-	move_hard_right_180();
+//	servo_test_startup();
+//
+//	move_hard_left_180();
+//	HAL_Delay(2000);
+//	move_hard_right_180();
 
 
 

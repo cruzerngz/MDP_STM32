@@ -26,10 +26,10 @@ typedef enum {
 
 typedef enum {
 	StateMachineForward = 'w',
-	StateMachineBackward = 's',
+	StateMachineBackward = 'x',
 	StateMachineWheelsLeft = 'a',
 	StateMachineWheelsRight = 'd',
-	StateMachineWheelsCenter = 'x'
+	StateMachineReset = 's'
 } StateMachineDriveSlave;
 
 

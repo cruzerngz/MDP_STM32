@@ -6,6 +6,7 @@
  */
 
 #include "uart_state_machine.h"
+#include "move.h"
 
 /*
  * Ingests a message from UART
@@ -19,22 +20,28 @@ uint8_t state_machine_interpret_simple(uint8_t *uart_msg, uint16_t msg_size) {
 
 	switch (uart_msg[0]) {
 	case StateMachineForward:
+		forward(MotorSpeed2);
 		return StateMachineFullAck;
 		break;
 
 	case StateMachineBackward:
+		backward(MotorSpeed2);
 		return StateMachineFullAck;
 		break;
 
 	case StateMachineWheelsLeft:
+		servo_point_left_full();
 		return StateMachineFullAck;
 		break;
 
 	case StateMachineWheelsRight:
+		servo_point_right_full();
 		return StateMachineFullAck;
 		break;
 
-	case StateMachineWheelsCenter:
+	case StateMachineReset:
+		servo_point_center();
+		motor_stop();
 		return StateMachineFullAck;
 		break;
 
