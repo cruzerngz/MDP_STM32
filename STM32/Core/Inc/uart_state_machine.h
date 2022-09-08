@@ -7,6 +7,7 @@
  * This module takes in and interprets UART data to control the car.
  */
 
+#include "uart_state_machine_api.h"
 #include "stdint.h"
 
 #ifndef INC_UART_STATE_MACHINE_H_
