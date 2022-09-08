@@ -445,7 +445,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
 
 
-	uint8_t response = state_machine_interpret_simple(&UART_RX_CHAR, sizeof(UART_RX_CHAR));
+	uint8_t response = state_machine_interpreter(UART_RX_CHAR);
 
 	//send back data in non blocking mode
 	HAL_UART_Transmit_IT(&huart3, (uint8_t *)&response, 1);
