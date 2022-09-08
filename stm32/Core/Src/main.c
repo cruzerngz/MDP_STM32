@@ -23,6 +23,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <string.h>
+#include <stdio.h>
+
 #include "oled.h"
 #include "motor.h"
 #include "servo.h"
@@ -36,6 +39,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ADC_BUF_LEN 4096
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,6 +48,9 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+DMA_HandleTypeDef hdma_adc1;
+
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
@@ -63,14 +70,30 @@ const osThreadAttr_t motorsTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
-/* Definitions for EncoderTask */
-osThreadId_t EncoderTaskHandle;
-const osThreadAttr_t EncoderTask_attributes = {
-  .name = "EncoderTask",
+/* Definitions for encoderTask */
+osThreadId_t encoderTaskHandle;
+const osThreadAttr_t encoderTask_attributes = {
+  .name = "encoderTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for IR_ADC_Task */
+osThreadId_t IR_ADC_TaskHandle;
+const osThreadAttr_t IR_ADC_Task_attributes = {
+  .name = "IR_ADC_Task",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* USER CODE BEGIN PV */
+
+// buffer to hold ADC output
+uint16_t adc_buf[ADC_BUF_LEN];
+
+__IO uint16_t uhADCxConvertedValue = 0;
+/* Variable to report ADC analog watchdog status:   */
+/*   RESET <=> voltage into AWD window   */
+/*   SET   <=> voltage out of AWD window */
+uint8_t ubAnalogWatchdogStatus = RESET;  /* Set into analog watchdog interrupt callback */
 
 /* USER CODE END PV */
 
@@ -81,9 +104,12 @@ static void MX_TIM8_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_DMA_Init(void);
+static void MX_ADC1_Init(void);
 void StartDefaultTask(void *argument);
 void motor(void *argument);
 void encoder_task(void *argument);
+void IR_ADC_task(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -126,8 +152,15 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
+  MX_DMA_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
   OLED_Init();
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buf, ADC_BUF_LEN); // Part 1: start DMA attached to ADC
+  if (HAL_ADC_Start_IT(&hadc1) != HAL_OK) // Part 2: start ADC conversion (do we still need this if the previous function is executed?)
+  	  {
+      	  Error_Handler();
+  	  }
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -156,8 +189,11 @@ int main(void)
   /* creation of motorsTask */
   motorsTaskHandle = osThreadNew(motor, NULL, &motorsTask_attributes);
 
-  /* creation of EncoderTask */
-  EncoderTaskHandle = osThreadNew(encoder_task, NULL, &EncoderTask_attributes);
+  /* creation of encoderTask */
+  encoderTaskHandle = osThreadNew(encoder_task, NULL, &encoderTask_attributes);
+
+  /* creation of IR_ADC_Task */
+  IR_ADC_TaskHandle = osThreadNew(IR_ADC_task, NULL, &IR_ADC_Task_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -218,6 +254,68 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_AnalogWDGConfTypeDef AnalogWDGConfig = {0};
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.ScanConvMode = DISABLE;
+  hadc1.Init.ContinuousConvMode = ENABLE;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.DMAContinuousRequests = ENABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure the analog watchdog
+  */
+  AnalogWDGConfig.WatchdogMode = ADC_ANALOGWATCHDOG_SINGLE_REG;
+  AnalogWDGConfig.HighThreshold = 3000;
+  AnalogWDGConfig.LowThreshold = 1000;
+  AnalogWDGConfig.Channel = ADC_CHANNEL_10;
+  AnalogWDGConfig.ITMode = ENABLE;
+  if (HAL_ADC_AnalogWDGConfig(&hadc1, &AnalogWDGConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_10;
+  sConfig.Rank = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
 }
 
 /**
@@ -471,6 +569,22 @@ static void MX_TIM8_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -481,18 +595,21 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOE_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, OLED_SCL_Pin|OLED_SCA_Pin|OLED_RST_Pin|OLED_DC_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, OLED_SCL_Pin|OLED_SCA_Pin|OLED_RST_Pin|OLED_DC_Pin
+                          |LED3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, AIN2_Pin|AIN1_Pin|BIN1_Pin|BIN2_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : OLED_SCL_Pin OLED_SCA_Pin OLED_RST_Pin OLED_DC_Pin */
-  GPIO_InitStruct.Pin = OLED_SCL_Pin|OLED_SCA_Pin|OLED_RST_Pin|OLED_DC_Pin;
+  /*Configure GPIO pins : OLED_SCL_Pin OLED_SCA_Pin OLED_RST_Pin OLED_DC_Pin
+                           LED3_Pin */
+  GPIO_InitStruct.Pin = OLED_SCL_Pin|OLED_SCA_Pin|OLED_RST_Pin|OLED_DC_Pin
+                          |LED3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -508,6 +625,46 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+// Part 1: Notify main code to do smth while the other half is being filled by DMA
+
+// Called when first half of buffer is filled
+void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc) {
+	// Part 1
+	// HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+
+	// do smth here
+
+}
+
+// Called when buffer is completely filled
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
+
+	// Part 1
+	// HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+
+	// do smth here
+
+}
+
+
+// Part 2
+
+/**
+  * @brief  Analog watchdog callback in non blocking mode.
+  * @param  hadc: ADC handle
+  * @retval None
+  */
+
+void HAL_ADC_LevelOutOfWindowCallback(ADC_HandleTypeDef* hadc) {
+	{
+	  /* Set variable to report analog watchdog out of window status to main program. */
+	  uhADCxConvertedValue = HAL_ADC_GetValue(&hadc1);
+	  ubAnalogWatchdogStatus = SET;
+	}
+
+}
+
 
 /* USER CODE END 4 */
 
@@ -640,6 +797,49 @@ void encoder_task(void *argument)
   /* USER CODE END encoder_task */
 }
 
+/* USER CODE BEGIN Header_IR_ADC_task */
+/**
+* @brief Function implementing the IR_ADC_Task thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_IR_ADC_task */
+void IR_ADC_task(void *argument)
+{
+  /* USER CODE BEGIN IR_ADC_task */
+	// Part 1
+	uint16_t raw;
+	uint8_t buffer_ADC[20];
+  /* Infinite loop */
+  for(;;)
+  {
+	  // Part 1: Get ADC value
+	  raw = HAL_ADC_GetValue(&hadc1);
+	  sprintf(buffer_ADC, "IR Sensor: %hu\r\n", raw); // should be a valye 0 <= X < 4096
+	  OLED_ShowString(10, 50, buffer_ADC);
+	  OLED_Refresh_Gram();
+
+	  // Part 2
+      /* Turn-on/off LED2 and LED3 in function of ADC conversion result */
+      /* - Turn-off if voltage is into AWD window */
+      /* - Turn-on if voltage is out of AWD window */
+
+      /* Variable of analog watchdog status is set into analog watchdog         */
+      /* interrupt callback                                                     */
+      if (ubAnalogWatchdogStatus == SET)
+      {
+    	  HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_SET);
+      }
+      else
+      {
+    	  HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_RESET);
+      }
+
+      ubAnalogWatchdogStatus = RESET;
+      HAL_Delay(1);
+  }
+  /* USER CODE END IR_ADC_task */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

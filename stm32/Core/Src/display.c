@@ -5,6 +5,9 @@
  *      Author: jimmysqqr
  */
 
+#include <string.h>
+#include <stdio.h>
+
 #include "display.h"
 #include "oled.h"
 
@@ -13,7 +16,6 @@
 
 
 // private static variables
-
 // timer pointers/variables
 static TIM_HandleTypeDef *MOTOR_ENCODER_TIMER_LEFT;
 static TIM_HandleTypeDef *MOTOR_ENCODER_TIMER_RIGHT;
@@ -22,7 +24,6 @@ static uint32_t MOTOR_CHANNEL_RIGHT;
 
 
 // private function prototypes
-
 int _read_encoder_left();
 int _read_encoder_right();
 
@@ -106,13 +107,13 @@ void display_speed() {
 	for(;;)
 	{
 		speed_left = _read_encoder_left();
-		sprintf(buffer_left, "L Speed: %5d\0", speed_left);
+		sprintf(buffer_left, "L Speed: %5d", speed_left);
 		OLED_ShowString(10, 20, buffer_left);
 		OLED_Refresh_Gram();
 
 		speed_right = _read_encoder_right();
-		sprintf(buffer_right, "R Speed: %5d\0", speed_right);
-		OLED_ShowString(10, 40, buffer_right);
+		sprintf(buffer_right, "R Speed: %5d", speed_right);
+		OLED_ShowString(10, 35, buffer_right);
 		OLED_Refresh_Gram();
 	}
 }
