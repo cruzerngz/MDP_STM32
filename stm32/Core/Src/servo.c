@@ -10,19 +10,23 @@
 // private macros
 // SERVO_CENTER moved into header file for move.c to use
 
-// amount to offset when centering from (left/right)
-#define SERVO_CENTERING_OFFSET 1
-
-// left and right offsets are not the same
-#define SERVO_LEFT_LIMIT 50
-#define SERVO_RIGHT_LIMIT 90
-
-#define SERVO_LEFT_MAX (SERVO_CENTER - SERVO_LEFT_LIMIT)
-#define SERVO_RIGHT_MAX (SERVO_CENTER + SERVO_RIGHT_LIMIT)
-
-#define SERVO_MIN_DELAY_TICKS 100
-
 // private static variables, initialized with servo_init();
+
+static uint16_t SERVO_LEFT_MAGS[] = {
+	8,
+	16,
+	24,
+	32,
+	SERVO_LEFT_LIMIT
+};
+
+static uint16_t SERVO_RIGHT_MAGS[] = {
+	8,
+	16,
+	24,
+	32,
+	SERVO_RIGHT_LIMIT
+};
 
 // Pointer to the timer handler initialized in main
 static TIM_HandleTypeDef *SERVO_PWM_TIMER;
@@ -133,24 +137,30 @@ void servo_showcase() {
  * Point the wheels at a certain direction with a specific magnitude
  */
 void servo_point(ServoDirection dir, ServoMagnitude mag) {
-	int16_t offset = ((uint16_t) mag + 1) << 3;
+//	int16_t offset = ((uint16_t) mag + 1) << 3;
+//	switch (dir) {
+//	case ServoDirLeft:
+//		offset = 0 - offset;
+//		SERVO_CURR_DIR = ServoDirLeft;
+//		break;
+//
+//	case ServoDirRight:
+//		SERVO_CURR_DIR = ServoDirRight;
+//		break;
+//
+//	default:
+//		SERVO_CURR_DIR = ServoDirCenter;
+//		break;
+//	}
 
-	switch (dir) {
-	case ServoDirLeft:
-		offset = 0 - offset;
-		SERVO_CURR_DIR = ServoDirLeft;
-		break;
-
-	case ServoDirRight:
-		SERVO_CURR_DIR = ServoDirRight;
-		break;
-
-	default:
-		SERVO_CURR_DIR = ServoDirCenter;
-		break;
+	if(dir == ServoDirLeft) {
+		*SERVO_PWM_REGISTER = SERVO_CENTER - SERVO_LEFT_MAGS[mag];
+	}
+	else if(dir == ServoDirRight) {
+		*SERVO_PWM_REGISTER = SERVO_CENTER + SERVO_RIGHT_MAGS[mag];
 	}
 
-	*SERVO_PWM_REGISTER = SERVO_CENTER + offset;
+//	*SERVO_PWM_REGISTER = SERVO_CENTER + offset;
 }
 
 /**

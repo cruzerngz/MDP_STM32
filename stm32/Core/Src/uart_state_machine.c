@@ -32,7 +32,7 @@ static volatile ToyCarStates GLOBAL_TOY_CAR_MODE = ToyCarDrive;
 static volatile ToyCarMoveCommands GLOBAL_TOY_CAR_MODE_MODIFIER;
 
 static MotorSpeed VALID_SPEEDS[] = {MotorSpeed1, MotorSpeed2, MotorSpeed3};
-static ServoMagnitude VALID_DIRS[] = {ServoMag1, ServoMag2, ServoMag3, ServoMag4};
+static ServoMagnitude VALID_DIRS[] = {ServoMag1, ServoMag2, ServoMag3, ServoMag4, ServoMag5};
 
 static volatile MotorSpeed GLOBAL_TOY_CAR_SPEED = MotorSpeed1;
 static volatile ServoMagnitude GLOBAL_TOY_CAR_DIR = ServoMag1;

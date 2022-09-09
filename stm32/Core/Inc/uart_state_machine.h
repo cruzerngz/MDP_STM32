@@ -41,7 +41,7 @@ typedef struct {
 	uint16_t len;
 } UartResponseMessage;
 
-UartResponseMessage *state_machine_interpret(uint8_t *uart_msg, uint16_t msg_size);
+uint8_t state_machine_interpreter(uint8_t command);//uint8_t *uart_msg, uint16_t msg_size);
 uint8_t state_machine_interpret_simple(uint8_t *uart_msg, uint16_t msg_size);
 
 #endif /* INC_UART_STATE_MACHINE_H_ */
