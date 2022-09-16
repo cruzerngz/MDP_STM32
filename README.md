@@ -47,17 +47,17 @@ Rough documentation of the UART-robot interface
 UART communication hard rules:
 - Only one char (command) sent at a time
 - Command has to be a valid ASCII character
-- Each sent char will be acknowledged with one of 3 replies
+- Each sent char will be acknowledged with one of 4 replies
 - Incorrect commands / improperly received commands will have to be sent again
 
 UART general communication/acknowledgement loop
 - Instruction sent from Pi to MCU
 - MCU sends partial ACK `char "."`
+- For commands that accept multi-number inputs, `char _` is sent instead of `char .`
 - Further instruction (if applicable) sent from Pi to MCU
 - MCU sends full ACK `char ";"` on complete instruction
 - MCU replies with error `char "?"` if an incorrect command is sent. Fallback to previous state.
 
-UART "state machine" replies
 | UART | Description |
 | --- | --- |
 | `.` | Partial ack, continue with next command |
@@ -89,6 +89,20 @@ This mode is used to control the movement of the car as accurately as possible. 
 
 
 ### Variable movements (incomplete)
+
+For now, all variable movements will need to have the number prefixed with `0` and postfixed with `00` due to some bug somwhere in the state machine.
+
+A move 100 cm command will be sent as:
+```
+m-0-1-0-0-0-0-;
+```
+
+A turn 45 degree command will be sent as:
+```
+t-0-4-5-0-0-;
+```
+
+
 | UART sequence | Description |
 | --- | --- |
 | `m-[number sequence]-;` | Move the car forward by X centimeters |
