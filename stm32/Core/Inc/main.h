@@ -37,7 +37,8 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
+//extern int16_t FLAG_MOVEMENT_DISTANCE;
+//extern int16_t FLAG_TURN_DIRECTION;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -68,6 +69,8 @@ void Error_Handler(void);
 #define BIN1_GPIO_Port GPIOA
 #define BIN2_Pin GPIO_PIN_5
 #define BIN2_GPIO_Port GPIOA
+#define LED3_Pin GPIO_PIN_10
+#define LED3_GPIO_Port GPIOE
 #define SERVO_OUT_Pin GPIO_PIN_14
 #define SERVO_OUT_GPIO_Port GPIOE
 #define PWMA_Pin GPIO_PIN_6

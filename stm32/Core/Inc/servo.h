@@ -57,4 +57,7 @@ void servo_point_center();
 void servo_point_left_full();
 void servo_point_right_full();
 
+// variable directions
+void servo_point_degrees(ServoDirection dir, uint8_t degrees);
+
 #endif /* INC_SERVO_H_ */

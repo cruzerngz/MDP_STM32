@@ -5,6 +5,10 @@
  *      Author: Jiarui.Ng
  */
 
+#include "stdbool.h"
+#include "stm32f4xx_hal.h" // temp include, for debugging
+
+
 #include "uart_state_machine.h"
 #include "uart_state_machine_api.h"
 #include "move.h"
@@ -15,8 +19,22 @@
 // Offset to convert an ascii char (as uint8_t) to an int val
 #define ASCII_OFFSET 48
 
+volatile int16_t FLAG_MOVEMENT_DISTANCE = 0;
+volatile int16_t FLAG_TURN_DIRECTION = 0;
 
 // private variables
+// array of custom movements
+void (*CUSTOM_DIRECTIONS[10]) (void) = {
+	move_hard_left_45,
+	move_hard_left_90,
+	move_hard_left_135,
+	move_hard_left_180,
+
+	move_hard_right_45,
+	move_hard_right_90,
+	move_hard_right_135,
+	move_hard_right_180
+};
 
 // current global state for state machine
 
@@ -26,6 +44,12 @@
 
 // default drive mode
 static volatile StateMachineDriveMode GLOBAL_DRIVE_MODE = StateMachineModeSelect;
+
+// default starting mode for fine control
+static volatile FineControlStates GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
+static volatile int16_t GLOBAL_FINE_CONTROL_MAGNITUDE = 0; // param that sets the flags after interrupt
+static volatile ServoDirection GLOBAL_FINE_CONTROL_DIR = ServoDirCenter; // direction to turn
+static volatile bool GLOBAL_FINE_CONTROL_INGEST = false;
 
 // default starting modes for toy car
 static volatile ToyCarStates GLOBAL_TOY_CAR_MODE = ToyCarDrive;
@@ -42,12 +66,17 @@ static volatile ServoMagnitude GLOBAL_TOY_CAR_DIR = ServoMag1;
 uint8_t _state_machine_mode_interpreter(uint8_t command);
 
 uint8_t _fine_control_interpreter(uint8_t command);
+uint8_t _fine_control_interpreter_idle(uint8_t command);
+uint8_t _fine_control_interpreter_move(uint8_t command);
+uint8_t _fine_control_interpreter_turn(uint8_t command);
+uint8_t _fine_control_interpreter_ingest_magnitude(uint8_t command);
 
 
 uint8_t _toy_car_interpreter(uint8_t command);
 uint8_t _toy_car_interpreter_drive(uint8_t command);
 uint8_t _toy_car_interpreter_setting(uint8_t command);
-uint8_t _toy_car_interpreter_modifier(uint8_t command);
+uint8_t _toy_car_interpreter_custom(uint8_t command);
+//uint8_t _toy_car_interpreter_modifier(uint8_t command);
 
 
 /**
@@ -64,7 +93,7 @@ uint8_t state_machine_interpreter(uint8_t command) {
 
 	switch(GLOBAL_DRIVE_MODE) {
 	case StateMachineFineControl:
-		return StateMachineUnknown;
+		return _fine_control_interpreter(command);
 		break;
 
 	case StateMachineToyCar:
@@ -109,6 +138,113 @@ uint8_t _state_machine_mode_interpreter(uint8_t command) {
 }
 
 /**
+ * Main entry point to the fine control state machine
+ */
+uint8_t _fine_control_interpreter(uint8_t command) {
+	switch(GLOBAL_FINE_CONTROL_MODE) {
+	case FineControlIdle:
+		return _fine_control_interpreter_idle(command);
+		break;
+
+	case FineControlMove:
+		return _fine_control_interpreter_move(command);
+		break;
+
+	case FineControlTurn:
+		return _fine_control_interpreter_turn(command);
+		break;
+
+	default:
+		GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
+		return StateMachineUnknown;
+	}
+}
+
+uint8_t _fine_control_interpreter_idle(uint8_t command) {
+	switch(command) {
+	case FineControlIdle:
+		return StateMachineFullAck;
+		break;
+
+	case FineControlMove:
+		GLOBAL_FINE_CONTROL_MODE = FineControlMove;
+		return StateMachineInputField;
+		break;
+
+	case FineControlTurn:
+		GLOBAL_FINE_CONTROL_MODE = FineControlTurn;
+		return StateMachineInputField;
+		break;
+
+	default:
+		GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
+		return StateMachineUnknown;
+		break;
+	}
+}
+uint8_t _fine_control_interpreter_move(uint8_t command) {
+	if(GLOBAL_FINE_CONTROL_INGEST) {
+		return _fine_control_interpreter_ingest_magnitude(command);
+
+	} else {
+		GLOBAL_FINE_CONTROL_INGEST = true;
+		GLOBAL_FINE_CONTROL_MAGNITUDE = 0; // reset the value
+		return StateMachineInputField;
+	}
+
+
+}
+uint8_t _fine_control_interpreter_turn(uint8_t command) {
+	if(GLOBAL_FINE_CONTROL_INGEST) {
+		return _fine_control_interpreter_ingest_magnitude(command);
+
+	} else {
+		GLOBAL_FINE_CONTROL_INGEST = true;
+		GLOBAL_FINE_CONTROL_MAGNITUDE = 0; // reset the value
+		return StateMachineInputField;
+	}
+}
+uint8_t _fine_control_interpreter_ingest_magnitude(uint8_t command) {
+	uint8_t command_as_int = command - ASCII_OFFSET;
+
+	if(command == StateMachineFullAck) {
+		if(GLOBAL_FINE_CONTROL_MODE == FineControlMove) {
+			FLAG_MOVEMENT_DISTANCE = GLOBAL_FINE_CONTROL_MAGNITUDE / 100;
+			GLOBAL_FINE_CONTROL_INGEST = false;
+			GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
+//			HAL_UART_Transmit(&huart3, (uint8_t *)"set\r\n", 10, HAL_MAX_DELAY);
+			return StateMachineFullAck;
+
+		} else if (GLOBAL_FINE_CONTROL_MODE == FineControlTurn) {
+			FLAG_TURN_DIRECTION = GLOBAL_FINE_CONTROL_MAGNITUDE / 100;
+			GLOBAL_FINE_CONTROL_INGEST = false;
+			GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
+//			HAL_UART_Transmit(&huart3, (uint8_t *)"set\r\n", 10, HAL_MAX_DELAY);
+			return StateMachineFullAck;
+
+		} else {
+			GLOBAL_FINE_CONTROL_INGEST = false;
+			GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
+			return StateMachineUnknown;
+		}
+	}
+
+	else if(command_as_int >= 0 && command_as_int <= 9 ) {
+		GLOBAL_FINE_CONTROL_MAGNITUDE *= 10;
+		GLOBAL_FINE_CONTROL_MAGNITUDE += command_as_int;
+		return StateMachineInputField;
+		// continue with ingest
+
+	} else { // fallback to idle state
+		GLOBAL_FINE_CONTROL_INGEST = false;
+		GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
+		return StateMachineUnknown;
+	}
+
+	return StateMachineUnknown;
+}
+
+/**
  * Main entry point to the toy car state machine
  */
 uint8_t _toy_car_interpreter(uint8_t command) {
@@ -119,6 +255,10 @@ uint8_t _toy_car_interpreter(uint8_t command) {
 
 	case ToyCarSetting:
 		return _toy_car_interpreter_setting(command);
+		break;
+
+	case ToyCarCustom:
+		return _toy_car_interpreter_custom(command);
 		break;
 
 	default:
@@ -137,6 +277,7 @@ uint8_t _toy_car_interpreter_drive(uint8_t command) {
 	switch(command) {
 	case ToyCarMoveForward:
 		forward(GLOBAL_TOY_CAR_SPEED);
+//		FLAG_MOVEMENT_DISTANCE = 100; //temp
 		return StateMachineFullAck;
 		break;
 
@@ -174,6 +315,11 @@ uint8_t _toy_car_interpreter_drive(uint8_t command) {
 	case ToyCarModifyServoMag:
 		GLOBAL_TOY_CAR_MODE = ToyCarSetting;
 		GLOBAL_TOY_CAR_MODE_MODIFIER = ToyCarModifyServoMag;
+		return StateMachinePartialAck;
+		break;
+
+	case ToyCarCustomMove:
+		GLOBAL_TOY_CAR_MODE = ToyCarCustom;
 		return StateMachinePartialAck;
 		break;
 
@@ -218,6 +364,23 @@ uint8_t _toy_car_interpreter_setting(uint8_t command) {
 	}
 
 	return StateMachineUnknown;
+}
+
+uint8_t _toy_car_interpreter_custom(uint8_t command) {
+	uint8_t command_as_int = command - ASCII_OFFSET;
+
+
+//
+//	if(command_as_int >= 0 && command_as_int < ARRAY_LEN(CUSTOM_DIRECTIONS)) {
+////		(CUSTOM_MOVEMENTS[command_as_int])();
+//		HARDCODE_DIRECTION = (void *)CUSTOM_DIRECTIONS[command_as_int];
+//		GLOBAL_TOY_CAR_MODE = ToyCarDrive;
+//		return StateMachineFullAck;
+//	} else {
+//		GLOBAL_TOY_CAR_MODE = ToyCarDrive;
+////		move_hard_left_45();
+//		return StateMachineUnknown;
+//	}
 }
 
 /*

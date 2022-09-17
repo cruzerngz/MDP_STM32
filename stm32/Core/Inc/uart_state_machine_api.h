@@ -16,6 +16,7 @@
 
 // state machine valid responses
 typedef enum {
+	StateMachineInputField = '_',
 	StateMachinePartialAck = '.',
 	StateMachineFullAck = ';',
 	StateMachineUnknown = '?',
@@ -31,17 +32,29 @@ typedef enum {
 /**
  * Fine control mode commands and modifiers
  */
-// TODO!()
+typedef enum {
+	FineControlIdle = 'i',
+	FineControlMove = 'm',
+	FineControlTurn = 't'
+} FineControlStates;
+
+typedef enum {
+	FineControlMain = 'i',
+	FineControlMovement = 'm',
+	FineControlTurning = 't',
+
+	FineControlTurnLeft = 'r',
+	FineControlTurnRight = 'y'
+} FineControlCommands;
 
 
 /**
  * Toy car states, commands and modifiers
  */
-
 typedef enum {
 	ToyCarDrive,
 	ToyCarSetting,
-	ToyCarMagnitude
+	ToyCarCustom
 } ToyCarStates;
 
 // valid commands to toy car
@@ -55,6 +68,8 @@ typedef enum {
 
 	ToyCarModifyMotorSpeed = 'm',
 	ToyCarModifyServoMag = 'n',
+
+	ToyCarCustomMove = 'c'
 } ToyCarMoveCommands;
 
 

@@ -1,3 +1,5 @@
+.vscode/
+
 debug/
 release/
 stm32/.settings/language.settings.xml

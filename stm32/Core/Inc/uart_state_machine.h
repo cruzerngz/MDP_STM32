@@ -8,20 +8,21 @@
  */
 
 #include "stdint.h"
+#include "stdio.h"
 
 #ifndef INC_UART_STATE_MACHINE_H_
 #define INC_UART_STATE_MACHINE_H_
 
-//// Mode, set first
-//typedef enum {
-//
-//} StateMachineMode;
-//
-//
-//
-//typedef struct {
-//
-//} StateMachineState;
+// Used by main to exec any predefined movement
+//void (*HARDCODE_DIRECTION)(void);
+//HARDCODE_DIRECTION = NULL;
+
+
+// Exported to main.c for use as interupt flags
+// Distance to move forward in centimeters
+extern volatile int16_t FLAG_MOVEMENT_DISTANCE;
+// Angle to turn in degrees
+extern volatile int16_t FLAG_TURN_DIRECTION;
 
 // Testing out the state machine and movement
 typedef enum {

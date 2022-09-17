@@ -54,32 +54,33 @@ const osThreadAttr_t defaultTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for motorsTask */
-osThreadId_t motorsTaskHandle;
-const osThreadAttr_t motorsTask_attributes = {
-  .name = "motorsTask",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+/* Definitions for movement_task */
+osThreadId_t movement_taskHandle;
+const osThreadAttr_t movement_task_attributes = {
+  .name = "movement_task",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityBelowNormal,
 };
 /* Definitions for uart_state_mach */
 osThreadId_t uart_state_machHandle;
 const osThreadAttr_t uart_state_mach_attributes = {
   .name = "uart_state_mach",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 400 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE BEGIN PV */
+
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_TIM8_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_TIM8_Init(void);
 static void MX_USART3_UART_Init(void);
 void StartDefaultTask(void *argument);
-void motor(void *argument);
+void movement(void *argument);
 void state_machine(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -120,8 +121,8 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_TIM8_Init();
   MX_TIM1_Init();
+  MX_TIM8_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 
@@ -156,8 +157,8 @@ int main(void)
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
-  /* creation of motorsTask */
-  motorsTaskHandle = osThreadNew(motor, NULL, &motorsTask_attributes);
+  /* creation of movement_task */
+  movement_taskHandle = osThreadNew(movement, NULL, &movement_task_attributes);
 
   /* creation of uart_state_mach */
   uart_state_machHandle = osThreadNew(state_machine, NULL, &uart_state_mach_attributes);
@@ -197,6 +198,7 @@ void SystemClock_Config(void)
   */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
@@ -208,6 +210,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -425,12 +428,22 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, AIN2_Pin|AIN1_Pin|BIN1_Pin|BIN2_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_RESET);
+
   /*Configure GPIO pins : AIN2_Pin AIN1_Pin BIN1_Pin BIN2_Pin */
   GPIO_InitStruct.Pin = AIN2_Pin|AIN1_Pin|BIN1_Pin|BIN2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : LED3_Pin */
+  GPIO_InitStruct.Pin = LED3_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(LED3_GPIO_Port, &GPIO_InitStruct);
 
 }
 
@@ -443,9 +456,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	// prevent unused arg warning during compilation
 	UNUSED(huart);
 
-
-
+	__disable_irq();
 	uint8_t response = state_machine_interpreter(UART_RX_CHAR);
+	__enable_irq();
 
 	//send back data in non blocking mode
 	HAL_UART_Transmit_IT(&huart3, (uint8_t *)&response, 1);
@@ -465,112 +478,79 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-	uint8_t ch = 'A';
 
   /* Infinite loop */
   for(;;)
   {
+//	  for(int i=1; i<6; i++) {
+//		  move_turn_forward_by(ServoDirLeft, i*10);
+//		  osDelay(1000);
+//		  move_turn_forward_by(ServoDirRight, i*10);
+//		  osDelay(1000);
+//	  }
 
-//	  HAL_UART_Transmit(&huart3, &ch, sizeof(ch), 0xFFFF);
-//	  if(ch < 'Z') ch++;
-//	  else ch = 'A';
-//
-//    osDelay(1000);
+    osDelay(2500);
   }
   /* USER CODE END 5 */
 }
 
-/* USER CODE BEGIN Header_motor */
+/* USER CODE BEGIN Header_movement */
+extern void (*HARDCODE_DIRECTION)(void); // func from state machine
 /**
- * @brief Function implementing the motorsTask thread.
- * @param argument: Not used
- * @retval None
- */
-/* USER CODE END Header_motor */
-void motor(void *argument)
+* @brief Function implementing the movement_task thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_movement */
+void movement(void *argument)
 {
-  /* USER CODE BEGIN motor */
+  /* USER CODE BEGIN movement */
+	static volatile int16_t mvmt_dist = 0;
+	static volatile int16_t turn_dir = 0;
 
-//	HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
-//	HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
-//	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
-
-
-
-
-//	uint16_t pwmVal = 350;
-//	uint8_t toggle = 0;
-
-//	motor_test_startup();
-//	servo_test_startup();
-//
-//	move_hard_left_180();
-//	HAL_Delay(2000);
-//	move_hard_right_180();
+	// Flags set in the UART interrupt routine set here
+  /* Infinite loop */
+  for(;;)
+  {
+	  HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
 
 
+	  __disable_irq();
+	  mvmt_dist = FLAG_MOVEMENT_DISTANCE;
+	  turn_dir = FLAG_TURN_DIRECTION;
 
-//	motor_forward(MotorSpeed1);
-//	HAL_Delay(8000);
-//	motor_stop();
-
-
-//	servo_point_center();
-//	motor_stop();
-//	HAL_Delay(500);
-//	servo_point_right_full();
-//	HAL_Delay(300);
-//	motor_forward(MotorSpeed2);
-//	HAL_Delay(2500);
-//	motor_stop();
-//	HAL_Delay(500);
-////	motor_backward(MotorSpeed1);
-////	HAL_Delay(8000);
-//	motor_stop();
-//	servo_point_center();
-
-	/* Infinite loop */
-	for (;;) {
+	  FLAG_MOVEMENT_DISTANCE = 0;
+	  FLAG_TURN_DIRECTION = 0;
+	  __enable_irq();
 
 
+	  if(mvmt_dist != 0) {
 
-//	  toggle = 1 - toggle;
-//	  if(toggle) {
-//		  servo_point_right_full();
-//	  } else {
-//		  servo_point_left_full();
-//	  }
+		  if(mvmt_dist < 0) {
+			  HAL_UART_Transmit(&huart3, (uint8_t *)"MoveB\r\n", 10, HAL_MAX_DELAY);
+			  move_backward_by(mvmt_dist);
+		  }
+		  else if(mvmt_dist > 0) {
+			  HAL_UART_Transmit(&huart3, (uint8_t *)"MoveF\r\n", 10, HAL_MAX_DELAY);
+			  move_forward_by(mvmt_dist);
+			  HAL_UART_Transmit(&huart3, (uint8_t *)"MoveOK\r\n", 10, HAL_MAX_DELAY);
+		  }
 
-//	  servo_point_left_full();
+	  }
 
-//		while (pwmVal < 2500) {
-//			// htim1 100 is left
-//			// htim1 130-140 is mid
-//			// htim1 180 is right
-////		  htim1.Instance->CCR4 = 144; // this is mid, literally
-//
-//			// AIN2_Pin | AIN1_Pin
-//			// left wheel clockwise
-//			HAL_GPIO_WritePin(GPIOA, AIN2_Pin, GPIO_PIN_RESET);
-//			HAL_GPIO_WritePin(GPIOA, AIN1_Pin, GPIO_PIN_SET);
-//			// right wheel anti-clockwise
-//			HAL_GPIO_WritePin(GPIOA, BIN2_Pin, GPIO_PIN_RESET);
-//			HAL_GPIO_WritePin(GPIOA, BIN1_Pin, GPIO_PIN_SET);
-//			pwmVal++;
-//			// modify comparison value for the duty cycle
-//			__HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_1, pwmVal);
-//			__HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_2, pwmVal);
-//			osDelay(3);
-//		}
-//
-//		osDelay(1000);
-//		__HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_1, 0);
-//		__HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_2, 0);
-//		osDelay(2000);
-//		pwmVal = 350;
-	}
+	  if(turn_dir != 0) {
 
-  /* USER CODE END motor */
+		  if(turn_dir < 0) {
+			  move_turn_forward_by(ServoDirLeft, turn_dir);
+		  }
+		  else {
+			  move_turn_forward_by(ServoDirRight, turn_dir);
+		  }
+
+	  }
+    osDelay(100); //10hz polling
+  }
+  /* USER CODE END movement */
 }
 
 /* USER CODE BEGIN Header_state_machine */
@@ -621,5 +601,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

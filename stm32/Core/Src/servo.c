@@ -157,7 +157,7 @@ void servo_point(ServoDirection dir, ServoMagnitude mag) {
 		*SERVO_PWM_REGISTER = SERVO_CENTER - SERVO_LEFT_MAGS[mag];
 	}
 	else if(dir == ServoDirRight) {
-		*SERVO_PWM_REGISTER = SERVO_CENTER + SERVO_RIGHT_MAGS[mag];
+		*SERVO_PWM_REGISTER = SERVO_CENTER + (int)(SERVO_RIGHT_MAGS[mag] *1.31f); // scaling factor
 	}
 
 //	*SERVO_PWM_REGISTER = SERVO_CENTER + offset;
@@ -194,5 +194,12 @@ void servo_point_center() {
 	}
 	SERVO_CURR_DIR = ServoDirCenter;
 //	*SERVO_PWM_REGISTER = SERVO_CENTER;
+}
+
+/**
+ * Points the servo to a specified angle
+ */
+void servo_point_degrees(ServoDirection dir, uint8_t degrees) {
+
 }
 
