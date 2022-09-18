@@ -30,21 +30,27 @@ typedef enum {
 } StateMachineDriveMode;
 
 /**
- * Fine control mode commands and modifiers
+ * Fine control mode states
  */
 typedef enum {
-	FineControlIdle = 'i',
-	FineControlMove = 'm',
-	FineControlTurn = 't'
+	FineControlIdle,
+	FineControlMove,
+	FineControlTurn
 } FineControlStates;
 
+/**
+ * @brief Fine control mode commands
+ *
+ */
 typedef enum {
-	FineControlMain = 'i',
+	FineControlReset = 'i',
 	FineControlMovement = 'm',
 	FineControlTurning = 't',
 
-	FineControlTurnLeft = 'r',
-	FineControlTurnRight = 'y'
+	FineControlMoveForward = 'f',
+	FineControlMoveBackward = 'b',
+	FineControlTurnLeft = 'l',
+	FineControlTurnRight = 'r'
 } FineControlCommands;
 
 

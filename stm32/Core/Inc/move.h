@@ -39,9 +39,10 @@ void backward_right(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag);
 void move_forward_by(uint32_t centimeters);
 void move_backward_by(uint32_t centimeters);
 
-void move_turn_forward_by(MoveDirection direction, uint8_t degrees);
-void move_turn_backward_by(MoveDirection direction, uint8_t degrees);
+void move_turn_forward_by(MoveDirection direction, uint16_t degrees);
+void move_turn_backward_by(MoveDirection direction, uint16_t degrees);
 
+void move_in_place_turn_by(MoveDirection direction, uint16_t degrees);
 
 
 

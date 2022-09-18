@@ -505,8 +505,9 @@ extern void (*HARDCODE_DIRECTION)(void); // func from state machine
 void movement(void *argument)
 {
   /* USER CODE BEGIN movement */
-	static volatile int16_t mvmt_dist = 0;
-	static volatile int16_t turn_dir = 0;
+	static volatile uint16_t mvmt_dist = 0;
+	static volatile uint16_t turn_dir = 0;
+  static volatile int8_t sign = 0;
 
 	// Flags set in the UART interrupt routine set here
   /* Infinite loop */
@@ -517,20 +518,22 @@ void movement(void *argument)
 
 	  __disable_irq();
 	  mvmt_dist = FLAG_MOVEMENT_DISTANCE;
-	  turn_dir = FLAG_TURN_DIRECTION;
+	  turn_dir =  FLAG_TURN_DIRECTION;
+    sign =      FLAG_DIRECTION;
 
 	  FLAG_MOVEMENT_DISTANCE = 0;
 	  FLAG_TURN_DIRECTION = 0;
+    FLAG_DIRECTION = 0;
 	  __enable_irq();
 
 
 	  if(mvmt_dist != 0) {
 
-		  if(mvmt_dist < 0) {
+		  if(sign < 0) {
 			  HAL_UART_Transmit(&huart3, (uint8_t *)"MoveB\r\n", 10, HAL_MAX_DELAY);
 			  move_backward_by(mvmt_dist);
 		  }
-		  else if(mvmt_dist > 0) {
+		  else if(sign > 0) {
 			  HAL_UART_Transmit(&huart3, (uint8_t *)"MoveF\r\n", 10, HAL_MAX_DELAY);
 			  move_forward_by(mvmt_dist);
 			  HAL_UART_Transmit(&huart3, (uint8_t *)"MoveOK\r\n", 10, HAL_MAX_DELAY);
@@ -540,10 +543,10 @@ void movement(void *argument)
 
 	  if(turn_dir != 0) {
 
-		  if(turn_dir < 0) {
+		  if(sign < 0) {
 			  move_turn_forward_by(ServoDirLeft, turn_dir);
 		  }
-		  else {
+		  else if(sign > 0) {
 			  move_turn_forward_by(ServoDirRight, turn_dir);
 		  }
 

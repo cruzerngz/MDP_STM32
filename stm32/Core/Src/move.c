@@ -228,7 +228,7 @@ void move_backward_by(uint32_t centimeters) {
 }
 
 // Move the car forward AND turn it to a specified angle
-void move_turn_forward_by(MoveDirection direction, uint8_t degrees) {
+void move_turn_forward_by(MoveDirection direction, uint16_t degrees) {
 	servo_point(direction, ServoMag4);
 	HAL_Delay(SERVO_FULL_LOCK_DELAY);
 	motor_forward(MotorSpeed2);
@@ -238,7 +238,7 @@ void move_turn_forward_by(MoveDirection direction, uint8_t degrees) {
 }
 
 // Move the car forward AND turn it to a specified angle
-void move_turn_backward_by(MoveDirection direction, uint8_t degrees) {
+void move_turn_backward_by(MoveDirection direction, uint16_t degrees) {
 
 }
 
