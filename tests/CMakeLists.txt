@@ -6,7 +6,8 @@ project(
     DESCRIPTION Unit tests for code used in the STM32
 )
 
-include_directories( ## this doesnt propogate the include path down to other dirs????
+## why doesnt this propogate the include path down to other dirs????
+include_directories(
     "lib/greatest"
 )
 
