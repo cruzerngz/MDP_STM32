@@ -22,10 +22,21 @@
 // Offset to convert an ascii char (as uint8_t) to an int val
 #define ASCII_OFFSET 48
 
+
+/* EXTERN GLOBALS */
+
 // flags polled by main to check for any command to execute
+// reset by main task, no need to be reset here
 volatile uint16_t 						FLAG_MOVEMENT_DISTANCE = 0;
-volatile uint16_t 						FLAG_TURN_DIRECTION = 0;
-volatile int8_t 						FLAG_DIRECTION = 0; // +1 or -1 only
+volatile uint16_t 						FLAG_TURN_ANGLE = 0;
+
+// additional flags used by move/turn, requires reset
+volatile int8_t 						FLAG_MOVE_DIR = 0; // forward/backward, +1 or -1 only
+volatile int8_t 						FLAG_TURN_DIR = 0; // right/left, +1 or -1 only
+
+
+/* STATIC GLOBALS */
+// Some globals are not static for extern unit tests to access them
 
 // default drive mode
 static volatile StateMachineDriveMode 	GLOBAL_DRIVE_MODE = StateMachineModeSelect;
@@ -34,8 +45,11 @@ static volatile StateMachineDriveMode 	GLOBAL_DRIVE_MODE = StateMachineModeSelec
 static volatile FineControlStates 		GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
 // static
 volatile int16_t 						GLOBAL_FINE_CONTROL_MAGNITUDE = 0; // param that sets the flags after interrupt
-// 0 for unset, 1 for positive (do nothing), -1 for negative (make magnitude negative)
-volatile int8_t  						GLOBAL_FINE_CONTROL_MAGNITUDE_SIGN = 0;
+// +1 for right, -1 for left
+volatile int8_t  						GLOBAL_FINE_CONTROL_TURN_DIR = 0;
+// +1 for forward, -1 for backward
+volatile int8_t 						GLOBAL_FINE_CONTROL_MOVE_DIR = 0;
+static volatile bool 					GLOBAL_FINE_CONTROL_ACCEPT_TURN_MOVE = false;
 static volatile bool 					GLOBAL_FINE_CONTROL_INGEST = false;
 
 // default starting modes for toy car
@@ -58,7 +72,12 @@ uint8_t _fine_control_interpreter(uint8_t command);
 uint8_t _fine_control_interpreter_idle(uint8_t command);
 uint8_t _fine_control_interpreter_move(uint8_t command);
 uint8_t _fine_control_interpreter_turn(uint8_t command);
+uint8_t _fine_control_interpreter_turn_dir(uint8_t command);
 uint8_t _fine_control_interpreter_ingest_magnitude(uint8_t command);
+
+void _fine_control_reset_intern_flags(void);
+void _fine_control_reset_extern_flags(void);
+uint8_t _fine_control_set_flags(void);
 
 
 uint8_t _toy_car_interpreter(uint8_t command);
@@ -157,6 +176,9 @@ uint8_t _fine_control_interpreter_idle(uint8_t command) {
 	switch(command) {
 	case FineControlReset:
 		GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
+		GLOBAL_FINE_CONTROL_INGEST = false;
+		GLOBAL_FINE_CONTROL_MAGNITUDE = 0; 		// reset
+		GLOBAL_FINE_CONTROL_TURN_DIR = 0; // reset
 		return StateMachineFullAck;
 		break;
 
@@ -185,9 +207,10 @@ uint8_t _fine_control_interpreter_move(uint8_t command) {
 		return _fine_control_interpreter_ingest_magnitude(command);
 
 	} else { // move dir not set, to be set here
-		if(command == FineControlMoveForward) GLOBAL_FINE_CONTROL_MAGNITUDE_SIGN = 1;
-		else if(command == FineControlMoveBackward) GLOBAL_FINE_CONTROL_MAGNITUDE_SIGN = -1;
+		if(command == FineControlMoveForward) GLOBAL_FINE_CONTROL_MOVE_DIR = 1;
+		else if(command == FineControlMoveBackward) GLOBAL_FINE_CONTROL_MOVE_DIR = -1;
 		else {
+			GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
 			GLOBAL_FINE_CONTROL_INGEST = false;
 			return StateMachineUnknown;
 		}
@@ -197,67 +220,168 @@ uint8_t _fine_control_interpreter_move(uint8_t command) {
 		return StateMachineInputField;
 	}
 }
+
+/**
+ * @brief Handles setting of flags for turning
+ *
+ *
+ * @param command
+ * @return uint8_t
+ */
 uint8_t _fine_control_interpreter_turn(uint8_t command) {
-	if(GLOBAL_FINE_CONTROL_INGEST) {
+	if(GLOBAL_FINE_CONTROL_INGEST) { // if ingesting numbers
 		return _fine_control_interpreter_ingest_magnitude(command);
-
-	} else {
-		if(command == FineControlTurnRight) GLOBAL_FINE_CONTROL_MAGNITUDE_SIGN = 1;
-		else if(command == FineControlTurnLeft) GLOBAL_FINE_CONTROL_MAGNITUDE_SIGN = -1;
+	}
+	else if(GLOBAL_FINE_CONTROL_ACCEPT_TURN_MOVE) { // if taking in move dirrection
+		return _fine_control_interpreter_turn_dir(command);
+	}
+	else {
+		if(command == FineControlTurnRight) {
+			GLOBAL_FINE_CONTROL_TURN_DIR = 1;
+			GLOBAL_FINE_CONTROL_ACCEPT_TURN_MOVE = true;
+			return StateMachinePartialAck;
+		}
+		else if(command == FineControlTurnLeft) {
+			GLOBAL_FINE_CONTROL_TURN_DIR = -1;
+			GLOBAL_FINE_CONTROL_ACCEPT_TURN_MOVE = true;
+			return StateMachinePartialAck;
+		}
 		else {
-			GLOBAL_FINE_CONTROL_INGEST = false;
+			_fine_control_reset_intern_flags();
+			// GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
+			// GLOBAL_FINE_CONTROL_INGEST = false;
+			// GLOBAL_FINE_CONTROL_ACCEPT_TURN_MOVE = true;
 			return StateMachineUnknown;
 		}
-
-		GLOBAL_FINE_CONTROL_INGEST = true;
-		GLOBAL_FINE_CONTROL_MAGNITUDE = 0; // reset the value
-		return StateMachineInputField;
 	}
 }
+
+/**
+ * @brief Set the movement dir when turning (forward/backward)
+ *
+ * @param command
+ * @return uint8_t
+ */
+uint8_t _fine_control_interpreter_turn_dir(uint8_t command) {
+	switch(command) {
+		case FineControlMoveForward:
+			GLOBAL_FINE_CONTROL_MOVE_DIR = 1;
+			GLOBAL_FINE_CONTROL_INGEST = true;
+			return StateMachineInputField;
+			break;
+
+		case FineControlMoveBackward:
+			GLOBAL_FINE_CONTROL_MOVE_DIR = -1;
+			GLOBAL_FINE_CONTROL_INGEST = true;
+			return StateMachineInputField;
+			break;
+
+		default:
+			_fine_control_reset_intern_flags();
+			return StateMachineUnknown;
+			break;
+	}
+}
+
 uint8_t _fine_control_interpreter_ingest_magnitude(uint8_t command) {
 	uint8_t command_as_int = command - ASCII_OFFSET;
+	uint8_t reply;
 
 	if(command == StateMachineFullAck) {
-		if(GLOBAL_FINE_CONTROL_MODE == FineControlMove) {
-			FLAG_MOVEMENT_DISTANCE = GLOBAL_FINE_CONTROL_MAGNITUDE;
-			FLAG_DIRECTION = GLOBAL_FINE_CONTROL_MAGNITUDE_SIGN;
-			GLOBAL_FINE_CONTROL_INGEST = false;
-			GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
-//			HAL_UART_Transmit(&huart3, (uint8_t *)"set\r\n", 10, HAL_MAX_DELAY);
-			return StateMachineFullAck;
+		reply = _fine_control_set_flags();
+		_fine_control_reset_intern_flags();
 
-		} else if (GLOBAL_FINE_CONTROL_MODE == FineControlTurn) {
-			FLAG_TURN_DIRECTION = GLOBAL_FINE_CONTROL_MAGNITUDE;
-			FLAG_DIRECTION = GLOBAL_FINE_CONTROL_MAGNITUDE_SIGN;
-			GLOBAL_FINE_CONTROL_INGEST = false;
-			GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
-//			HAL_UART_Transmit(&huart3, (uint8_t *)"set\r\n", 10, HAL_MAX_DELAY);
-			return StateMachineFullAck;
+		return reply;
+// 		if(GLOBAL_FINE_CONTROL_MODE == FineControlMove) {
+// 			FLAG_MOVEMENT_DISTANCE = GLOBAL_FINE_CONTROL_MAGNITUDE;
+// 			FLAG_TURN_DIR = GLOBAL_FINE_CONTROL_MAGNITUDE_SIGN;
+// 			GLOBAL_FINE_CONTROL_INGEST = false;
+// 			GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
+// //			HAL_UART_Transmit(&huart3, (uint8_t *)"set\r\n", 10, HAL_MAX_DELAY);
+// 			return StateMachineFullAck;
 
-		} else {
-			GLOBAL_FINE_CONTROL_INGEST = false;
-			GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
-			return StateMachineUnknown;
-		}
+// 		} else if (GLOBAL_FINE_CONTROL_MODE == FineControlTurn) {
+// 			FLAG_TURN_ANGLE = GLOBAL_FINE_CONTROL_MAGNITUDE;
+// 			FLAG_TURN_DIR = GLOBAL_FINE_CONTROL_MAGNITUDE_SIGN;
+// 			GLOBAL_FINE_CONTROL_INGEST = false;
+// 			GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
+// //			HAL_UART_Transmit(&huart3, (uint8_t *)"set\r\n", 10, HAL_MAX_DELAY);
+// 			return StateMachineFullAck;
+
+// 		} else {
+// 			GLOBAL_FINE_CONTROL_INGEST = false;
+// 			GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
+// 			return StateMachineUnknown;
+// 		}
 	}
 
 	else if(command_as_int >= 0 && command_as_int <= 9 ) {
-		// printf("accumulating magnitude (%d) by %d\n", GLOBAL_FINE_CONTROL_MAGNITUDE, command_as_int);
 		GLOBAL_FINE_CONTROL_MAGNITUDE = (GLOBAL_FINE_CONTROL_MAGNITUDE * 10) + command_as_int;
-		// printf("new magnitude: %d\n", GLOBAL_FINE_CONTROL_MAGNITUDE);
-
 		return StateMachineInputField;
 		// continue with ingest
 
 	} else { // fallback to idle state
-		GLOBAL_FINE_CONTROL_INGEST = false;
-		GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
+		_fine_control_reset_intern_flags();
+		// GLOBAL_FINE_CONTROL_INGEST = false;
+		// GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
 		return StateMachineUnknown;
 	}
 
 	return StateMachineUnknown;
 }
 
+/**
+ * @brief Sets the various flags in fine control mode
+ * Passes the values from statically scoped variables to extern variables
+ *
+ */
+uint8_t _fine_control_set_flags(void) {
+	switch(GLOBAL_FINE_CONTROL_MODE) {
+		case FineControlMove:
+			FLAG_MOVEMENT_DISTANCE = GLOBAL_FINE_CONTROL_MAGNITUDE;
+			FLAG_MOVE_DIR = GLOBAL_FINE_CONTROL_MOVE_DIR;
+			return StateMachineFullAck;
+			break;
+
+		case FineControlTurn:
+			FLAG_TURN_ANGLE = GLOBAL_FINE_CONTROL_MAGNITUDE;
+			FLAG_TURN_DIR = GLOBAL_FINE_CONTROL_TURN_DIR;
+			FLAG_MOVE_DIR = GLOBAL_FINE_CONTROL_MOVE_DIR;
+			return StateMachineFullAck;
+			break;
+
+		default: // do nothing
+			return StateMachineUnknown;
+			break;
+
+	}
+}
+
+/**
+ * @brief Resets all flags internal to defaults
+ * Resets the fine control mode to idle
+ *
+ */
+void _fine_control_reset_intern_flags(void) {
+	GLOBAL_FINE_CONTROL_MAGNITUDE = 0;
+	GLOBAL_FINE_CONTROL_TURN_DIR = 0;
+	GLOBAL_FINE_CONTROL_MOVE_DIR = 0;
+	GLOBAL_FINE_CONTROL_ACCEPT_TURN_MOVE = false;
+	GLOBAL_FINE_CONTROL_INGEST = false;
+
+	GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
+}
+
+/**
+ * @brief Resets all extern flags (FLAG_*) to defaults
+ *
+ */
+void _fine_control_reset_extern_flags(void) {
+	FLAG_MOVE_DIR = 0;
+	FLAG_TURN_DIR = 0;
+	FLAG_MOVEMENT_DISTANCE = 0;
+	FLAG_TURN_ANGLE = 0;
+}
 
 #ifndef UNITTEST // disable this block if unit testing
 

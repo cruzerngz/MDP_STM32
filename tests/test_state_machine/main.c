@@ -26,7 +26,7 @@ TEST test_fine_control_move_forward() {
 
     // check for correct value in global
     ASSERT_EQ(FLAG_MOVEMENT_DISTANCE, 100);
-    ASSERT_EQ(FLAG_DIRECTION, 1);
+    ASSERT_EQ(FLAG_MOVE_DIR, 1);
 
     PASS();
 }
@@ -50,7 +50,7 @@ TEST test_fine_control_move_backward() {
 
     // check for correct value in global
     ASSERT_EQ(FLAG_MOVEMENT_DISTANCE, 100);
-    ASSERT_EQ(FLAG_DIRECTION, -1);
+    ASSERT_EQ(FLAG_MOVE_DIR, -1);
 
     PASS();
 }
@@ -60,11 +60,12 @@ TEST test_fine_control_move_backward() {
  *
  * @return TEST
  */
-TEST test_fine_control_turn_left() {
+TEST test_fine_control_turn_front_left() {
     ASSERT_EQ(state_machine_interpreter('\\'), ';'); // return to mode select
     ASSERT_EQ(state_machine_interpreter('f'), ';'); // enter fine control
     ASSERT_EQ(state_machine_interpreter('t'), '.'); // turn, await subcommand
-    ASSERT_EQ(state_machine_interpreter('l'), '_'); // set turn direction
+    ASSERT_EQ(state_machine_interpreter('l'), '.'); // set turn direction
+    ASSERT_EQ(state_machine_interpreter('f'), '_'); // turn, set mvmt dir
     ASSERT_EQ(GLOBAL_FINE_CONTROL_MAGNITUDE, 0); // check that value is zeroed
 
     ASSERT_EQ(state_machine_interpreter('1'), '_'); // move, continue val entry
@@ -73,8 +74,9 @@ TEST test_fine_control_turn_left() {
     ASSERT_EQ(state_machine_interpreter(';'), ';'); // move, complete entry
 
     // check for correct value in global
-    ASSERT_EQ(FLAG_TURN_DIRECTION, 100);
-    ASSERT_EQ(FLAG_DIRECTION, -1);
+    ASSERT_EQ(FLAG_TURN_ANGLE, 100);
+    ASSERT_EQ(FLAG_TURN_DIR, -1);
+    ASSERT_EQ(FLAG_MOVE_DIR, 1);
 
     PASS();
 }
@@ -84,11 +86,12 @@ TEST test_fine_control_turn_left() {
  *
  * @return TEST
  */
-TEST test_fine_control_turn_right() {
+TEST test_fine_control_turn_front_right() {
     ASSERT_EQ(state_machine_interpreter('\\'), ';'); // return to mode select
     ASSERT_EQ(state_machine_interpreter('f'), ';'); // enter fine control
     ASSERT_EQ(state_machine_interpreter('t'), '.'); // turn, await subcommand
-    ASSERT_EQ(state_machine_interpreter('r'), '_'); // set turn direction
+    ASSERT_EQ(state_machine_interpreter('r'), '.'); // set turn direction
+    ASSERT_EQ(state_machine_interpreter('f'), '_'); // turn, set mvmt dir
     ASSERT_EQ(GLOBAL_FINE_CONTROL_MAGNITUDE, 0); // check that value is zeroed
 
     ASSERT_EQ(state_machine_interpreter('1'), '_'); // move, continue val entry
@@ -97,9 +100,80 @@ TEST test_fine_control_turn_right() {
     ASSERT_EQ(state_machine_interpreter(';'), ';'); // move, complete entry
 
     // check for correct value in global
-    ASSERT_EQ(FLAG_TURN_DIRECTION, 100);
-    ASSERT_EQ(FLAG_DIRECTION, 1);
+    ASSERT_EQ(FLAG_TURN_ANGLE, 100);
+    ASSERT_EQ(FLAG_TURN_DIR, 1);
+    ASSERT_EQ(FLAG_MOVE_DIR, 1);
 
+    PASS();
+}
+
+/**
+ * @brief Test turning for fine control
+ *
+ * @return TEST
+ */
+TEST test_fine_control_turn_back_left() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';'); // return to mode select
+    ASSERT_EQ(state_machine_interpreter('f'), ';'); // enter fine control
+    ASSERT_EQ(state_machine_interpreter('t'), '.'); // turn, await subcommand
+    ASSERT_EQ(state_machine_interpreter('l'), '.'); // set turn direction
+    ASSERT_EQ(state_machine_interpreter('b'), '_'); // turn, set mvmt dir
+    ASSERT_EQ(GLOBAL_FINE_CONTROL_MAGNITUDE, 0); // check that value is zeroed
+
+    ASSERT_EQ(state_machine_interpreter('1'), '_'); // move, continue val entry
+    ASSERT_EQ(state_machine_interpreter('0'), '_'); // move, continue val entry
+    ASSERT_EQ(state_machine_interpreter('0'), '_'); // move, continue val entry
+    ASSERT_EQ(state_machine_interpreter(';'), ';'); // move, complete entry
+
+    // check for correct value in global
+    ASSERT_EQ(FLAG_TURN_ANGLE, 100);
+    ASSERT_EQ(FLAG_TURN_DIR, -1);
+    ASSERT_EQ(FLAG_MOVE_DIR, -1);
+
+    PASS();
+}
+
+/**
+ * @brief Test turning for fine control
+ *
+ * @return TEST
+ */
+TEST test_fine_control_turn_back_right() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';'); // return to mode select
+    ASSERT_EQ(state_machine_interpreter('f'), ';'); // enter fine control
+    ASSERT_EQ(state_machine_interpreter('t'), '.'); // turn, await subcommand
+    ASSERT_EQ(state_machine_interpreter('r'), '.'); // set turn direction
+    ASSERT_EQ(state_machine_interpreter('b'), '_'); // turn, set mvmt dir
+    ASSERT_EQ(GLOBAL_FINE_CONTROL_MAGNITUDE, 0); // check that value is zeroed
+
+    ASSERT_EQ(state_machine_interpreter('1'), '_'); // move, continue val entry
+    ASSERT_EQ(state_machine_interpreter('0'), '_'); // move, continue val entry
+    ASSERT_EQ(state_machine_interpreter('0'), '_'); // move, continue val entry
+    ASSERT_EQ(state_machine_interpreter(';'), ';'); // move, complete entry
+
+    // check for correct value in global
+    ASSERT_EQ(FLAG_TURN_ANGLE, 100);
+    ASSERT_EQ(FLAG_TURN_DIR, 1);
+    ASSERT_EQ(FLAG_MOVE_DIR, -1);
+
+    PASS();
+}
+
+/**
+ * @brief Tests the in-place cardinal turns
+ *
+ * @return TEST
+ */
+TEST test_fine_control_in_place_cardinal_left() {
+    PASS();
+}
+
+/**
+ * @brief Tests the in-place cardinal turns
+ *
+ * @return TEST
+ */
+TEST test_fine_control_in_place_cardinal_right() {
     PASS();
 }
 
@@ -109,10 +183,19 @@ TEST test_fine_control_turn_right() {
  *
  */
 SUITE(suite_fine_control) {
+    // forward, backward
     RUN_TEST(test_fine_control_move_forward);
     RUN_TEST(test_fine_control_move_backward);
-    RUN_TEST(test_fine_control_turn_left);
-    RUN_TEST(test_fine_control_turn_right);
+
+    // turns, all kinds
+    RUN_TEST(test_fine_control_turn_front_left);
+    RUN_TEST(test_fine_control_turn_front_right);
+    RUN_TEST(test_fine_control_turn_back_left);
+    RUN_TEST(test_fine_control_turn_back_right);
+
+    // cardinal in-place turns
+    RUN_TEST(test_fine_control_in_place_cardinal_left);
+    RUN_TEST(test_fine_control_in_place_cardinal_right);
 }
 
 GREATEST_MAIN_DEFS(); // important, right before main

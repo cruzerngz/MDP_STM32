@@ -44,6 +44,8 @@ void move_turn_backward_by(MoveDirection direction, uint16_t degrees);
 
 void move_in_place_turn_by(MoveDirection direction, uint16_t degrees);
 
+void move_in_place_turn_cardinal(uint8_t cardinal_direction);
+
 
 
 // Hardcoded, known movements (requires further calibration)

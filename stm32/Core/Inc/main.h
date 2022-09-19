@@ -38,7 +38,7 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 //extern int16_t FLAG_MOVEMENT_DISTANCE;
-//extern int16_t FLAG_TURN_DIRECTION;
+//extern int16_t FLAG_TURN_ANGLE;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/

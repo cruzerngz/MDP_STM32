@@ -20,6 +20,11 @@
 #define TEST_MOVE_TIMER 800
 #define MOTOR_ADJUST_SPEED 300 // TODO: to be tested
 
+#define STRAIGHT_FORWARD_CONSTANT 57
+#define STRAIGHT_BACKWARD_CONSTANT 55
+#define TURN_FORWARD_CONSTANT 44
+#define TURN_BACKWARD_CONSTANT 44
+
 
 // private globals
 
@@ -210,7 +215,7 @@ void move_forward_by(uint32_t centimeters) {
 	servo_point_center();
 	HAL_Delay(100);
 	motor_forward(MotorSpeed2);
-	HAL_Delay(60 * centimeters);
+	HAL_Delay(57 * centimeters);
 
 	motor_stop();
 	servo_point_center();
@@ -221,7 +226,7 @@ void move_backward_by(uint32_t centimeters) {
 	servo_point_center();
 	HAL_Delay(100);
 	motor_backward(MotorSpeed2);
-	HAL_Delay(60 * centimeters);
+	HAL_Delay(55 * centimeters);
 
 	motor_stop();
 	servo_point_center();
@@ -237,8 +242,24 @@ void move_turn_forward_by(MoveDirection direction, uint16_t degrees) {
 	servo_point_center();
 }
 
-// Move the car forward AND turn it to a specified angle
+// Move the car backward AND turn it to a specified angle
 void move_turn_backward_by(MoveDirection direction, uint16_t degrees) {
+	servo_point(direction, ServoMag4);
+	HAL_Delay(SERVO_FULL_LOCK_DELAY);
+	motor_backward(MotorSpeed2);
+	HAL_Delay(44 * degrees);
+	motor_stop();
+	servo_point_center();
+}
+
+void move_in_place_turn_by(MoveDirection direction, uint16_t degrees) {
+
+}
+
+// Perform an in place turn by a multiple of 22.5 degrees, 0-indexed
+// E.g. cardinal_direction=4 performs a 90 degree in-place turn, clockwise
+// E.g. cardinal_direction=12 performs a 90 degree in-place turn, anticlockwise
+void move_in_place_turn_cardinal(uint8_t cardinal_direction) {
 
 }
 

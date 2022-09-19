@@ -519,11 +519,11 @@ void movement(void *argument)
 	  __disable_irq();
 	  mvmt_dist = FLAG_MOVEMENT_DISTANCE;
 	  turn_dir =  FLAG_TURN_DIRECTION;
-    sign =      FLAG_DIRECTION;
+	  sign =      FLAG_DIRECTION;
 
 	  FLAG_MOVEMENT_DISTANCE = 0;
 	  FLAG_TURN_DIRECTION = 0;
-    FLAG_DIRECTION = 0;
+	  FLAG_DIRECTION = 0;
 	  __enable_irq();
 
 

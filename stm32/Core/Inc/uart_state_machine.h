@@ -21,10 +21,13 @@
 // Exported to main.c for use as interupt flags
 // Distance to move forward in centimeters
 extern volatile uint16_t FLAG_MOVEMENT_DISTANCE;
+
+// move f/b when turning, Forward is +1, Backward is -1
+extern volatile int8_t FLAG_MOVE_DIR;
 // Angle to turn in degrees
-extern volatile uint16_t FLAG_TURN_DIRECTION;
+extern volatile uint16_t FLAG_TURN_ANGLE;
 // Direction (front/back, left/right) the car takes, -1, 0, +1
-extern volatile int8_t FLAG_DIRECTION;
+extern volatile int8_t FLAG_TURN_DIR;
 
 // Testing out the state machine and movement
 typedef enum {
