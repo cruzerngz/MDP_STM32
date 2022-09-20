@@ -506,8 +506,9 @@ void movement(void *argument)
 {
   /* USER CODE BEGIN movement */
 	static volatile uint16_t mvmt_dist = 0;
-	static volatile uint16_t turn_dir = 0;
-  static volatile int8_t sign = 0;
+	static volatile uint16_t turn_angle = 0;
+	static volatile int8_t move_dir = 0;
+	static volatile int8_t turn_dir = 0;
 
 	// Flags set in the UART interrupt routine set here
   /* Infinite loop */
@@ -518,36 +519,38 @@ void movement(void *argument)
 
 	  __disable_irq();
 	  mvmt_dist = FLAG_MOVEMENT_DISTANCE;
-	  turn_dir =  FLAG_TURN_DIRECTION;
-	  sign =      FLAG_DIRECTION;
+	  turn_angle =  FLAG_TURN_ANGLE;
+	  move_dir =      FLAG_MOVE_DIR;
+	  turn_dir = FLAG_TURN_DIR;
 
 	  FLAG_MOVEMENT_DISTANCE = 0;
-	  FLAG_TURN_DIRECTION = 0;
-	  FLAG_DIRECTION = 0;
+	  FLAG_TURN_ANGLE = 0;
+	  FLAG_MOVE_DIR = 0;
+	  FLAG_TURN_DIR = 0;
 	  __enable_irq();
 
 
 	  if(mvmt_dist != 0) {
 
-		  if(sign < 0) {
-			  HAL_UART_Transmit(&huart3, (uint8_t *)"MoveB\r\n", 10, HAL_MAX_DELAY);
+		  if(move_dir < 0) {
+			  // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveB\r\n", 10, HAL_MAX_DELAY);
 			  move_backward_by(mvmt_dist);
 		  }
-		  else if(sign > 0) {
-			  HAL_UART_Transmit(&huart3, (uint8_t *)"MoveF\r\n", 10, HAL_MAX_DELAY);
+		  else if(move_dir > 0) {
+			  // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveF\r\n", 10, HAL_MAX_DELAY);
 			  move_forward_by(mvmt_dist);
-			  HAL_UART_Transmit(&huart3, (uint8_t *)"MoveOK\r\n", 10, HAL_MAX_DELAY);
+			  // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveOK\r\n", 10, HAL_MAX_DELAY);
 		  }
 
 	  }
 
-	  if(turn_dir != 0) {
+	  if(turn_angle != 0) {
 
-		  if(sign < 0) {
-			  move_turn_forward_by(ServoDirLeft, turn_dir);
+		  if(move_dir < 0) {
+			  move_turn_backward_by(turn_dir > 0 ? MoveDirRight : MoveDirLeft, turn_angle);
 		  }
-		  else if(sign > 0) {
-			  move_turn_forward_by(ServoDirRight, turn_dir);
+		  else if(move_dir > 0) {
+			  move_turn_forward_by(turn_dir > 0 ? MoveDirRight : MoveDirLeft, turn_angle);
 		  }
 
 	  }
