@@ -252,14 +252,29 @@ void move_turn_backward_by(MoveDirection direction, uint16_t degrees) {
 	servo_point_center();
 }
 
+// Perform an in-place turn, starting with a direction (forward/backward)
+//
 void move_in_place_turn_by(MoveDirection direction, uint16_t degrees) {
 
 }
 
 // Perform an in place turn by a multiple of 22.5 degrees, 0-indexed
+// Starts by moving backwards first
 // E.g. cardinal_direction=4 performs a 90 degree in-place turn, clockwise
 // E.g. cardinal_direction=12 performs a 90 degree in-place turn, anticlockwise
 void move_in_place_turn_cardinal(uint8_t cardinal_direction) {
+	// convert clockwise multiples of 22.5 degrees
+	// to pos-neg multiples of 22.5 degrees (-8 to +7)
+	int8_t num_turns_clockwise = (cardinal_direction % 16) - 8;
+	uint8_t clockwise = num_turns_clockwise >= 0 ? 1 : 0;
+	num_turns_clockwise = num_turns_clockwise >= 0 ? num_turns_clockwise : 0 - num_turns_clockwise;
+
+	MoveDirection rev_dir = clockwise ? MoveDirLeft : MoveDirRight;
+	MoveDirection for_dir = clockwise ? MoveDirRight : MoveDirLeft;
+	for(uint8_t i=0; i<num_turns_clockwise; i++) {
+		move_turn_backward_by(rev_dir, 12);
+		move_turn_forward_by(for_dir, 11);
+	}
 
 }
 

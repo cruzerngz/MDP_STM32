@@ -35,17 +35,19 @@ typedef enum {
 typedef enum {
 	FineControlIdle,
 	FineControlMove,
-	FineControlTurn
+	FineControlTurn,
+	FineControlInPlaceTurn
 } FineControlStates;
 
 /**
- * @brief Fine control mode commands
+ * @brief Fine control mode commands + subcommands
  *
  */
 typedef enum {
-	FineControlReset = 'i',
+	FineControlReset = 'q',
 	FineControlMovement = 'm',
 	FineControlTurning = 't',
+	FineControlInPlaceTurning = 'c',
 
 	FineControlMoveForward = 'f',
 	FineControlMoveBackward = 'b',

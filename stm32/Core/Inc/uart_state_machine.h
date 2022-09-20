@@ -29,6 +29,10 @@ extern volatile uint16_t FLAG_TURN_ANGLE;
 // Direction (front/back, left/right) the car takes, -1, 0, +1
 extern volatile int8_t FLAG_TURN_DIR;
 
+// Cardinal directions the car can do for in-place turn
+// 0-indexed, max 15, steps of 22.5 degrees clockwise
+extern volatile uint8_t FLAG_IN_PLACE_CARDINAL;
+
 // Testing out the state machine and movement
 typedef enum {
 	StateMachineTestForward,

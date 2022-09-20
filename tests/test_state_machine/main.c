@@ -165,6 +165,18 @@ TEST test_fine_control_turn_back_right() {
  * @return TEST
  */
 TEST test_fine_control_in_place_cardinal_left() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';'); // return to mode select
+    ASSERT_EQ(state_machine_interpreter('f'), ';'); // enter fine control
+    ASSERT_EQ(state_machine_interpreter('c'), '_'); // in-place turn cardinal
+    ASSERT_EQ(GLOBAL_FINE_CONTROL_MAGNITUDE, 0); // check that value is zeroed
+
+    ASSERT_EQ(state_machine_interpreter('1'), '_'); // continue val entry
+    ASSERT_EQ(state_machine_interpreter('3'), '_'); // continue val entry
+    ASSERT_EQ(state_machine_interpreter(';'), ';'); // complete, exec
+
+    // check for correct values in global
+    ASSERT_EQ(FLAG_IN_PLACE_CARDINAL, 13);
+
     PASS();
 }
 
@@ -174,6 +186,17 @@ TEST test_fine_control_in_place_cardinal_left() {
  * @return TEST
  */
 TEST test_fine_control_in_place_cardinal_right() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';'); // return to mode select
+    ASSERT_EQ(state_machine_interpreter('f'), ';'); // enter fine control
+    ASSERT_EQ(state_machine_interpreter('c'), '_'); // in-place turn cardinal
+    ASSERT_EQ(GLOBAL_FINE_CONTROL_MAGNITUDE, 0); // check that value is zeroed
+
+    ASSERT_EQ(state_machine_interpreter('4'), '_'); // continue val entry
+    ASSERT_EQ(state_machine_interpreter(';'), ';'); // complete, exec
+
+    // check for correct values in global
+    ASSERT_EQ(FLAG_IN_PLACE_CARDINAL, 4);
+
     PASS();
 }
 

@@ -29,6 +29,7 @@
 // reset by main task, no need to be reset here
 volatile uint16_t 						FLAG_MOVEMENT_DISTANCE = 0;
 volatile uint16_t 						FLAG_TURN_ANGLE = 0;
+volatile uint8_t 						FLAG_IN_PLACE_CARDINAL = 0;
 
 // additional flags used by move/turn, requires reset
 volatile int8_t 						FLAG_MOVE_DIR = 0; // forward/backward, +1 or -1 only
@@ -166,6 +167,10 @@ uint8_t _fine_control_interpreter(uint8_t command) {
 		return _fine_control_interpreter_turn(command);
 		break;
 
+	case FineControlInPlaceTurn:
+		return _fine_control_interpreter_ingest_magnitude(command);
+		break;
+
 	default:
 		GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
 		return StateMachineUnknown;
@@ -184,16 +189,18 @@ uint8_t _fine_control_interpreter_idle(uint8_t command) {
 
 	case FineControlMovement:
 		GLOBAL_FINE_CONTROL_MODE = FineControlMove;
-		// GLOBAL_FINE_CONTROL_INGEST = true;
-		// GLOBAL_FINE_CONTROL_MAGNITUDE = 0; // reset the value
 		return StateMachinePartialAck;
 		break;
 
 	case FineControlTurning:
 		GLOBAL_FINE_CONTROL_MODE = FineControlTurn;
-		// GLOBAL_FINE_CONTROL_INGEST = true;
-		// GLOBAL_FINE_CONTROL_MAGNITUDE = 0; // reset the value
 		return StateMachinePartialAck;
+		break;
+
+	case FineControlInPlaceTurning:
+		GLOBAL_FINE_CONTROL_MODE = FineControlInPlaceTurn;
+		GLOBAL_FINE_CONTROL_INGEST = true;
+		return StateMachineInputField;
 		break;
 
 	default:
@@ -248,9 +255,6 @@ uint8_t _fine_control_interpreter_turn(uint8_t command) {
 		}
 		else {
 			_fine_control_reset_intern_flags();
-			// GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
-			// GLOBAL_FINE_CONTROL_INGEST = false;
-			// GLOBAL_FINE_CONTROL_ACCEPT_TURN_MOVE = true;
 			return StateMachineUnknown;
 		}
 	}
@@ -292,27 +296,6 @@ uint8_t _fine_control_interpreter_ingest_magnitude(uint8_t command) {
 		_fine_control_reset_intern_flags();
 
 		return reply;
-// 		if(GLOBAL_FINE_CONTROL_MODE == FineControlMove) {
-// 			FLAG_MOVEMENT_DISTANCE = GLOBAL_FINE_CONTROL_MAGNITUDE;
-// 			FLAG_TURN_DIR = GLOBAL_FINE_CONTROL_MAGNITUDE_SIGN;
-// 			GLOBAL_FINE_CONTROL_INGEST = false;
-// 			GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
-// //			HAL_UART_Transmit(&huart3, (uint8_t *)"set\r\n", 10, HAL_MAX_DELAY);
-// 			return StateMachineFullAck;
-
-// 		} else if (GLOBAL_FINE_CONTROL_MODE == FineControlTurn) {
-// 			FLAG_TURN_ANGLE = GLOBAL_FINE_CONTROL_MAGNITUDE;
-// 			FLAG_TURN_DIR = GLOBAL_FINE_CONTROL_MAGNITUDE_SIGN;
-// 			GLOBAL_FINE_CONTROL_INGEST = false;
-// 			GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
-// //			HAL_UART_Transmit(&huart3, (uint8_t *)"set\r\n", 10, HAL_MAX_DELAY);
-// 			return StateMachineFullAck;
-
-// 		} else {
-// 			GLOBAL_FINE_CONTROL_INGEST = false;
-// 			GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
-// 			return StateMachineUnknown;
-// 		}
 	}
 
 	else if(command_as_int >= 0 && command_as_int <= 9 ) {
@@ -322,8 +305,6 @@ uint8_t _fine_control_interpreter_ingest_magnitude(uint8_t command) {
 
 	} else { // fallback to idle state
 		_fine_control_reset_intern_flags();
-		// GLOBAL_FINE_CONTROL_INGEST = false;
-		// GLOBAL_FINE_CONTROL_MODE = FineControlIdle;
 		return StateMachineUnknown;
 	}
 
@@ -350,10 +331,14 @@ uint8_t _fine_control_set_flags(void) {
 			return StateMachineFullAck;
 			break;
 
+		case FineControlInPlaceTurn:
+			FLAG_IN_PLACE_CARDINAL = GLOBAL_FINE_CONTROL_MAGNITUDE;
+			return StateMachineFullAck;
+			break;
+
 		default: // do nothing
 			return StateMachineUnknown;
 			break;
-
 	}
 }
 
@@ -381,6 +366,7 @@ void _fine_control_reset_extern_flags(void) {
 	FLAG_TURN_DIR = 0;
 	FLAG_MOVEMENT_DISTANCE = 0;
 	FLAG_TURN_ANGLE = 0;
+	FLAG_IN_PLACE_CARDINAL = 0;
 }
 
 #ifndef UNITTEST // disable this block if unit testing
@@ -508,19 +494,6 @@ uint8_t _toy_car_interpreter_setting(uint8_t command) {
 
 uint8_t _toy_car_interpreter_custom(uint8_t command) {
 	uint8_t command_as_int = command - ASCII_OFFSET;
-
-
-//
-//	if(command_as_int >= 0 && command_as_int < ARRAY_LEN(CUSTOM_DIRECTIONS)) {
-////		(CUSTOM_MOVEMENTS[command_as_int])();
-//		HARDCODE_DIRECTION = (void *)CUSTOM_DIRECTIONS[command_as_int];
-//		GLOBAL_TOY_CAR_MODE = ToyCarDrive;
-//		return StateMachineFullAck;
-//	} else {
-//		GLOBAL_TOY_CAR_MODE = ToyCarDrive;
-////		move_hard_left_45();
-//		return StateMachineUnknown;
-//	}
 }
 
 /*
