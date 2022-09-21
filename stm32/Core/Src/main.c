@@ -25,6 +25,8 @@
 /* USER CODE BEGIN Includes */
 #include "move.h"
 #include "uart_state_machine.h"
+#include "oled.h"
+#include "encoder.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,6 +45,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim8;
 
 UART_HandleTypeDef huart3;
@@ -68,6 +72,13 @@ const osThreadAttr_t uart_state_mach_attributes = {
   .stack_size = 400 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for encoder_display */
+osThreadId_t encoder_displayHandle;
+const osThreadAttr_t encoder_display_attributes = {
+  .name = "encoder_display",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* USER CODE BEGIN PV */
 
 
@@ -79,9 +90,12 @@ static void MX_GPIO_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM8_Init(void);
 static void MX_USART3_UART_Init(void);
+static void MX_TIM2_Init(void);
+static void MX_TIM3_Init(void);
 void StartDefaultTask(void *argument);
 void movement(void *argument);
 void state_machine(void *argument);
+void encoder(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -124,14 +138,18 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM8_Init();
   MX_USART3_UART_Init();
+  MX_TIM2_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-
+  OLED_Init();
   HAL_UART_Receive_IT(&huart3, &UART_RX_CHAR, 1);
 
 	motor_init_timer(&htim8, TIM_CHANNEL_1, TIM_CHANNEL_2);
 	motor_init_gpio_left(GPIOA, AIN1_Pin, AIN2_Pin);
 	motor_init_gpio_right(GPIOA, BIN1_Pin, BIN2_Pin);
 	servo_init(&htim1, TIM_CHANNEL_4);
+
+	encoder_init(&htim2, &htim3, TIM_CHANNEL_ALL, TIM_CHANNEL_ALL);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -162,6 +180,9 @@ int main(void)
 
   /* creation of uart_state_mach */
   uart_state_machHandle = osThreadNew(state_machine, NULL, &uart_state_mach_attributes);
+
+  /* creation of encoder_display */
+  encoder_displayHandle = osThreadNew(encoder, NULL, &encoder_display_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -301,6 +322,104 @@ static void MX_TIM1_Init(void)
 }
 
 /**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_Encoder_InitTypeDef sConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 0;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 65535;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
+  sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC1Filter = 0;
+  sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC2Filter = 0;
+  if (HAL_TIM_Encoder_Init(&htim2, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_Encoder_InitTypeDef sConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 0;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 65535;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
+  sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC1Filter = 0;
+  sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC2Filter = 0;
+  if (HAL_TIM_Encoder_Init(&htim3, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+
+}
+
+/**
   * @brief TIM8 Initialization Function
   * @param None
   * @retval None
@@ -421,15 +540,29 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8
+                          |LED3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, AIN2_Pin|AIN1_Pin|BIN1_Pin|BIN2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(BUZZER_GPIO_Port, BUZZER_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : PE5 PE6 PE7 PE8
+                           LED3_Pin */
+  GPIO_InitStruct.Pin = GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8
+                          |LED3_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pins : AIN2_Pin AIN1_Pin BIN1_Pin BIN2_Pin */
   GPIO_InitStruct.Pin = AIN2_Pin|AIN1_Pin|BIN1_Pin|BIN2_Pin;
@@ -438,12 +571,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LED3_Pin */
-  GPIO_InitStruct.Pin = LED3_Pin;
+  /*Configure GPIO pin : BUZZER_Pin */
+  GPIO_InitStruct.Pin = BUZZER_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LED3_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(BUZZER_GPIO_Port, &GPIO_InitStruct);
 
 }
 
@@ -482,12 +615,7 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-//	  for(int i=1; i<6; i++) {
-//		  move_turn_forward_by(ServoDirLeft, i*10);
-//		  osDelay(1000);
-//		  move_turn_forward_by(ServoDirRight, i*10);
-//		  osDelay(1000);
-//	  }
+
 
     osDelay(2500);
   }
@@ -541,11 +669,11 @@ void movement(void *argument)
 
 		  if(move_dir < 0) {
 			  // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveB\r\n", 10, HAL_MAX_DELAY);
-			  move_backward_by(mvmt_dist);
+			  move_backward_calc(mvmt_dist);
 		  }
 		  else if(move_dir > 0) {
 			  // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveF\r\n", 10, HAL_MAX_DELAY);
-			  move_forward_by(mvmt_dist);
+			  move_forward_calc(mvmt_dist);
 			  // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveOK\r\n", 10, HAL_MAX_DELAY);
 		  }
 
@@ -588,6 +716,49 @@ void state_machine(void *argument)
     osDelay(1);
   }
   /* USER CODE END state_machine */
+}
+
+/* USER CODE BEGIN Header_encoder */
+/**
+* @brief Function implementing the encoder_display thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_encoder */
+void encoder(void *argument)
+{
+  /* USER CODE BEGIN encoder */
+	static uint32_t ticks = 0;
+
+	static uint32_t left_pos = 0;
+	static uint32_t right_pos = 0;
+
+	static char left_buf[16] = {0};
+	static char right_buf[16] = {0};
+
+	OLED_Display_On();
+
+  /* Infinite loop */
+  for(;;)
+  {
+	  ticks = osKernelGetTickCount();
+
+	  left_pos = _read_encoder_left();
+	  right_pos = _read_encoder_right();
+
+	  taskENTER_CRITICAL();
+	  sprintf(left_buf, "L: %07lu", left_pos);
+	  sprintf(right_buf, "R: %07lu", right_pos);
+	  taskEXIT_CRITICAL();
+
+	  OLED_ShowString(0, 0, (uint8_t *)left_buf);
+	  OLED_ShowString(0, 10, (uint8_t *)right_buf);
+
+	  OLED_Refresh_Gram();
+
+    osDelayUntil(ticks + 100);
+  }
+  /* USER CODE END encoder */
 }
 
 /**

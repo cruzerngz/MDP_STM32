@@ -36,8 +36,11 @@ void backward_left(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag);
 void backward_right(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag);
 
 // dynamic movement functions, require the use of the encoder
-void move_forward_by(uint32_t centimeters);
-void move_backward_by(uint32_t centimeters);
+void move_forward_calc(uint32_t centimeters);
+void move_backward_calc(uint32_t centimeters);
+
+void move_forward_cm(uint32_t centimeters);
+void move_backward_cm(uint32_t centimeters);
 
 void move_turn_forward_by(MoveDirection direction, uint16_t degrees);
 void move_turn_backward_by(MoveDirection direction, uint16_t degrees);

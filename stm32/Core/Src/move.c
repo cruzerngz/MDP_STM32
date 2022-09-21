@@ -6,6 +6,7 @@
  */
 
 #include "stm32f4xx_hal.h"
+#include "cmsis_os.h"
 
 #include "move.h"
 #include "servo.h"
@@ -52,7 +53,7 @@ void _adjust_backward(MotorSpeed speed);
  */
 void _adjust_forward(MotorSpeed speed) {
 //	steer(dir, mag);
-//	HAL_Delay(MOVE_DELAY_TICKS);
+//	osDelay(MOVE_DELAY_TICKS);
 	forward(speed);
 }
 
@@ -62,7 +63,7 @@ void _adjust_forward(MotorSpeed speed) {
  */
 void _adjust_backward(MotorSpeed speed) {
 //	steer(dir, mag);
-//	HAL_Delay(MOVE_DELAY_TICKS);
+//	osDelay(MOVE_DELAY_TICKS);
 	backward(speed);
 }
 
@@ -77,35 +78,35 @@ void move_test_startup() {
 	stop();
 	_adjust_backward(MOTOR_ADJUST_SPEED);
 	stop();
-	HAL_Delay(100);
+	osDelay(100);
 
 	backward(MotorSpeed1);
 	stop();
 	_adjust_forward(MOTOR_ADJUST_SPEED);
 	stop();
-	HAL_Delay(100);
+	osDelay(100);
 
 	steer(ServoDirLeft, ServoMag1);
-	HAL_Delay(100);
+	osDelay(100);
 
 	steer(ServoDirRight, ServoMag1);
-	HAL_Delay(100);
+	osDelay(100);
 
 	steer_straight();
-	HAL_Delay(300);
+	osDelay(300);
 
 	// combined moves
 	forward_left(MotorSpeed1, ServoDirLeft, ServoMag1);
-	HAL_Delay(300);
+	osDelay(300);
 
 	backward_left(MotorSpeed1, ServoDirLeft, ServoMag1);
-	HAL_Delay(300);
+	osDelay(300);
 
 	forward_right(MotorSpeed1, ServoDirRight, ServoMag1);
-	HAL_Delay(300);
+	osDelay(300);
 
 	backward_right(MotorSpeed1, ServoDirRight, ServoMag1);
-	HAL_Delay(300);
+	osDelay(300);
 }
 
 /**
@@ -164,7 +165,7 @@ void steer_straight() {
  */
 void forward_left(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag) {
 	steer(dir, mag);
-	HAL_Delay(MOVE_DELAY_TICKS);
+	osDelay(MOVE_DELAY_TICKS);
 	forward(speed);
 }
 
@@ -174,7 +175,7 @@ void forward_left(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag) {
  */
 void forward_right(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag) {
 	steer(dir, mag);
-	HAL_Delay(MOVE_DELAY_TICKS);
+	osDelay(MOVE_DELAY_TICKS);
 	forward(speed);
 }
 
@@ -184,7 +185,7 @@ void forward_right(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag) {
  */
 void backward_left(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag) {
 	steer(dir, mag);
-	HAL_Delay(MOVE_DELAY_TICKS);
+	osDelay(MOVE_DELAY_TICKS);
 	backward(speed);
 }
 
@@ -194,7 +195,7 @@ void backward_left(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag) {
  */
 void backward_right(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag) {
 	steer(dir, mag);
-	HAL_Delay(MOVE_DELAY_TICKS);
+	osDelay(MOVE_DELAY_TICKS);
 	backward(speed);
 }
 
@@ -210,34 +211,44 @@ void backward_right(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag) {
  */
 
 
-// Move the car forward by a specified distance
-void move_forward_by(uint32_t centimeters) {
+// Move the car forward by a specified distance, calculated
+void move_forward_calc(uint32_t centimeters) {
 	servo_point_center();
-	HAL_Delay(100);
+	osDelay(100);
 	motor_forward(MotorSpeed2);
-	HAL_Delay(57 * centimeters);
+	osDelay(57 * centimeters);
 
 	motor_stop();
 	servo_point_center();
 }
 
-// Move the car back by a specified distance
-void move_backward_by(uint32_t centimeters) {
+// Move the car back by a specified distance, calculated
+void move_backward_calc(uint32_t centimeters) {
 	servo_point_center();
-	HAL_Delay(100);
+	osDelay(100);
 	motor_backward(MotorSpeed2);
-	HAL_Delay(55 * centimeters);
+	osDelay(55 * centimeters);
 
 	motor_stop();
 	servo_point_center();
+}
+
+// Move a specified distance using the encoder
+void move_forward_cm(uint32_t centimeters) {
+
+}
+
+// Move a specified distance using the encoder
+void move_backward_cm(uint32_t centimeters) {
+
 }
 
 // Move the car forward AND turn it to a specified angle
 void move_turn_forward_by(MoveDirection direction, uint16_t degrees) {
 	servo_point(direction, ServoMag4);
-	HAL_Delay(SERVO_FULL_LOCK_DELAY);
+	osDelay(SERVO_FULL_LOCK_DELAY);
 	motor_forward(MotorSpeed2);
-	HAL_Delay(43 * degrees);
+	osDelay(43 * degrees);
 	motor_stop();
 	servo_point_center();
 }
@@ -245,9 +256,9 @@ void move_turn_forward_by(MoveDirection direction, uint16_t degrees) {
 // Move the car backward AND turn it to a specified angle
 void move_turn_backward_by(MoveDirection direction, uint16_t degrees) {
 	servo_point(direction, ServoMag4);
-	HAL_Delay(SERVO_FULL_LOCK_DELAY);
+	osDelay(SERVO_FULL_LOCK_DELAY);
 	motor_backward(MotorSpeed2);
-	HAL_Delay(46 * degrees);
+	osDelay(46 * degrees);
 	motor_stop();
 	servo_point_center();
 }
@@ -275,9 +286,9 @@ void move_in_place_turn_cardinal(uint8_t cardinal_direction) {
 	MoveDirection for_dir = clockwise ? MoveDirRight : MoveDirLeft;
 	for(uint8_t i=0; i<num_turns; i++) {
 		move_turn_backward_by(rev_dir, 12);
-		HAL_Delay(100);
+		osDelay(100);
 		move_turn_forward_by(for_dir, 11);
-		HAL_Delay(100);
+		osDelay(100);
 	}
 
 }
@@ -290,18 +301,18 @@ void move_in_place_turn_cardinal(uint8_t cardinal_direction) {
 
 void move_hard_left_45() {
 	servo_point_left_full();
-	HAL_Delay(SERVO_FULL_LOCK_DELAY);
+	osDelay(SERVO_FULL_LOCK_DELAY);
 	motor_forward(MotorSpeed1);
-	HAL_Delay(DELAY_45);
+	osDelay(DELAY_45);
 	motor_stop();
 	servo_point_center();
 }
 
 void move_hard_right_45() {
 	servo_point_right_full();
-	HAL_Delay(SERVO_FULL_LOCK_DELAY);
+	osDelay(SERVO_FULL_LOCK_DELAY);
 	motor_forward(MotorSpeed2);
-	HAL_Delay(DELAY_45);
+	osDelay(DELAY_45);
 	motor_stop();
 	servo_point_center();
 }
@@ -309,49 +320,49 @@ void move_hard_right_45() {
 // Move and turn 90 degrees to the left
 void move_hard_left_90() {
 	servo_point_left_full();
-	HAL_Delay(SERVO_FULL_LOCK_DELAY);
+	osDelay(SERVO_FULL_LOCK_DELAY);
 	motor_forward(MotorSpeed2);
-	HAL_Delay(DELAY_90);
+	osDelay(DELAY_90);
 	motor_stop();
 	servo_point_center();
 }
 void move_hard_right_90() {
 	servo_point_right_full();
-	HAL_Delay(SERVO_FULL_LOCK_DELAY);
+	osDelay(SERVO_FULL_LOCK_DELAY);
 	motor_forward(MotorSpeed2);
-	HAL_Delay(DELAY_90);
+	osDelay(DELAY_90);
 	motor_stop();
 	servo_point_center();
 }
 void move_hard_left_135() {
 	servo_point_left_full();
-	HAL_Delay(SERVO_FULL_LOCK_DELAY);
+	osDelay(SERVO_FULL_LOCK_DELAY);
 	motor_forward(MotorSpeed2);
-	HAL_Delay(DELAY_135);
+	osDelay(DELAY_135);
 	motor_stop();
 	servo_point_center();
 }
 void move_hard_right_135() {
 	servo_point_right_full();
-	HAL_Delay(SERVO_FULL_LOCK_DELAY);
+	osDelay(SERVO_FULL_LOCK_DELAY);
 	motor_forward(MotorSpeed2);
-	HAL_Delay(DELAY_135);
+	osDelay(DELAY_135);
 	motor_stop();
 	servo_point_center();
 }
 void move_hard_left_180() {
 	servo_point_left_full();
-	HAL_Delay(SERVO_FULL_LOCK_DELAY);
+	osDelay(SERVO_FULL_LOCK_DELAY);
 	motor_forward(MotorSpeed2);
-	HAL_Delay(DELAY_180);
+	osDelay(DELAY_180);
 	motor_stop();
 	servo_point_center();
 }
 void move_hard_right_180() {
 	servo_point_right_full();
-	HAL_Delay(SERVO_FULL_LOCK_DELAY);
+	osDelay(SERVO_FULL_LOCK_DELAY);
 	motor_forward(MotorSpeed2);
-	HAL_Delay(DELAY_180);
+	osDelay(DELAY_180);
 	motor_stop();
 	servo_point_center();
 }
