@@ -17,6 +17,11 @@
 
 
 // private static variables
+
+// Left is [0], Right is [1]
+volatile uint32_t ENCODER_POS[2] = {0}; // raw readout from timer
+volatile int16_t ENCODER_SPEED[2] = {0}; // speed in mm/s
+
 // timer pointers/variables
 static TIM_HandleTypeDef *MOTOR_ENCODER_TIMER_LEFT;
 static TIM_HandleTypeDef *MOTOR_ENCODER_TIMER_RIGHT;
@@ -31,11 +36,14 @@ static volatile uint32_t *MOTOR_ENCODER_READOUT_RIGHT = NULL;
 uint32_t _read_encoder_left();
 uint32_t _read_encoder_right();
 
-// read encoder for a side. Left = -1, Right = 1
-uint32_t _read_encoder_side(int8_t side);
+// read encoder for a side. Left = 0, Right = 1
+uint32_t _read_encoder_side_mm(uint8_t side);
+
+// calculate the encoder speed, in millimeters per sec
+void _calc_encoder_speed_mm_s();
 
 // same as above, use HAL_Delay to read the encoder
-int _read_encoder_side_delay(int8_t side);
+int _read_encoder_side_delay(uint8_t side);
 
 
 
@@ -65,34 +73,44 @@ void encoder_init(TIM_HandleTypeDef *htim_left, TIM_HandleTypeDef *htim_right, u
 
 uint32_t _read_encoder_left() {
 //	return _read_encoder_side_delay(-1);
-	return _read_encoder_side(-1);
+	return _read_encoder_side_mm(-1);
 }
 
 
 uint32_t _read_encoder_right() {
 //	return _read_encoder_side_delay(1);
-	return _read_encoder_side(1);
+	return _read_encoder_side_mm(1);
 }
 
-// Reads the absolute positions of the encoders
+// Reads the absolute positions of the encoders, in mm
 // Note that a positive delta (rising value) indicates clockwise motor rotation
 // Negative delta (falling value) indicates anticlockwise motor rotation
-uint32_t _read_encoder_side(int8_t side) {
+uint32_t _read_encoder_side_mm(uint8_t side) {
 	volatile uint32_t *encoder_side;
 
-	if(side == 1) encoder_side = MOTOR_ENCODER_READOUT_RIGHT;
-	else if(side == -1) encoder_side = MOTOR_ENCODER_READOUT_LEFT;
+	if(side == 1) {
+		encoder_side = MOTOR_ENCODER_READOUT_RIGHT;
+		ENCODER_POS[side] = *encoder_side;
+	}
+	else if(side == 0) {
+		encoder_side = MOTOR_ENCODER_READOUT_LEFT;
+		ENCODER_POS[side] = *encoder_side;
+	}
 	else return 0;
 
 
 	return (uint32_t)(*encoder_side * MOTOR_ENCODER_CONSTANT);
 }
 
-int _read_encoder_side_delay(int8_t side) {
+//void _read_encoder_raw(uint8_t side) {
+//
+//}
+
+int _read_encoder_side_delay(uint8_t side) {
 	int cnt1, cnt2, diff;
 	TIM_HandleTypeDef *encoder_side;
 	if(side == 1) encoder_side = MOTOR_ENCODER_TIMER_RIGHT;
-	else if(side == -1) encoder_side = MOTOR_ENCODER_TIMER_LEFT;
+	else if(side == 0) encoder_side = MOTOR_ENCODER_TIMER_LEFT;
 	else return 0;
 
 	cnt1 = __HAL_TIM_GET_COUNTER(encoder_side);
@@ -114,11 +132,41 @@ int _read_encoder_side_delay(int8_t side) {
 	return diff;
 }
 
+// calculate the encoder speed, in millimeters per sec
+// Positive values indicate clockwise rotation
+// negative values indicate anticlockwise rotation
+// Assumes the polling rate defined in header file is used
+void _calc_encoder_speed_mm_s() {
+	// initial values
+	static uint32_t r_start = 0;
+	static uint32_t l_start = 0;
+	// compared against these
+	static uint32_t r_end = 0;
+	static uint32_t l_end = 0;
+
+	// read and calc delta
+	r_end = ENCODER_POS[1];
+	l_end = ENCODER_POS[0];
+
+	ENCODER_SPEED[1] = (int16_t)(((int32_t)r_end - (int32_t)r_start) * MOTOR_ENCODER_CONSTANT * MOTOR_ENCODER_REFRESH_INTERVAL_FREQ);
+	ENCODER_SPEED[0] = (int16_t)(((int32_t)l_end - (int32_t)l_start) * MOTOR_ENCODER_CONSTANT * MOTOR_ENCODER_REFRESH_INTERVAL_FREQ);
+
+	r_start = r_end;
+	l_start = l_end;
+}
+
+void encoder_reset_counters(void) {
+
+}
+
 
 // Main polling function to the encoders.
 //
 void encoder_poll(void) {
+	ENCODER_POS[0] = *MOTOR_ENCODER_READOUT_LEFT;
+	ENCODER_POS[1] = *MOTOR_ENCODER_READOUT_RIGHT;
 
+	_calc_encoder_speed_mm_s();
 }
 
 

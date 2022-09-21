@@ -79,6 +79,13 @@ const osThreadAttr_t encoder_display_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for encoder_poll_ro */
+osThreadId_t encoder_poll_roHandle;
+const osThreadAttr_t encoder_poll_ro_attributes = {
+  .name = "encoder_poll_ro",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityBelowNormal,
+};
 /* USER CODE BEGIN PV */
 
 
@@ -96,6 +103,7 @@ void StartDefaultTask(void *argument);
 void movement(void *argument);
 void state_machine(void *argument);
 void encoder(void *argument);
+void encoder_poller(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -183,6 +191,9 @@ int main(void)
 
   /* creation of encoder_display */
   encoder_displayHandle = osThreadNew(encoder, NULL, &encoder_display_attributes);
+
+  /* creation of encoder_poll_ro */
+  encoder_poll_roHandle = osThreadNew(encoder_poller, NULL, &encoder_poll_ro_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -564,22 +575,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(BUZZER_GPIO_Port, BUZZER_Pin, GPIO_PIN_RESET);
-
   /*Configure GPIO pins : AIN2_Pin AIN1_Pin BIN1_Pin BIN2_Pin */
   GPIO_InitStruct.Pin = AIN2_Pin|AIN1_Pin|BIN1_Pin|BIN2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : BUZZER_Pin */
-  GPIO_InitStruct.Pin = BUZZER_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(BUZZER_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : BUZZER_Pin */
   GPIO_InitStruct.Pin = BUZZER_Pin;
@@ -746,6 +747,9 @@ void encoder(void *argument)
 	static char left_buf[16] = {0};
 	static char right_buf[16] = {0};
 
+	static char left_buf_s[16] = {0};
+	static char right_buf_s[16] = {0};
+
 	OLED_Display_On();
 
   /* Infinite loop */
@@ -757,18 +761,52 @@ void encoder(void *argument)
 	  right_pos = _read_encoder_right();
 
 	  taskENTER_CRITICAL();
-	  sprintf(left_buf, "L: %07lu", left_pos);
-	  sprintf(right_buf, "R: %07lu", right_pos);
+	  sprintf(left_buf, "L: %05lu", left_pos);
+	  sprintf(left_buf_s, "L: %05d", ENCODER_SPEED[0]);
+
+	  sprintf(right_buf, "R: %05lu", right_pos);
+	  sprintf(right_buf_s, "R: %05d", ENCODER_SPEED[1]);
 	  taskEXIT_CRITICAL();
 
 	  OLED_ShowString(0, 0, (uint8_t *)left_buf);
-	  OLED_ShowString(0, 10, (uint8_t *)right_buf);
+	  OLED_ShowString(0, 10, (uint8_t *)left_buf_s);
+	  OLED_ShowString(0, 20, (uint8_t *)right_buf);
+	  OLED_ShowString(0, 30, (uint8_t *)right_buf_s);
 
 	  OLED_Refresh_Gram();
 
-    osDelayUntil(ticks + 100);
+    osDelayUntil(ticks + 100); // 10hz display freq
   }
   /* USER CODE END encoder */
+}
+
+/* USER CODE BEGIN Header_encoder_poller */
+/**
+* @brief Function implementing the encoder_poll_ro thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_encoder_poller */
+void encoder_poller(void *argument)
+{
+  /* USER CODE BEGIN encoder_poller */
+
+	// Polls and updates the encoder values
+
+	static uint32_t ticks = 0;
+  /* Infinite loop */
+  for(;;)
+
+  {
+	  ticks = osKernelGetTickCount();
+
+	  taskENTER_CRITICAL();
+	  encoder_poll();
+	  taskEXIT_CRITICAL();
+
+    osDelayUntil(ticks + MOTOR_ENCODER_REFRESH_INTERVAL_TICKS);
+  }
+  /* USER CODE END encoder_poller */
 }
 
 /**
