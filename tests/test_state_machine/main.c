@@ -201,6 +201,15 @@ TEST test_fine_control_in_place_cardinal_right() {
 }
 
 /**
+ * @brief Test the modification of 
+ * 
+ * @return TEST 
+ */
+TEST test_config() {
+
+}
+
+/**
  * @brief Construct a new SUITE object
  * Add tests to be run here
  *
@@ -221,13 +230,21 @@ SUITE(suite_fine_control) {
     RUN_TEST(test_fine_control_in_place_cardinal_right);
 }
 
+/**
+ * @brief Construct a new SUITE object
+ * Tests for the config sub-state machine
+ */
+SUITE(suite_config) {
+
+}
+
 GREATEST_MAIN_DEFS(); // important, right before main
 
 int main(int argc, char **argv) {
     GREATEST_MAIN_BEGIN();
 
     RUN_SUITE(suite_fine_control);
-
+    RUN_SUITE(suite_config);
 
     GREATEST_MAIN_END();
     return 0;

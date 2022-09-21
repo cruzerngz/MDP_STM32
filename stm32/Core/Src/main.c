@@ -507,6 +507,8 @@ void movement(void *argument)
   /* USER CODE BEGIN movement */
 	static volatile uint16_t mvmt_dist = 0;
 	static volatile uint16_t turn_angle = 0;
+	static volatile uint8_t cardinal = 0;
+
 	static volatile int8_t move_dir = 0;
 	static volatile int8_t turn_dir = 0;
 
@@ -520,11 +522,16 @@ void movement(void *argument)
 	  __disable_irq();
 	  mvmt_dist = FLAG_MOVEMENT_DISTANCE;
 	  turn_angle =  FLAG_TURN_ANGLE;
+	  cardinal = FLAG_IN_PLACE_CARDINAL;
+
 	  move_dir =      FLAG_MOVE_DIR;
 	  turn_dir = FLAG_TURN_DIR;
 
+
 	  FLAG_MOVEMENT_DISTANCE = 0;
 	  FLAG_TURN_ANGLE = 0;
+	  FLAG_IN_PLACE_CARDINAL = 0;
+
 	  FLAG_MOVE_DIR = 0;
 	  FLAG_TURN_DIR = 0;
 	  __enable_irq();
@@ -554,6 +561,12 @@ void movement(void *argument)
 		  }
 
 	  }
+
+	  if(cardinal != 0) {
+		  move_in_place_turn_cardinal(cardinal);
+	  }
+
+
     osDelay(100); //10hz polling
   }
   /* USER CODE END movement */

@@ -237,7 +237,7 @@ void move_turn_forward_by(MoveDirection direction, uint16_t degrees) {
 	servo_point(direction, ServoMag4);
 	HAL_Delay(SERVO_FULL_LOCK_DELAY);
 	motor_forward(MotorSpeed2);
-	HAL_Delay(44 * degrees);
+	HAL_Delay(43 * degrees);
 	motor_stop();
 	servo_point_center();
 }
@@ -247,7 +247,7 @@ void move_turn_backward_by(MoveDirection direction, uint16_t degrees) {
 	servo_point(direction, ServoMag4);
 	HAL_Delay(SERVO_FULL_LOCK_DELAY);
 	motor_backward(MotorSpeed2);
-	HAL_Delay(44 * degrees);
+	HAL_Delay(46 * degrees);
 	motor_stop();
 	servo_point_center();
 }
@@ -265,15 +265,19 @@ void move_in_place_turn_by(MoveDirection direction, uint16_t degrees) {
 void move_in_place_turn_cardinal(uint8_t cardinal_direction) {
 	// convert clockwise multiples of 22.5 degrees
 	// to pos-neg multiples of 22.5 degrees (-8 to +7)
-	int8_t num_turns_clockwise = (cardinal_direction % 16) - 8;
-	uint8_t clockwise = num_turns_clockwise >= 0 ? 1 : 0;
-	num_turns_clockwise = num_turns_clockwise >= 0 ? num_turns_clockwise : 0 - num_turns_clockwise;
+	cardinal_direction = cardinal_direction % 16; // wrap to 0-15
+	// actual turn action, -8 to +7
+	int8_t num_turns = cardinal_direction > 7 ? 16 - cardinal_direction : cardinal_direction;
+	// exec clockwise (1) or anticlockwise (0)s
+	uint8_t clockwise = cardinal_direction <= 7 ? 1 : 0; // clockwise if less than 7
 
 	MoveDirection rev_dir = clockwise ? MoveDirLeft : MoveDirRight;
 	MoveDirection for_dir = clockwise ? MoveDirRight : MoveDirLeft;
-	for(uint8_t i=0; i<num_turns_clockwise; i++) {
+	for(uint8_t i=0; i<num_turns; i++) {
 		move_turn_backward_by(rev_dir, 12);
+		HAL_Delay(100);
 		move_turn_forward_by(for_dir, 11);
+		HAL_Delay(100);
 	}
 
 }
