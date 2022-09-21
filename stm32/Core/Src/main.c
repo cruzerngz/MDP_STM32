@@ -29,7 +29,7 @@
 #include "oled.h"
 #include "motor.h"
 #include "servo.h"
-#include "display.h"
+#include "encoder.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,6 +55,8 @@ TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim8;
+
+UART_HandleTypeDef huart3;
 
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -106,6 +108,7 @@ static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_USART3_UART_Init(void);
 void StartDefaultTask(void *argument);
 void motor(void *argument);
 void encoder_task(void *argument);
@@ -154,13 +157,21 @@ int main(void)
   MX_TIM3_Init();
   MX_DMA_Init();
   MX_ADC1_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
   OLED_Init();
-  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buf, ADC_BUF_LEN); // Part 1: start DMA attached to ADC
-  if (HAL_ADC_Start_IT(&hadc1) != HAL_OK) // Part 2: start ADC conversion (do we still need this if the previous function is executed?)
-  	  {
-      	  Error_Handler();
-  	  }
+//  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buf, ADC_BUF_LEN); // Part 1: start DMA attached to ADC
+//  if (HAL_ADC_Start_IT(&hadc1) != HAL_OK) // Part 2: start ADC conversion (do we still need this if the previous function is executed?)
+//  	  {
+//      	  Error_Handler();
+//  	  }
+
+	motor_init_timer(&htim8, TIM_CHANNEL_1, TIM_CHANNEL_2);
+	motor_init_gpio_left(GPIOA, AIN1_Pin, AIN2_Pin);
+	motor_init_gpio_right(GPIOA, BIN1_Pin, BIN2_Pin);
+	servo_init(&htim1, TIM_CHANNEL_4);
+
+	encoder_init(&htim2, &htim3, TIM_CHANNEL_ALL, TIM_CHANNEL_ALL);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -413,14 +424,14 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 4294967295;
+  htim2.Init.Period = 65535;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  sConfig.EncoderMode = TIM_ENCODERMODE_TI12;
+  sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
   sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC1Filter = 10;
+  sConfig.IC1Filter = 0;
   sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
@@ -465,11 +476,11 @@ static void MX_TIM3_Init(void)
   htim3.Init.Period = 65535;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  sConfig.EncoderMode = TIM_ENCODERMODE_TI12;
+  sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
   sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC1Filter = 10;
+  sConfig.IC1Filter = 0;
   sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
@@ -569,6 +580,39 @@ static void MX_TIM8_Init(void)
 }
 
 /**
+  * @brief USART3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART3_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART3_Init 0 */
+
+  /* USER CODE END USART3_Init 0 */
+
+  /* USER CODE BEGIN USART3_Init 1 */
+
+  /* USER CODE END USART3_Init 1 */
+  huart3.Instance = USART3;
+  huart3.Init.BaudRate = 115200;
+  huart3.Init.WordLength = UART_WORDLENGTH_8B;
+  huart3.Init.StopBits = UART_STOPBITS_1;
+  huart3.Init.Parity = UART_PARITY_NONE;
+  huart3.Init.Mode = UART_MODE_TX_RX;
+  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART3_Init 2 */
+
+  /* USER CODE END USART3_Init 2 */
+
+}
+
+/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -606,6 +650,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, AIN2_Pin|AIN1_Pin|BIN1_Pin|BIN2_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(BUZZER_GPIO_Port, BUZZER_Pin, GPIO_PIN_RESET);
+
   /*Configure GPIO pins : OLED_SCL_Pin OLED_SCA_Pin OLED_RST_Pin OLED_DC_Pin
                            LED3_Pin */
   GPIO_InitStruct.Pin = OLED_SCL_Pin|OLED_SCA_Pin|OLED_RST_Pin|OLED_DC_Pin
@@ -621,6 +668,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : BUZZER_Pin */
+  GPIO_InitStruct.Pin = BUZZER_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(BUZZER_GPIO_Port, &GPIO_InitStruct);
 
 }
 
@@ -696,83 +750,9 @@ void motor(void *argument)
 {
   /* USER CODE BEGIN motor */
 
-//	HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
-//	HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
-//	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
-
-
-	motor_init_timer(&htim8, TIM_CHANNEL_1, TIM_CHANNEL_2);
-	motor_init_gpio_left(GPIOA, AIN1_Pin, AIN2_Pin);
-	motor_init_gpio_right(GPIOA, BIN1_Pin, BIN2_Pin);
-	servo_init(&htim1, TIM_CHANNEL_4);
-
-//	uint16_t pwmVal = 350;
-//	uint8_t toggle = 0;
-
-//	motor_test_startup();
-//	servo_test_startup();
-
-	servo_point_center();
-	motor_stop();
-	HAL_Delay(500);
-
-	motor_forward(MotorSpeed1);
-	HAL_Delay(3000);
-	motor_backward(MotorSpeed1);
-	HAL_Delay(3000);
-
-	motor_forward(MotorSpeed2);
-	HAL_Delay(3000);
-	motor_backward(MotorSpeed2);
-	HAL_Delay(3000);
-
-	motor_forward(MotorSpeed3);
-	HAL_Delay(3000);
-	motor_backward(MotorSpeed3);
-	HAL_Delay(3000);
-//	motor_backward(MotorSpeed1);
-//	HAL_Delay(8000);
-	motor_stop();
-
 	/* Infinite loop */
 	for (;;) {
 
-
-
-//	  toggle = 1 - toggle;
-//	  if(toggle) {
-//		  servo_point_right_full();
-//	  } else {
-//		  servo_point_left_full();
-//	  }
-
-//	  servo_point_left_full();
-
-//		while (pwmVal < 2500) {
-//			// htim1 100 is left
-//			// htim1 130-140 is mid
-//			// htim1 180 is right
-////		  htim1.Instance->CCR4 = 144; // this is mid, literally
-//
-//			// AIN2_Pin | AIN1_Pin
-//			// left wheel clockwise
-//			HAL_GPIO_WritePin(GPIOA, AIN2_Pin, GPIO_PIN_RESET);
-//			HAL_GPIO_WritePin(GPIOA, AIN1_Pin, GPIO_PIN_SET);
-//			// right wheel anti-clockwise
-//			HAL_GPIO_WritePin(GPIOA, BIN2_Pin, GPIO_PIN_RESET);
-//			HAL_GPIO_WritePin(GPIOA, BIN1_Pin, GPIO_PIN_SET);
-//			pwmVal++;
-//			// modify comparison value for the duty cycle
-//			__HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_1, pwmVal);
-//			__HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_2, pwmVal);
-//			osDelay(3);
-//		}
-//
-//		osDelay(1000);
-//		__HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_1, 0);
-//		__HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_2, 0);
-//		osDelay(2000);
-//		pwmVal = 350;
 	}
 
   /* USER CODE END motor */
@@ -788,11 +768,41 @@ void motor(void *argument)
 void encoder_task(void *argument)
 {
   /* USER CODE BEGIN encoder_task */
+	static int encoder_left = 0;
+	static int encoder_right = 0;
 
-	encoder_init(&htim2, &htim3, TIM_CHANNEL_2, TIM_CHANNEL_3);
-	oled_init();
+//	static char uart_buffer[80] = {0};
+	static char left_buf[16] = {0};
+	static char right_buf[16] = {0};
 
-	display_speed();
+//	static uint32_t start_ticks = osKernelGetTickCount();
+	static uint32_t loop_ticks = 0;
+	OLED_Display_On();
+
+	for(;;) {
+		HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
+		HAL_GPIO_TogglePin(BUZZER_GPIO_Port, BUZZER_Pin);
+
+		loop_ticks = osKernelGetTickCount();
+		encoder_left = _read_encoder_left();
+		encoder_right = _read_encoder_right();
+
+		taskENTER_CRITICAL();
+//		sprintf(uart_buffer, "L: %07d, R: %07d\r\n", encoder_left, encoder_right);
+		sprintf(left_buf, "L: %+07d", encoder_left);
+		sprintf(right_buf, "R: %+07d", encoder_right);
+		taskEXIT_CRITICAL();
+
+		OLED_ShowString(0, 0, (uint8_t *)left_buf);
+		OLED_ShowString(0, 10, (uint8_t *)right_buf);
+
+		OLED_Refresh_Gram();
+
+//		HAL_UART_Transmit(&huart3, (uint8_t *)uart_buffer, sizeof(uart_buffer), HAL_MAX_DELAY);
+
+//		osDelay(100);
+		osDelayUntil(loop_ticks + 50); // 20 hz freq
+	}
 
   /* USER CODE END encoder_task */
 }
@@ -815,9 +825,9 @@ void IR_ADC_task(void *argument)
   {
 	  // Part 1: Get ADC value
 	  raw = HAL_ADC_GetValue(&hadc1);
-	  sprintf(buffer_ADC, "IR Sensor: %hu\r\n", raw); // should be a valye 0 <= X < 4096
-	  OLED_ShowString(10, 50, buffer_ADC);
-	  OLED_Refresh_Gram();
+//	  sprintf(buffer_ADC, "IR Sensor: %hu\r\n", raw); // should be a valye 0 <= X < 4096
+//	  OLED_ShowString(10, 50, buffer_ADC);
+//	  OLED_Refresh_Gram();
 
 	  // Part 2
       /* Turn-on/off LED2 and LED3 in function of ADC conversion result */
@@ -828,11 +838,11 @@ void IR_ADC_task(void *argument)
       /* interrupt callback                                                     */
       if (ubAnalogWatchdogStatus == SET)
       {
-    	  HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_SET);
+//    	  HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_SET);
       }
       else
       {
-    	  HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_RESET);
+//    	  HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_RESET);
       }
 
       ubAnalogWatchdogStatus = RESET;
