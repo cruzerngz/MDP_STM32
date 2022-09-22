@@ -36,6 +36,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ADC_BUF_LEN 4096
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,6 +45,9 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+DMA_HandleTypeDef hdma_adc1;
+
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
@@ -86,24 +90,42 @@ const osThreadAttr_t encoder_poll_ro_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityBelowNormal,
 };
+/* Definitions for ir_adc_task */
+osThreadId_t ir_adc_taskHandle;
+const osThreadAttr_t ir_adc_task_attributes = {
+  .name = "ir_adc_task",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* USER CODE BEGIN PV */
 
+// buffer to hold ADC output
+uint16_t adc_buf[ADC_BUF_LEN];
+
+__IO uint16_t uhADCxConvertedValue = 0;
+/* Variable to report ADC analog watchdog status:   */
+/*   RESET <=> voltage into AWD window   */
+/*   SET   <=> voltage out of AWD window */
+uint8_t ubAnalogWatchdogStatus = RESET;  /* Set into analog watchdog interrupt callback */
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM8_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_ADC1_Init(void);
 void StartDefaultTask(void *argument);
 void movement(void *argument);
 void state_machine(void *argument);
 void encoder(void *argument);
 void encoder_poller(void *argument);
+void ir_adc(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -143,13 +165,18 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_TIM1_Init();
   MX_TIM8_Init();
   MX_USART3_UART_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
   OLED_Init();
+
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buf, ADC_BUF_LEN); // start DMA attached to ADC
+
   HAL_UART_Receive_IT(&huart3, &UART_RX_CHAR, 1);
 
 	motor_init_timer(&htim8, TIM_CHANNEL_1, TIM_CHANNEL_2);
@@ -194,6 +221,9 @@ int main(void)
 
   /* creation of encoder_poll_ro */
   encoder_poll_roHandle = osThreadNew(encoder_poller, NULL, &encoder_poll_ro_attributes);
+
+  /* creation of ir_adc_task */
+  ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -256,6 +286,71 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_AnalogWDGConfTypeDef AnalogWDGConfig = {0};
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+
+  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.ScanConvMode = DISABLE;
+  hadc1.Init.ContinuousConvMode = ENABLE;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.DMAContinuousRequests = ENABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure the analog watchdog
+  */
+  AnalogWDGConfig.WatchdogMode = ADC_ANALOGWATCHDOG_SINGLE_REG;
+  AnalogWDGConfig.HighThreshold = 1800;
+  AnalogWDGConfig.LowThreshold = 0;
+  AnalogWDGConfig.Channel = ADC_CHANNEL_10;
+  AnalogWDGConfig.ITMode = DISABLE;
+  if (HAL_ADC_AnalogWDGConfig(&hadc1, &AnalogWDGConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_10;
+  sConfig.Rank = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
 }
 
 /**
@@ -542,6 +637,22 @@ static void MX_USART3_UART_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -552,9 +663,9 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8
@@ -608,6 +719,17 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	HAL_UART_Transmit_IT(&huart3, (uint8_t *)&response, 1);
 
 	HAL_UART_Receive_IT(&huart3, &UART_RX_CHAR, sizeof(UART_RX_CHAR));
+}
+
+/**
+  * @brief  Analog watchdog callback in non blocking mode.
+  * @param  hadc: ADC handle
+  * @retval None
+  */
+void HAL_ADC_LevelOutOfWindowCallback(ADC_HandleTypeDef* hadc) {
+	  /* Set variable to report analog watchdog out of window status to main program. */
+	  uhADCxConvertedValue = HAL_ADC_GetValue(&hadc1);
+	  ubAnalogWatchdogStatus = SET;
 }
 
 /* USER CODE END 4 */
@@ -807,6 +929,103 @@ void encoder_poller(void *argument)
     osDelayUntil(ticks + MOTOR_ENCODER_REFRESH_INTERVAL_TICKS);
   }
   /* USER CODE END encoder_poller */
+}
+
+/* USER CODE BEGIN Header_ir_adc */
+/**
+* @brief Function implementing the ir_adc_task thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_ir_adc */
+void ir_adc(void *argument)
+{
+  /* USER CODE BEGIN ir_adc */
+	static uint8_t watchdog_val = 0;
+	static uint8_t coll_det_flag = 1;
+
+	uint16_t raw;
+	uint8_t buffer_ADC[16];
+	int i, sum=0, avg=9999;
+
+//	OLED_Display_On();
+
+  for(;;)
+  {
+
+	  uint8_t buffer_ADC[16];
+	  // Get ADC value
+	  i = 10;
+	  sum = 0;
+	  while (i > 0) {
+		  raw = HAL_ADC_GetValue(&hadc1);
+		  if (raw > 1700) continue;
+		  sum += raw;
+		  i--;
+		  HAL_Delay(1);
+	  }
+
+	  avg = sum / 10;
+
+	  __disable_irq();
+	  watchdog_val = ubAnalogWatchdogStatus;
+	  __enable_irq();
+
+	  if (watchdog_val == SET)
+      {
+		  if (coll_det_flag) {
+	    	  HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, GPIO_PIN_SET);
+	    	  motor_stop();
+
+//	    	  taskENTER_CRITICAL();
+//			  sprintf(buffer_ADC, "##stop at %hu\r\n", avg);
+	    	  strcpy(buffer_ADC, "Found\r\n");
+//			  taskEXIT_CRITICAL();
+
+			  HAL_UART_Transmit(&huart3, buffer_ADC, strlen(buffer_ADC), HAL_MAX_DELAY);
+
+//	    	  OLED_ShowString(0, 10, out_buf);
+
+	    	  // disable coll det if exceed threshold
+	    	  __disable_irq();
+	    	  coll_det_flag = 0;
+	    	  __enable_irq();
+
+		  }
+
+    	  __disable_irq();
+    	  watchdog_val = RESET;
+    	  ubAnalogWatchdogStatus = RESET;
+    	  __enable_irq();
+
+    	  strcpy(buffer_ADC, "Idle\r\n");
+		  HAL_UART_Transmit(&huart3, buffer_ADC, strlen(buffer_ADC), HAL_MAX_DELAY);
+
+    	  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buf, ADC_BUF_LEN);
+      }
+      else
+      {
+//    	  taskENTER_CRITICAL();
+//    	  sprintf(buffer_ADC, "IR: %d\r\n", avg); // should be a valye 0 <= X < 4096
+    	  strcpy(buffer_ADC, "Sensing\r\n");
+//    	  taskEXIT_CRITICAL();
+
+		  HAL_UART_Transmit(&huart3, buffer_ADC, strlen(buffer_ADC), HAL_MAX_DELAY);
+
+    //	  OLED_ShowString(0, 0, buffer_ADC);
+    	  HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
+
+    	  // enable coll det if enters threshold
+    	  __disable_irq();
+    	  coll_det_flag = 1;
+    	  __enable_irq();
+      }
+
+//	  OLED_Refresh_Gram();
+
+      HAL_Delay(100);
+  }
+  /* USER CODE END ir_adc */
 }
 
 /**
