@@ -29,8 +29,6 @@ void _accumulate_sum(void);
 void ir_adc_init(ADC_HandleTypeDef *hadc)
 {
     HADC = hadc;
-    // uhADCxConvertedValue = 0;
-    // ubAnalogWatchdogStatus = RESET;
     HAL_ADC_Start_DMA(HADC, (uint32_t *)adc_buf, ADC_BUF_LEN);
     AGGREGATE_SUM = HAL_ADC_GetValue(HADC) << IR_ADC_SUM_SIZE_BITS; // set global once on init
 }

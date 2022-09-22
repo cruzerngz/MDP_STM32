@@ -303,6 +303,7 @@ static void MX_ADC1_Init(void)
 
     /* USER CODE END ADC1_Init 0 */
 
+    ADC_AnalogWDGConfTypeDef AnalogWDGConfig = {0};
     ADC_ChannelConfTypeDef sConfig = {0};
 
     /* USER CODE BEGIN ADC1_Init 1 */
@@ -324,6 +325,18 @@ static void MX_ADC1_Init(void)
     hadc1.Init.DMAContinuousRequests = ENABLE;
     hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
     if (HAL_ADC_Init(&hadc1) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    /** Configure the analog watchdog
+     */
+    AnalogWDGConfig.WatchdogMode = ADC_ANALOGWATCHDOG_SINGLE_REG;
+    AnalogWDGConfig.HighThreshold = 2900;
+    AnalogWDGConfig.LowThreshold = 0;
+    AnalogWDGConfig.Channel = ADC_CHANNEL_10;
+    AnalogWDGConfig.ITMode = DISABLE;
+    if (HAL_ADC_AnalogWDGConfig(&hadc1, &AnalogWDGConfig) != HAL_OK)
     {
         Error_Handler();
     }
@@ -707,12 +720,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
  * @param  hadc: ADC handle
  * @retval None
  */
-//void HAL_ADC_LevelOutOfWindowCallback(ADC_HandleTypeDef *hadc)
-//{
-//    /* Set variable to report analog watchdog out of window status to main program. */
-//    uhADCxConvertedValue = HAL_ADC_GetValue(&hadc1);
+void HAL_ADC_LevelOutOfWindowCallback(ADC_HandleTypeDef *hadc)
+{
+    /* Set variable to report analog watchdog out of window status to main program. */
 //    ubAnalogWatchdogStatus = SET;
-//}
+}
 
 /* USER CODE END 4 */
 
@@ -787,7 +799,8 @@ void movement(void *argument)
             else if (move_dir > 0)
             {
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveF\r\n", 10, HAL_MAX_DELAY);
-                move_forward_calc(mvmt_dist);
+                // move_forward_calc(mvmt_dist);
+                move_to_obstacle();
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveOK\r\n", 10, HAL_MAX_DELAY);
             }
         }

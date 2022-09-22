@@ -49,6 +49,7 @@ void move_in_place_turn_by(MoveDirection direction, uint16_t degrees);
 
 void move_in_place_turn_cardinal(uint8_t cardinal_direction);
 
+void move_to_obstacle(void);
 
 
 // Hardcoded, known movements (requires further calibration)
