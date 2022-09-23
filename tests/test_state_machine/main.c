@@ -200,10 +200,20 @@ TEST test_fine_control_in_place_cardinal_right() {
     PASS();
 }
 
+TEST test_fine_control_approach_obstacle() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';'); // return to mode select
+    ASSERT_EQ(state_machine_interpreter('f'), ';'); // enter fine control
+    ASSERT_EQ(state_machine_interpreter('o'), ';'); // appr obstacle
+
+    ASSERT_EQ(FLAG_APPROACH_OBSTACLE, 1);
+
+    PASS();
+}
+
 /**
- * @brief Test the modification of 
- * 
- * @return TEST 
+ * @brief Test the modification of
+ *
+ * @return TEST
  */
 TEST test_config() {
 
@@ -228,6 +238,8 @@ SUITE(suite_fine_control) {
     // cardinal in-place turns
     RUN_TEST(test_fine_control_in_place_cardinal_left);
     RUN_TEST(test_fine_control_in_place_cardinal_right);
+
+    RUN_TEST(test_fine_control_approach_obstacle);
 }
 
 /**

@@ -30,6 +30,7 @@
 volatile uint16_t 						FLAG_MOVEMENT_DISTANCE = 0;
 volatile uint16_t 						FLAG_TURN_ANGLE = 0;
 volatile uint8_t 						FLAG_IN_PLACE_CARDINAL = 0;
+volatile int8_t 						FLAG_APPROACH_OBSTACLE =  0;
 
 // additional flags used by move/turn, requires reset
 volatile int8_t 						FLAG_MOVE_DIR = 0; // forward/backward, +1 or -1 only
@@ -201,6 +202,11 @@ uint8_t _fine_control_interpreter_idle(uint8_t command) {
 		GLOBAL_FINE_CONTROL_MODE = FineControlInPlaceTurn;
 		GLOBAL_FINE_CONTROL_INGEST = true;
 		return StateMachineInputField;
+		break;
+
+	case FineControlApproachObstacle:
+		FLAG_APPROACH_OBSTACLE = 1;
+		return StateMachineFullAck;
 		break;
 
 	default:

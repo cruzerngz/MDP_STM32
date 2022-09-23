@@ -48,6 +48,7 @@ typedef enum {
 	FineControlMovement = 'm',
 	FineControlTurning = 't',
 	FineControlInPlaceTurning = 'c',
+	FineControlApproachObstacle = 'o',
 
 	FineControlMoveForward = 'f',
 	FineControlMoveBackward = 'b',

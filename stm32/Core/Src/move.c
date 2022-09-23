@@ -8,6 +8,7 @@
 #include "stm32f4xx_hal.h"
 #include "cmsis_os.h"
 #include "math.h"
+#include "stdlib.h"
 
 #include "move.h"
 #include "servo.h"
@@ -320,7 +321,7 @@ void move_to_obstacle(void)
             backward(MotorSpeed1);
         }
         osDelayUntil(ticks + 25);
-    } while (abs(ir_diff) > 20);
+    } while (abs(ir_diff) > 30);
 
     motor_stop();
 }

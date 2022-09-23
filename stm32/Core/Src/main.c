@@ -759,9 +759,12 @@ extern void (*HARDCODE_DIRECTION)(void); // func from state machine
 void movement(void *argument)
 {
     /* USER CODE BEGIN movement */
+    static uint32_t ticks = 0;
+
     static volatile uint16_t mvmt_dist = 0;
     static volatile uint16_t turn_angle = 0;
     static volatile uint8_t cardinal = 0;
+    static volatile int8_t appr_obstacle = 0;
 
     static volatile int8_t move_dir = 0;
     static volatile int8_t turn_dir = 0;
@@ -771,11 +774,14 @@ void movement(void *argument)
     for (;;)
     {
         // HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
+        ticks = osKernelGetTickCount();
+
 
         __disable_irq();
         mvmt_dist = FLAG_MOVEMENT_DISTANCE;
         turn_angle = FLAG_TURN_ANGLE;
         cardinal = FLAG_IN_PLACE_CARDINAL;
+        appr_obstacle = FLAG_APPROACH_OBSTACLE;
 
         move_dir = FLAG_MOVE_DIR;
         turn_dir = FLAG_TURN_DIR;
@@ -799,8 +805,8 @@ void movement(void *argument)
             else if (move_dir > 0)
             {
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveF\r\n", 10, HAL_MAX_DELAY);
-                // move_forward_calc(mvmt_dist);
-                move_to_obstacle();
+                 move_forward_calc(mvmt_dist);
+//                move_to_obstacle();
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveOK\r\n", 10, HAL_MAX_DELAY);
             }
         }
@@ -823,10 +829,16 @@ void movement(void *argument)
             move_in_place_turn_cardinal(cardinal);
         }
 
-        osDelay(100); // 10hz polling
+        if(appr_obstacle == 1) {
+          move_to_obstacle();
+          appr_obstacle = 0;
+        }
+
+        osDelayUntil(ticks + 100); // 10hz polling
     }
     /* USER CODE END movement */
 }
+
 
 /* USER CODE BEGIN Header_state_machine */
 /**
