@@ -24,6 +24,10 @@ extern volatile uint16_t FLAG_MOVEMENT_DISTANCE;
 
 // move f/b when turning, Forward is +1, Backward is -1
 extern volatile int8_t FLAG_MOVE_DIR;
+
+// approach obstacle routine
+extern volatile int8_t FLAG_APPROACH_OBSTACLE;
+
 // Angle to turn in degrees
 extern volatile uint16_t FLAG_TURN_ANGLE;
 // Direction (front/back, left/right) the car takes, -1, 0, +1
