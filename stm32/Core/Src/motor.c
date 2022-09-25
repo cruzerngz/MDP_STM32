@@ -17,7 +17,6 @@
 // RPi command or boolean isStop() ??
 #define TEST_MOTOR_TIMER 800
 
-
 // private static variables, initialized with the motor_init...() family;
 
 // timer pointers/variables
@@ -104,6 +103,8 @@ void motor_init_timer(TIM_HandleTypeDef *htim, uint32_t channel_left, uint32_t c
 
 	HAL_TIM_PWM_Start(MOTOR_PWM_TIMER, MOTOR_CHANNEL_LEFT);
 	HAL_TIM_PWM_Start(MOTOR_PWM_TIMER, MOTOR_CHANNEL_RIGHT);
+	*MOTOR_LEFT_PWM_REGISTER = 0;
+	*MOTOR_RIGHT_PWM_REGISTER = 0;
 }
 
 /**

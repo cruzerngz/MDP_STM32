@@ -10,6 +10,12 @@
 #ifndef INC_MOTOR_H_
 #define INC_MOTOR_H_
 
+// Motor select enum
+typedef enum {
+	MotorLeft,
+	MotorRight
+} MotorSide;
+
 // Motor direction control
 typedef enum {
 	MotorDirForward,

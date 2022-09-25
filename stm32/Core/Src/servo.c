@@ -17,6 +17,7 @@ static uint16_t SERVO_LEFT_MAGS[] = {
 	16,
 	24,
 	32,
+	40,
 	SERVO_LEFT_LIMIT
 };
 
@@ -25,6 +26,7 @@ static uint16_t SERVO_RIGHT_MAGS[] = {
 	16,
 	24,
 	32,
+	40,
 	SERVO_RIGHT_LIMIT
 };
 
@@ -75,6 +77,7 @@ void servo_init(TIM_HandleTypeDef *htim, uint32_t Channel) {
 	}
 
 	HAL_TIM_PWM_Start(SERVO_PWM_TIMER, SERVO_CHANNEL);
+	*SERVO_PWM_REGISTER = SERVO_CENTER;
 	SERVO_CURR_DIR = ServoDirCenter;
 }
 

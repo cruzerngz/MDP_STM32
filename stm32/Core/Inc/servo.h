@@ -43,7 +43,8 @@ typedef enum {
 	ServoMag2,
 	ServoMag3,
 	ServoMag4,
-	ServoMag5
+	ServoMag5,
+	ServoMag6
 } ServoMagnitude;
 
 // init and showcase functions
