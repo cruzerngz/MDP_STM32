@@ -252,7 +252,7 @@ void move_turn_forward_by(MoveDirection direction, uint16_t degrees)
     servo_point(direction, ServoMag4);
     osDelay(SERVO_FULL_LOCK_DELAY);
     motor_forward(MotorSpeed2);
-    osDelay(43 * degrees);
+    osDelay(46 * degrees);
     motor_stop();
     servo_point_center();
 }
@@ -321,7 +321,7 @@ void move_to_obstacle(void)
             backward(MotorSpeed1);
         }
         osDelayUntil(ticks + 25);
-    } while (abs(ir_diff) > 30);
+    } while (abs(ir_diff) > 20);
 
     motor_stop();
 }

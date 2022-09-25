@@ -223,7 +223,7 @@ int main(void)
     encoder_poll_roHandle = osThreadNew(encoder_poller, NULL, &encoder_poll_ro_attributes);
 
     /* creation of ir_adc_task */
-    ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
+//    ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
 
     /* creation of ir_adc_poller_t */
     ir_adc_poller_tHandle = osThreadNew(ir_adc_poller, NULL, &ir_adc_poller_t_attributes);
@@ -789,6 +789,7 @@ void movement(void *argument)
         FLAG_MOVEMENT_DISTANCE = 0;
         FLAG_TURN_ANGLE = 0;
         FLAG_IN_PLACE_CARDINAL = 0;
+        FLAG_APPROACH_OBSTACLE = 0;
 
         FLAG_MOVE_DIR = 0;
         FLAG_TURN_DIR = 0;

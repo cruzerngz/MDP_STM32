@@ -373,6 +373,7 @@ void _fine_control_reset_extern_flags(void) {
 	FLAG_MOVEMENT_DISTANCE = 0;
 	FLAG_TURN_ANGLE = 0;
 	FLAG_IN_PLACE_CARDINAL = 0;
+	FLAG_APPROACH_OBSTACLE = 0;
 }
 
 #ifndef UNITTEST // disable this block if unit testing
