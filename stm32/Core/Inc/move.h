@@ -10,6 +10,10 @@
 #ifndef INC_MOVE_H_
 #define INC_MOVE_H_
 
+#define MOVE_KP 2.0f
+#define MOVE_KI 0.2f
+#define MOVE_KD 0.2f
+
 // Move direction inherited from servo.h
 // Exposed here as another enum
 typedef enum {
@@ -51,6 +55,7 @@ void move_in_place_turn_cardinal(uint8_t cardinal_direction);
 
 void move_to_obstacle(void);
 
+void _set_motor_speed_pid(MotorDirection dir, MotorSide side, uint16_t speed_mm_s);
 
 // Hardcoded, known movements (requires further calibration)
 

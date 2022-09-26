@@ -19,6 +19,8 @@
 
 // private static variables, initialized with the motor_init...() family;
 
+
+
 // timer pointers/variables
 static TIM_HandleTypeDef *MOTOR_PWM_TIMER;
 static uint32_t MOTOR_CHANNEL_LEFT;
@@ -43,10 +45,14 @@ static uint16_t MOTOR_LEFT_GPIO_PIN_NEG;
 static uint16_t MOTOR_RIGHT_GPIO_PIN_POS;
 static uint16_t MOTOR_RIGHT_GPIO_PIN_NEG;
 
+// used by _motor_set_pwm, indexed by MotorSide
+static uint16_t *MOTOR_GPIO_PINS_POS[2] = {&MOTOR_LEFT_GPIO_PIN_POS, &MOTOR_RIGHT_GPIO_PIN_POS};
+static uint16_t *MOTOR_GPIO_PINS_NEG[2] = {&MOTOR_LEFT_GPIO_PIN_NEG, &MOTOR_RIGHT_GPIO_PIN_NEG};
+static GPIO_TypeDef **MOTOR_GPIO_BANKS[2] = {&MOTOR_LEFT_GPIO_BANK, &MOTOR_RIGHT_GPIO_BANK};
+static __IO uint32_t **MOTOR_PWM_REGISTERS[2] = {&MOTOR_LEFT_PWM_REGISTER, &MOTOR_RIGHT_PWM_REGISTER};
 
 // private function prototypes
-
-
+// these exposed for move.c
 void _motor_left_set_pwm(MotorDirection dir, uint16_t pwm_val);
 void _motor_right_set_pwm(MotorDirection dir, uint16_t pwm_val);
 
@@ -167,6 +173,21 @@ void _motor_right_set_pwm(MotorDirection dir, uint16_t pwm_val) {
 
 }
 
+// set the pwm duty of the motor
+// max pwm is 7199
+void _motor_set_pwm(MotorDirection dir, MotorSide side, uint16_t pwm_val) {
+	HAL_GPIO_WritePin(
+		*MOTOR_GPIO_BANKS[side],
+		*MOTOR_GPIO_PINS_POS[side],
+		(dir == MotorDirForward) ? GPIO_PIN_SET : GPIO_PIN_RESET
+	);
+	HAL_GPIO_WritePin(
+		*MOTOR_GPIO_BANKS[side],
+		*MOTOR_GPIO_PINS_NEG[side],
+		(dir == MotorDirForward) ? GPIO_PIN_RESET : GPIO_PIN_SET
+	);
+	**MOTOR_PWM_REGISTERS[side] = pwm_val;
+}
 
 /**
  * Go through all motor movements

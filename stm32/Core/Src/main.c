@@ -214,10 +214,10 @@ int main(void)
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of movement_task */
-  movement_taskHandle = osThreadNew(movement, NULL, &movement_task_attributes);
+//  movement_taskHandle = osThreadNew(movement, NULL, &movement_task_attributes);
 
   /* creation of uart_state_mach */
-  uart_state_machHandle = osThreadNew(state_machine, NULL, &uart_state_mach_attributes);
+//  uart_state_machHandle = osThreadNew(state_machine, NULL, &uart_state_mach_attributes);
 
   /* creation of encoder_display */
   encoder_displayHandle = osThreadNew(encoder, NULL, &encoder_display_attributes);
@@ -226,10 +226,10 @@ int main(void)
   encoder_poll_roHandle = osThreadNew(encoder_poller, NULL, &encoder_poll_ro_attributes);
 
   /* creation of ir_adc_task */
-  ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
+//  ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
 
   /* creation of ir_adc_poller_t */
-  ir_adc_poller_tHandle = osThreadNew(ir_adc_poller, NULL, &ir_adc_poller_t_attributes);
+//  ir_adc_poller_tHandle = osThreadNew(ir_adc_poller, NULL, &ir_adc_poller_t_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
     /* add threads, ... */
@@ -774,12 +774,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-
+	static uint32_t ticks = 0;
     /* Infinite loop */
     for (;;)
     {
+    	ticks = osKernelGetTickCount();
+    	_set_motor_speed_pid(MotorDirForward, MotorLeft, 100);
+    	_set_motor_speed_pid(MotorDirForward, MotorRight, 100);
 
-        osDelay(2500);
+        osDelayUntil(ticks + 40); //25 hz
     }
   /* USER CODE END 5 */
 }
@@ -838,11 +841,13 @@ void movement(void *argument)
             {
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveB\r\n", 10, HAL_MAX_DELAY);
                 move_backward_calc(mvmt_dist);
+                USART3_SEND_CHAR('&'); // algo needs this to know when to send the next command
             }
             else if (move_dir > 0)
             {
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveF\r\n", 10, HAL_MAX_DELAY);
                  move_forward_calc(mvmt_dist);
+                 USART3_SEND_CHAR('&');
 //                move_to_obstacle();
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveOK\r\n", 10, HAL_MAX_DELAY);
             }
@@ -854,20 +859,24 @@ void movement(void *argument)
             if (move_dir < 0)
             {
                 move_turn_backward_by(turn_dir > 0 ? MoveDirRight : MoveDirLeft, turn_angle);
+                USART3_SEND_CHAR('&');
             }
             else if (move_dir > 0)
             {
                 move_turn_forward_by(turn_dir > 0 ? MoveDirRight : MoveDirLeft, turn_angle);
+                USART3_SEND_CHAR('&');
             }
         }
 
         if (cardinal != 0)
         {
             move_in_place_turn_cardinal(cardinal);
+            USART3_SEND_CHAR('&');
         }
 
         if(appr_obstacle == 1) {
           move_to_obstacle();
+          USART3_SEND_CHAR('&');
           appr_obstacle = 0;
         }
 

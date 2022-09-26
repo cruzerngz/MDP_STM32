@@ -38,6 +38,12 @@ void motor_init_gpio_right(GPIO_TypeDef *gpio_bank, uint16_t gpio_pin_pos, uint1
 void motor_test_startup();
 void motor_showcase();
 
+// pwm set
+void _motor_set_pwm(MotorDirection dir, MotorSide side, uint16_t pwm_val);
+// void _motor_left_set_pwm(MotorDirection dir, uint16_t pwm_val);
+// void _motor_right_set_pwm(MotorDirection dir, uint16_t pwm_val);
+
+
 // moveset
 void motor_forward(MotorSpeed speed);
 void motor_backward(MotorSpeed speed);

@@ -14,6 +14,7 @@
 #include "servo.h"
 #include "motor.h"
 #include "ir_adc.h"
+#include "encoder.h"
 
 // private macros
 #define MOVE_DELAY_TICKS 100
@@ -30,18 +31,25 @@
 
 // private globals
 
-/*
- * Global struct containing the current effector states
- */
-static struct global_state
-{
-    uint32_t servo;
-    uint32_t motor_left;
-    uint32_t motor_right;
-} GLOBAL_EFFECTOR_STATE = {
-    .servo = SERVO_CENTER, // move SERVO_CENTER out of private namespace and use it here
-    .motor_left = 0,
-    .motor_right = 0};
+static float MOTOR_INTEGRATION_SUM[2] = {0.0f}; // pid global
+static float MOTOR_PREV_ERROR[2] = {0.0f}; // pid global
+static float MOTOR_PREV_TICKS[2] = {0.0f}; // pid global
+
+
+// /*
+//  * Global struct containing the current effector states
+//  */
+// static struct global_state
+// {
+//     uint32_t servo;
+//     uint32_t motor_left;
+//     uint32_t motor_right;
+// } GLOBAL_EFFECTOR_STATE = {
+//     .servo = SERVO_CENTER, // move SERVO_CENTER out of private namespace and use it here
+//     .motor_left = 0,
+//     .motor_right = 0};
+
+
 
 // private function prototypes
 void _adjust_forward(MotorSpeed speed);
@@ -325,6 +333,26 @@ void move_to_obstacle(void)
 
     motor_stop();
 }
+
+// sets the motor speed for one motor for one PID iteration
+void _set_motor_speed_pid(MotorDirection dir, MotorSide side, uint16_t speed_mm_s) {
+    float current_error = (float)(speed_mm_s - ENCODER_SPEED_DIRECTIONAL[side]); // target - current
+    uint32_t current_time = osKernelGetTickCount();
+    uint32_t interation_time = 0;
+    uint32_t new_pwm_val = 0;
+
+    interation_time = (uint32_t)(current_time - MOTOR_PREV_TICKS[side]);
+
+    MOTOR_INTEGRATION_SUM[side] += (float)(current_error * interation_time);
+
+    new_pwm_val = (uint32_t)(MOVE_KP * current_error + MOVE_KI * MOTOR_INTEGRATION_SUM[side] + MOVE_KD * 1000 * (current_error - MOTOR_PREV_ERROR[side]) / interation_time);
+
+    MOTOR_PREV_ERROR[side] = current_error;
+    MOTOR_PREV_TICKS[side] = current_time;
+
+    _motor_set_pwm(dir, side, new_pwm_val);
+}
+
 
 /*
  * Start of hardcoded movement functions
