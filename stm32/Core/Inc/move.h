@@ -10,9 +10,12 @@
 #ifndef INC_MOVE_H_
 #define INC_MOVE_H_
 
-#define MOVE_KP 2.0f
+#define MOVE_KP 5.0f
 #define MOVE_KI 0.2f
 #define MOVE_KD 0.2f
+
+#define MOVE_DEFAULT_SPEED_MM_S 200
+#define MOVE_PID_RELOAD_SPEED_TICKS 20 // pid refresh frequency
 
 // Move direction inherited from servo.h
 // Exposed here as another enum
@@ -43,8 +46,8 @@ void backward_right(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag);
 void move_forward_calc(uint32_t centimeters);
 void move_backward_calc(uint32_t centimeters);
 
-void move_forward_cm(uint32_t centimeters);
-void move_backward_cm(uint32_t centimeters);
+void move_forward_pid_cm(uint32_t centimeters);
+void move_backward_pid_cm(uint32_t centimeters);
 
 void move_turn_forward_by(MoveDirection direction, uint16_t degrees);
 void move_turn_backward_by(MoveDirection direction, uint16_t degrees);

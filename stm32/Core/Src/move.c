@@ -245,13 +245,37 @@ void move_backward_calc(uint32_t centimeters)
 }
 
 // Move a specified distance using the encoder
-void move_forward_cm(uint32_t centimeters)
+void move_forward_pid_cm(uint32_t centimeters)
 {
+	uint32_t time_ticks = osKernelGetTickCount();
+	uint32_t total_ticks = time_ticks + (centimeters * 10 / MOVE_DEFAULT_SPEED_MM_S);
+	servo_point_center();
+	do {
+		time_ticks = osKernelGetTickCount();
+		_set_motor_speed_pid(MotorDirForward, MotorLeft, MOVE_DEFAULT_SPEED_MM_S);
+		_set_motor_speed_pid(MotorDirForward, MotorRight, MOVE_DEFAULT_SPEED_MM_S);
+
+		osDelayUntil(time_ticks + MOVE_PID_RELOAD_SPEED_TICKS);
+	} while(time_ticks < total_ticks); // while still in delay loop
+
+	motor_stop();
 }
 
 // Move a specified distance using the encoder
-void move_backward_cm(uint32_t centimeters)
+void move_backward_pid_cm(uint32_t centimeters)
 {
+	uint32_t time_ticks = osKernelGetTickCount();
+	uint32_t total_ticks = time_ticks + (centimeters * 10 / MOVE_DEFAULT_SPEED_MM_S);
+	servo_point_center();
+	do {
+		time_ticks = osKernelGetTickCount();
+		_set_motor_speed_pid(MotorDirBackward, MotorLeft, MOVE_DEFAULT_SPEED_MM_S);
+		_set_motor_speed_pid(MotorDirBackward, MotorRight, MOVE_DEFAULT_SPEED_MM_S);
+
+		osDelayUntil(time_ticks + MOVE_PID_RELOAD_SPEED_TICKS);
+	} while(time_ticks < total_ticks); // while still in delay loop
+
+	motor_stop();
 }
 
 // Move the car forward AND turn it to a specified angle
