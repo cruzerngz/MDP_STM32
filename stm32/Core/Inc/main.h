@@ -75,6 +75,9 @@ void Error_Handler(void);
 #define SERVO_OUT_GPIO_Port GPIOE
 #define BUZZER_Pin GPIO_PIN_10
 #define BUZZER_GPIO_Port GPIOB
+#define BUTTON_Pin GPIO_PIN_8
+#define BUTTON_GPIO_Port GPIOD
+#define BUTTON_EXTI_IRQn EXTI9_5_IRQn
 #define PWMA_Pin GPIO_PIN_6
 #define PWMA_GPIO_Port GPIOC
 #define PWMB_Pin GPIO_PIN_7

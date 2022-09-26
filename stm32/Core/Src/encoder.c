@@ -20,7 +20,9 @@
 
 // Left is [0], Right is [1]
 volatile uint32_t ENCODER_POS[2] = {0}; // raw readout from timer
-volatile int16_t ENCODER_SPEED[2] = {0}; // speed in mm/s
+volatile uint32_t ENCODER_POS_DIRECTIONAL[2] = {0}; // timer readout, compensated for opp rotations
+volatile int16_t ENCODER_SPEED[2] = {0}; // speed in mm/s, pos for clockwise
+volatile int16_t ENCODER_SPEED_DIRECTIONAL[2] = {0}; // speed in mm/s, pos for forward
 
 // timer pointers/variables
 static TIM_HandleTypeDef *MOTOR_ENCODER_TIMER_LEFT;
@@ -73,7 +75,7 @@ void encoder_init(TIM_HandleTypeDef *htim_left, TIM_HandleTypeDef *htim_right, u
 
 uint32_t _read_encoder_left() {
 //	return _read_encoder_side_delay(-1);
-	return _read_encoder_side_mm(-1);
+	return _read_encoder_side_mm(0);
 }
 
 
@@ -91,10 +93,12 @@ uint32_t _read_encoder_side_mm(uint8_t side) {
 	if(side == 1) {
 		encoder_side = MOTOR_ENCODER_READOUT_RIGHT;
 		ENCODER_POS[side] = *encoder_side;
+		ENCODER_POS_DIRECTIONAL[side] = *encoder_side;
 	}
 	else if(side == 0) {
 		encoder_side = MOTOR_ENCODER_READOUT_LEFT;
 		ENCODER_POS[side] = *encoder_side;
+		ENCODER_POS_DIRECTIONAL[side] = MOTOR_ENCODER_MAX_POS - *encoder_side;
 	}
 	else return 0;
 
@@ -106,6 +110,7 @@ uint32_t _read_encoder_side_mm(uint8_t side) {
 //
 //}
 
+// old function
 int _read_encoder_side_delay(uint8_t side) {
 	int cnt1, cnt2, diff;
 	TIM_HandleTypeDef *encoder_side;
@@ -148,8 +153,10 @@ void _calc_encoder_speed_mm_s() {
 	r_end = ENCODER_POS[1];
 	l_end = ENCODER_POS[0];
 
-	ENCODER_SPEED[1] = (int16_t)(((int32_t)r_end - (int32_t)r_start) * MOTOR_ENCODER_CONSTANT * MOTOR_ENCODER_REFRESH_INTERVAL_FREQ);
 	ENCODER_SPEED[0] = (int16_t)(((int32_t)l_end - (int32_t)l_start) * MOTOR_ENCODER_CONSTANT * MOTOR_ENCODER_REFRESH_INTERVAL_FREQ);
+	ENCODER_SPEED[1] = (int16_t)(((int32_t)r_end - (int32_t)r_start) * MOTOR_ENCODER_CONSTANT * MOTOR_ENCODER_REFRESH_INTERVAL_FREQ);
+	ENCODER_SPEED_DIRECTIONAL[1] = ENCODER_SPEED[1];
+	ENCODER_SPEED_DIRECTIONAL[0] = 0 - ENCODER_SPEED[0];
 
 	r_start = r_end;
 	l_start = l_end;
@@ -165,6 +172,9 @@ void encoder_reset_counters(void) {
 void encoder_poll(void) {
 	ENCODER_POS[0] = *MOTOR_ENCODER_READOUT_LEFT;
 	ENCODER_POS[1] = *MOTOR_ENCODER_READOUT_RIGHT;
+
+	ENCODER_POS_DIRECTIONAL[0] = (MOTOR_ENCODER_MAX_POS - *MOTOR_ENCODER_READOUT_LEFT) % MOTOR_ENCODER_MAX_POS;
+	ENCODER_POS_DIRECTIONAL[1] = *MOTOR_ENCODER_READOUT_RIGHT % MOTOR_ENCODER_MAX_POS;
 
 	_calc_encoder_speed_mm_s();
 }

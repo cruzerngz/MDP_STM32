@@ -6,6 +6,7 @@
 // static uint16_t raw;
 
 #include "ir_adc.h"
+#include "stdlib.h"
 #include "math.h"
 
 static ADC_HandleTypeDef *HADC;
@@ -40,7 +41,7 @@ void _accumulate_sum(void)
     uint32_t fraction = AGGREGATE_SUM >> IR_ADC_SUM_SIZE_BITS;
 
     // ignore if out of range - periodic jitter from signal
-    if (abs(fraction - ADC_RAW_READOUT) > IR_ADC_REJECT_THRESHOLD)
+    if (abs((int)(fraction - ADC_RAW_READOUT)) > IR_ADC_REJECT_THRESHOLD)
     {
         return;
     }
