@@ -24,9 +24,9 @@ static uint16_t SERVO_LEFT_MAGS[] = {
 static uint16_t SERVO_RIGHT_MAGS[] = {
 	8,
 	16,
-	24,
-	32,
-	40,
+	31,
+	41,
+	56,
 	SERVO_RIGHT_LIMIT
 };
 
@@ -160,7 +160,7 @@ void servo_point(ServoDirection dir, ServoMagnitude mag) {
 		*SERVO_PWM_REGISTER = SERVO_CENTER - SERVO_LEFT_MAGS[mag];
 	}
 	else if(dir == ServoDirRight) {
-		*SERVO_PWM_REGISTER = SERVO_CENTER + (int)(SERVO_RIGHT_MAGS[mag] *1.31f); // scaling factor
+		*SERVO_PWM_REGISTER = SERVO_CENTER + SERVO_RIGHT_MAGS[mag]; // scaling factor
 	}
 
 //	*SERVO_PWM_REGISTER = SERVO_CENTER + offset;

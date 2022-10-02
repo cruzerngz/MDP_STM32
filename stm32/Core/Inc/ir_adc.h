@@ -8,7 +8,7 @@
 #define IR_ADC_REJECT_THRESHOLD 4000 // in adc value steps
 #define IR_ADC_SUM_SIZE_BITS 4       // 2 ** this = number of values accumulated (2 ** 3 = 8)
 
-#define IR_ADC_POLLING_RATE_TICKS 4
+#define IR_ADC_POLLING_RATE_TICKS 5
 #define IR_ADC_POLLING_RATE_HZ 200
 
 // For other modules to access

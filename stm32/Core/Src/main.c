@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "string.h"
+#include "inttypes.h"
 
 #include "move.h"
 #include "uart_state_machine.h"
@@ -71,7 +72,7 @@ osThreadId_t movement_taskHandle;
 const osThreadAttr_t movement_task_attributes = {
   .name = "movement_task",
   .stack_size = 256 * 4,
-  .priority = (osPriority_t) osPriorityBelowNormal,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for uart_state_mach */
 osThreadId_t uart_state_machHandle;
@@ -774,15 +775,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-//	static uint32_t ticks = 0;
+	static uint32_t ticks = 0;
     /* Infinite loop */
     for (;;)
     {
-//    	ticks = osKernelGetTickCount();
-//    	_set_motor_speed_pid(MotorDirForward, MotorLeft, 100);
-//    	_set_motor_speed_pid(MotorDirForward, MotorRight, 100);
-//
-//        osDelayUntil(ticks + 20); //50 hz
+    	ticks = osKernelGetTickCount();
+   	// move_backward_pid_cm(20);
+  	// _set_motor_speed_pid(MotorDirForward, MotorLeft, 200);
+  	// _set_motor_speed_pid(MotorDirForward, MotorRight, 200);
+    // osDelayUntil(ticks + MOVE_PID_LOOP_PERIOD_TICKS); //20 hz
+    	osDelay(1000);
     }
   /* USER CODE END 5 */
 }
@@ -853,6 +855,7 @@ void movement(void *argument)
 //                move_to_obstacle();
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveOK\r\n", 10, HAL_MAX_DELAY);
             }
+            mvmt_dist = 0;
         }
 
         if (turn_angle != 0)
@@ -860,20 +863,23 @@ void movement(void *argument)
 
             if (move_dir < 0)
             {
-                move_turn_backward_by(turn_dir > 0 ? MoveDirRight : MoveDirLeft, turn_angle);
+                move_turn_backward_pid_degrees(turn_dir > 0 ? MoveDirRight : MoveDirLeft, turn_angle);
                 USART3_SEND_CHAR('&');
             }
             else if (move_dir > 0)
             {
-                move_turn_forward_by(turn_dir > 0 ? MoveDirRight : MoveDirLeft, turn_angle);
+                move_turn_forward_pid_degrees(turn_dir > 0 ? MoveDirRight : MoveDirLeft, turn_angle);
                 USART3_SEND_CHAR('&');
             }
+
+            turn_angle = 0;
         }
 
         if (cardinal != 0)
         {
             move_in_place_turn_cardinal(cardinal);
             USART3_SEND_CHAR('&');
+            cardinal = 0;
         }
 
         if(appr_obstacle == 1) {
@@ -984,17 +990,19 @@ void ir_adc(void *argument)
   /* USER CODE BEGIN ir_adc */
     // static uint16_t IR_READOUT = 0;
     static uint32_t ticks = 0;
-    static char buffer_ADC[20];
+    static char buffer_ADC[100] = {0};
 
     for (;;)
     {
         taskENTER_CRITICAL();
         sprintf(
         		buffer_ADC,
-				"%d %d %d\r\n",
+				"%d %d %d %d %d\r\n",
 				IR_ADC_AVERAGE_READOUT,
 				ENCODER_SPEED_DIRECTIONAL[0],
-				ENCODER_SPEED_DIRECTIONAL[1]
+				ENCODER_SPEED_DIRECTIONAL[1],
+        ENCODER_POS_DIRECTIONAL[0],
+        ENCODER_POS_DIRECTIONAL[1]
 		);
 
         taskEXIT_CRITICAL();

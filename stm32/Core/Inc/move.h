@@ -10,12 +10,19 @@
 #ifndef INC_MOVE_H_
 #define INC_MOVE_H_
 
-#define MOVE_KP 5.0f
-#define MOVE_KI 0.2f
-#define MOVE_KD 0.2f
+// 5.5, 16.0, 0.13 slight overshoot (no resistance on wheels)
+
+#define MOVE_KP 8.0f//4.0f//6.0f //4.0f
+#define MOVE_KI 24.0f//1.0f//6.0f //4.5f //40.0f
+#define MOVE_KD 0.0f//0.3f //0.2f //0.13f
 
 #define MOVE_DEFAULT_SPEED_MM_S 200
-#define MOVE_PID_RELOAD_SPEED_TICKS 20 // pid refresh frequency
+#define MOVE_PID_LOOP_PERIOD_TICKS 50 // pid refresh ticks
+
+// difference in motor speed between outside and inside wheels
+// when turining with servo magnitude 5
+#define MOVE_PID_TURN_REDUCTION_FACTOR 0.5825864277f
+#define MOVE_PID_TURN_TICKS_PER_DEGREE 34.07755365f
 
 // Move direction inherited from servo.h
 // Exposed here as another enum
@@ -23,6 +30,9 @@ typedef enum {
 	MoveDirLeft = ServoDirLeft,
 	MoveDirRight = ServoDirRight
 } MoveDirection;
+
+// temp
+extern float MOTOR_INTEGRATION_SUM[2];
 
 // init and showcase functions
 void move_test_startup();
@@ -51,6 +61,9 @@ void move_backward_pid_cm(uint32_t centimeters);
 
 void move_turn_forward_by(MoveDirection direction, uint16_t degrees);
 void move_turn_backward_by(MoveDirection direction, uint16_t degrees);
+
+void move_turn_forward_pid_degrees(MoveDirection direction, uint16_t degrees);
+void move_turn_backward_pid_degrees(MoveDirection direction, uint16_t degrees);
 
 void move_in_place_turn_by(MoveDirection direction, uint16_t degrees);
 

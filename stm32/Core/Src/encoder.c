@@ -149,23 +149,53 @@ void _calc_encoder_speed_mm_s() {
 	static uint32_t r_end = 0;
 	static uint32_t l_end = 0;
 
+	static uint32_t t_start = 0;
+	static uint32_t t_end = 0;
+
+	float freq;
+
+	t_end = osKernelGetTickCount();
+	freq = (float) 1000 / (t_end - t_start);
+
 	// read and calc delta
 	r_end = ENCODER_POS[1];
 	l_end = ENCODER_POS[0];
 
-	ENCODER_SPEED[0] = (int16_t)(((int32_t)l_end - (int32_t)l_start) * MOTOR_ENCODER_CONSTANT * MOTOR_ENCODER_REFRESH_INTERVAL_FREQ);
-	ENCODER_SPEED[1] = (int16_t)(((int32_t)r_end - (int32_t)r_start) * MOTOR_ENCODER_CONSTANT * MOTOR_ENCODER_REFRESH_INTERVAL_FREQ);
+	ENCODER_SPEED[0] = (int16_t)(((int32_t)l_end - (int32_t)l_start) * MOTOR_ENCODER_CONSTANT * freq);
+	ENCODER_SPEED[1] = (int16_t)(((int32_t)r_end - (int32_t)r_start) * MOTOR_ENCODER_CONSTANT * freq);
 	ENCODER_SPEED_DIRECTIONAL[1] = ENCODER_SPEED[1];
 	ENCODER_SPEED_DIRECTIONAL[0] = 0 - ENCODER_SPEED[0];
 
 	r_start = r_end;
 	l_start = l_end;
+	t_start = t_end;
 }
 
-void encoder_reset_counters(void) {
-
+/**
+ * @brief Writes to the timer readout registers
+ *
+ */
+void encoder_reset_counters_backward() {
+	*MOTOR_ENCODER_READOUT_LEFT = 0;
+	*MOTOR_ENCODER_READOUT_RIGHT = MOTOR_ENCODER_MAX_POS;
+	ENCODER_POS[0] = 0;
+	ENCODER_POS[1] = MOTOR_ENCODER_MAX_POS;
+	ENCODER_POS_DIRECTIONAL[0] = MOTOR_ENCODER_MAX_POS;
+	ENCODER_POS_DIRECTIONAL[1] = MOTOR_ENCODER_MAX_POS;
 }
 
+/**
+ * @brief Writes to the timer readout registers
+ *
+ */
+void encoder_reset_counters_forward() {
+	*MOTOR_ENCODER_READOUT_LEFT = 0;
+	*MOTOR_ENCODER_READOUT_RIGHT = 0;
+	ENCODER_POS[0] = 0;
+	ENCODER_POS[1] = 0;
+	ENCODER_POS_DIRECTIONAL[0] = 0;
+	ENCODER_POS_DIRECTIONAL[1] = 0;
+}
 
 // Main polling function to the encoders.
 //
@@ -173,8 +203,8 @@ void encoder_poll(void) {
 	ENCODER_POS[0] = *MOTOR_ENCODER_READOUT_LEFT;
 	ENCODER_POS[1] = *MOTOR_ENCODER_READOUT_RIGHT;
 
-	ENCODER_POS_DIRECTIONAL[0] = (MOTOR_ENCODER_MAX_POS - *MOTOR_ENCODER_READOUT_LEFT) % MOTOR_ENCODER_MAX_POS;
-	ENCODER_POS_DIRECTIONAL[1] = *MOTOR_ENCODER_READOUT_RIGHT % MOTOR_ENCODER_MAX_POS;
+	ENCODER_POS_DIRECTIONAL[0] = (MOTOR_ENCODER_MAX_POS - *MOTOR_ENCODER_READOUT_LEFT) % (MOTOR_ENCODER_MAX_POS);
+	ENCODER_POS_DIRECTIONAL[1] = *MOTOR_ENCODER_READOUT_RIGHT % (MOTOR_ENCODER_MAX_POS);
 
 	_calc_encoder_speed_mm_s();
 }
