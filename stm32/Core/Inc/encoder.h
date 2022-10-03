@@ -25,7 +25,8 @@ extern volatile int16_t ENCODER_SPEED_DIRECTIONAL[2];
 extern volatile uint32_t ENCODER_POS[2];
 
 // encoder pos in mm,
-extern volatile uint32_t ENCODER_POS_DIRECTIONAL[2];
+extern volatile uint32_t ENCODER_POS_DIRECTIONAL_FORWARD[2];
+extern volatile uint32_t ENCODER_POS_DIRECTIONAL_BACKWARD[2];
 
 // 100Hz polling freq, for accuracy
 #define MOTOR_ENCODER_REFRESH_INTERVAL_TICKS 10 // in ticks, 1 tick = 1ms

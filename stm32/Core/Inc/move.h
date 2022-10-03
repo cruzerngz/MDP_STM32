@@ -58,12 +58,16 @@ void move_backward_calc(uint32_t centimeters);
 
 void move_forward_pid_cm(uint32_t centimeters);
 void move_backward_pid_cm(uint32_t centimeters);
+void move_adjust_forward_pos_cm(uint32_t centimeters);
+void move_adjust_backward_pos_cm(uint32_t centimeters);
 
 void move_turn_forward_by(MoveDirection direction, uint16_t degrees);
 void move_turn_backward_by(MoveDirection direction, uint16_t degrees);
 
 void move_turn_forward_pid_degrees(MoveDirection direction, uint16_t degrees);
 void move_turn_backward_pid_degrees(MoveDirection direction, uint16_t degrees);
+void move_turn_forward_adjust_pos_degrees(MoveDirection direction, uint16_t degrees);
+void move_turn_backward_adjust_pos_degrees(MoveDirection direction, uint16_t degrees);
 
 void move_in_place_turn_by(MoveDirection direction, uint16_t degrees);
 
