@@ -23,6 +23,10 @@
 // when turining with servo magnitude 5
 #define MOVE_PID_TURN_REDUCTION_FACTOR 0.5825864277f
 #define MOVE_PID_TURN_TICKS_PER_DEGREE 34.07755365f
+#define MOVE_PID_TURN_OUTER_MM_PER_DEGREE 7.41111111111f
+
+#define MOVE_CAR_INNER_WHEEL_RADIUS 39.05f
+#define MOVE_CAR_OUTER_WHEEL_RADIUS 22.75f
 
 // Move direction inherited from servo.h
 // Exposed here as another enum

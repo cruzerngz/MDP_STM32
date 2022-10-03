@@ -997,7 +997,7 @@ void ir_adc(void *argument)
         taskENTER_CRITICAL();
         sprintf(
         		buffer_ADC,
-				"%d %04d %04d %06d %06d %06d %06d %06d %06d\r\n",
+				"%04d %04d %04d %06d %06d %06d %06d %06d %06d\r\n",
 				IR_ADC_AVERAGE_READOUT,
 				ENCODER_SPEED_DIRECTIONAL[0],
 				ENCODER_SPEED_DIRECTIONAL[1],

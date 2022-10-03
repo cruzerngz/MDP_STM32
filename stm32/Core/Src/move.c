@@ -395,6 +395,8 @@ void move_turn_forward_pid_degrees(MoveDirection direction, uint16_t degrees) {
 	uint32_t time_ticks = osKernelGetTickCount();
 	uint32_t start_ticks = time_ticks;
 	uint32_t target_ticks = start_ticks + (uint32_t) degrees * MOVE_PID_TURN_TICKS_PER_DEGREE;
+	uint32_t target_dist_mm = degrees * MOVE_PID_TURN_OUTER_MM_PER_DEGREE * (1 + MOVE_PID_TURN_REDUCTION_FACTOR);
+
 	uint16_t left_motor_speed = direction == MoveDirLeft ? MOVE_DEFAULT_SPEED_MM_S * MOVE_PID_TURN_REDUCTION_FACTOR : MOVE_DEFAULT_SPEED_MM_S;
 	uint16_t right_motor_speed = direction == MoveDirRight ? MOVE_DEFAULT_SPEED_MM_S * MOVE_PID_TURN_REDUCTION_FACTOR : MOVE_DEFAULT_SPEED_MM_S;;
 	_pid_reset(time_ticks);
@@ -412,7 +414,7 @@ void move_turn_forward_pid_degrees(MoveDirection direction, uint16_t degrees) {
 		taskEXIT_CRITICAL();
 
 		osDelayUntil(time_ticks + MOVE_PID_LOOP_PERIOD_TICKS);
-	} while(time_ticks < target_ticks);
+	} while((ENCODER_POS_DIRECTIONAL_FORWARD[0] + ENCODER_POS_DIRECTIONAL_FORWARD[1]) < target_dist_mm);
 
 	motor_stop();
 	servo_point_center();
@@ -428,6 +430,8 @@ void move_turn_backward_pid_degrees(MoveDirection direction, uint16_t degrees) {
 	uint32_t time_ticks = osKernelGetTickCount();
 	uint32_t start_ticks = time_ticks;
 	uint32_t target_ticks = start_ticks + (uint32_t) degrees * MOVE_PID_TURN_TICKS_PER_DEGREE;
+	uint32_t target_dist_mm = degrees * MOVE_PID_TURN_OUTER_MM_PER_DEGREE * (1 + MOVE_PID_TURN_REDUCTION_FACTOR);
+
 	uint16_t left_motor_speed = direction == MoveDirLeft ? MOVE_DEFAULT_SPEED_MM_S * MOVE_PID_TURN_REDUCTION_FACTOR : MOVE_DEFAULT_SPEED_MM_S;
 	uint16_t right_motor_speed = direction == MoveDirRight ? MOVE_DEFAULT_SPEED_MM_S * MOVE_PID_TURN_REDUCTION_FACTOR : MOVE_DEFAULT_SPEED_MM_S;;
 	_pid_reset(time_ticks);
@@ -445,7 +449,7 @@ void move_turn_backward_pid_degrees(MoveDirection direction, uint16_t degrees) {
 		taskEXIT_CRITICAL();
 
 		osDelayUntil(time_ticks + MOVE_PID_LOOP_PERIOD_TICKS);
-	} while(time_ticks < target_ticks);
+	} while((ENCODER_POS_DIRECTIONAL_BACKWARD[0] + ENCODER_POS_DIRECTIONAL_BACKWARD[1]) < target_dist_mm);
 
 	motor_stop();
 	servo_point_center();
