@@ -10,6 +10,8 @@
 #include "stdint.h"
 #include "stdio.h"
 
+#include "globals.h"
+
 #ifndef INC_UART_STATE_MACHINE_H_
 #define INC_UART_STATE_MACHINE_H_
 

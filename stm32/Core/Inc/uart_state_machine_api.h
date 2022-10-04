@@ -26,6 +26,7 @@ typedef enum {
 typedef enum {
 	StateMachineFineControl = 'f',
 	StateMachineToyCar = 't',
+	StateMachineConfig = 'c',
 	StateMachineModeSelect = '\\' // this is a single backslash
 } StateMachineDriveMode;
 
