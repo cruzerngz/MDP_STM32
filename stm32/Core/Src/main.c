@@ -227,7 +227,7 @@ int main(void)
   encoder_poll_roHandle = osThreadNew(encoder_poller, NULL, &encoder_poll_ro_attributes);
 
   /* creation of ir_adc_task */
-  ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
+//   ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
 
   /* creation of ir_adc_poller_t */
   ir_adc_poller_tHandle = osThreadNew(ir_adc_poller, NULL, &ir_adc_poller_t_attributes);
@@ -935,7 +935,7 @@ void encoder(void *argument)
         // note here that strings are max 16 (+1 null) chars long
         sprintf(oled_lines[0], "L<%05lu  %05lu>R", ENCODER_POS_DIRECTIONAL_FORWARD[0], ENCODER_POS_DIRECTIONAL_FORWARD[1]);
         sprintf(oled_lines[1], "L<%+05d  %+05d>R", ENCODER_SPEED_DIRECTIONAL[0], ENCODER_SPEED_DIRECTIONAL[1]);
-        sprintf(oled_lines[2], " "); // blank line
+        sprintf(oled_lines[2], "               "); // blank line
         taskEXIT_CRITICAL();
 
         OLED_ShowString(0, 0, (uint8_t *)oled_lines[0]);

@@ -12,18 +12,22 @@
 
 // 5.5, 16.0, 0.13 slight overshoot (no resistance on wheels)
 
-#define MOVE_KP 8.0f//4.0f//6.0f //4.0f
-#define MOVE_KI 24.0f//1.0f//6.0f //4.5f //40.0f
+#define MOVE_KP 9.0f//4.0f//6.0f //4.0f
+#define MOVE_KI 30.0f//1.0f//6.0f //4.5f //40.0f
 #define MOVE_KD 0.0f//0.3f //0.2f //0.13f
 
-#define MOVE_DEFAULT_SPEED_MM_S 200
+#define MOVE_DEFAULT_SPEED_STRAIGHT_MM_S 200
+#define MOVE_DEFAULT_SPEED_TURN_MM_S 75
 #define MOVE_PID_LOOP_PERIOD_TICKS 50 // pid refresh ticks
 
 // difference in motor speed between outside and inside wheels
 // when turining with servo magnitude 5
-#define MOVE_PID_TURN_REDUCTION_FACTOR 0.5825864277f
+#define MOVE_PID_TURN_REDUCTION_FACTOR 0.584097859f
 #define MOVE_PID_TURN_TICKS_PER_DEGREE 34.07755365f
-#define MOVE_PID_TURN_OUTER_MM_PER_DEGREE 7.41111111111f
+#define MOVE_PID_TURN_OUTER_MM_PER_DEGREE 7.266666666666f
+
+// multiplier for turning backwards, to account for wheel slip
+#define MOVE_PID_BACKWARD_MULITPLIER 1.02f
 
 #define MOVE_CAR_INNER_WHEEL_RADIUS 39.05f
 #define MOVE_CAR_OUTER_WHEEL_RADIUS 22.75f

@@ -213,7 +213,7 @@ void backward_right(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag)
 	backward(speed);
 }
 
-#define SERVO_FULL_LOCK_DELAY 350
+#define SERVO_FULL_LOCK_DELAY 300
 #define DELAY_45 2650
 #define DELAY_90 2650
 #define DELAY_135 4500
@@ -266,7 +266,7 @@ void _pid_reset(uint32_t time_ticks) {
 void move_forward_pid_cm(uint32_t centimeters)
 {
 	uint32_t time_ticks = osKernelGetTickCount();
-	uint32_t end_ticks = time_ticks + 10000 * centimeters / MOVE_DEFAULT_SPEED_MM_S;
+	uint32_t end_ticks = time_ticks + 10000 * centimeters / MOVE_DEFAULT_SPEED_STRAIGHT_MM_S;
 
 	uint32_t target = centimeters * 20;
 
@@ -278,15 +278,15 @@ void move_forward_pid_cm(uint32_t centimeters)
 		time_ticks = osKernelGetTickCount();
 
 		taskENTER_CRITICAL();
-		_set_motor_speed_pid(MotorDirForward, MotorLeft, MOVE_DEFAULT_SPEED_MM_S);
-		_set_motor_speed_pid(MotorDirForward, MotorRight, MOVE_DEFAULT_SPEED_MM_S);
+		_set_motor_speed_pid(MotorDirForward, MotorLeft, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S);
+		_set_motor_speed_pid(MotorDirForward, MotorRight, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S);
 		taskEXIT_CRITICAL();
 		// sum_dist += (ENCODER_SPEED_DIRECTIONAL[0] + ENCODER_SPEED_DIRECTIONAL[1]) * MOVE_PID_LOOP_PERIOD_TICKS / 2000;
 		osDelayUntil(time_ticks + MOVE_PID_LOOP_PERIOD_TICKS);
 	} while(((ENCODER_POS_DIRECTIONAL_FORWARD[0] + ENCODER_POS_DIRECTIONAL_FORWARD[1])) < target); // while still in delay loop
 
 	motor_stop();
-	osDelay(MOVE_PID_LOOP_PERIOD_TICKS << 1);
+	osDelay(MOVE_PID_LOOP_PERIOD_TICKS << 2);
 
 	int32_t delta_cm = centimeters - (ENCODER_POS_DIRECTIONAL_FORWARD[0] + ENCODER_POS_DIRECTIONAL_FORWARD[1]) / 20;
 	if(delta_cm < 0) move_adjust_backward_pos_cm(abs(delta_cm));
@@ -297,7 +297,7 @@ void move_forward_pid_cm(uint32_t centimeters)
 void move_backward_pid_cm(uint32_t centimeters)
 {
 	uint32_t time_ticks = osKernelGetTickCount();
-	uint32_t end_ticks = time_ticks + 10000 * centimeters / MOVE_DEFAULT_SPEED_MM_S;
+	uint32_t end_ticks = time_ticks + 10000 * centimeters / MOVE_DEFAULT_SPEED_STRAIGHT_MM_S;
 	_pid_reset(time_ticks);
 	encoder_reset_counters_backward();
 	servo_point_center();
@@ -308,8 +308,8 @@ void move_backward_pid_cm(uint32_t centimeters)
 		time_ticks = osKernelGetTickCount();
 
 		taskENTER_CRITICAL();
-		_set_motor_speed_pid(MotorDirBackward, MotorLeft, MOVE_DEFAULT_SPEED_MM_S);
-		_set_motor_speed_pid(MotorDirBackward, MotorRight, MOVE_DEFAULT_SPEED_MM_S);
+		_set_motor_speed_pid(MotorDirBackward, MotorLeft, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S);
+		_set_motor_speed_pid(MotorDirBackward, MotorRight, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S);
 		taskEXIT_CRITICAL();
 
 		osDelayUntil(time_ticks + MOVE_PID_LOOP_PERIOD_TICKS);
@@ -317,7 +317,7 @@ void move_backward_pid_cm(uint32_t centimeters)
 
 	// (ENCODER_POS_DIRECTIONAL[0]+ENCODER_POS_DIRECTIONAL[1] + centimeters * 20) > 65535 * MOTOR_ENCODER_CONSTANT * 2
 	motor_stop();
-	osDelay(MOVE_PID_LOOP_PERIOD_TICKS << 1);
+	osDelay(MOVE_PID_LOOP_PERIOD_TICKS << 2);
 
 	int32_t delta_cm = centimeters - (ENCODER_POS_DIRECTIONAL_BACKWARD[0] + ENCODER_POS_DIRECTIONAL_BACKWARD[1]) / 20;
 	if(delta_cm < 0) move_adjust_forward_pos_cm(abs(delta_cm));
@@ -327,7 +327,7 @@ void move_backward_pid_cm(uint32_t centimeters)
 // Move at a slower speed, for more precise control
 void move_adjust_forward_pos_cm(uint32_t centimeters) {
 	uint32_t time_ticks = osKernelGetTickCount();
-	uint32_t end_ticks = time_ticks + 10000 * centimeters / MOVE_DEFAULT_SPEED_MM_S;
+	uint32_t end_ticks = time_ticks + 10000 * centimeters / MOVE_DEFAULT_SPEED_STRAIGHT_MM_S;
 
 	uint32_t target = centimeters * 20;
 
@@ -339,8 +339,8 @@ void move_adjust_forward_pos_cm(uint32_t centimeters) {
 		time_ticks = osKernelGetTickCount();
 
 		taskENTER_CRITICAL();
-		_set_motor_speed_pid(MotorDirForward, MotorLeft, MOVE_DEFAULT_SPEED_MM_S >> 1);
-		_set_motor_speed_pid(MotorDirForward, MotorRight, MOVE_DEFAULT_SPEED_MM_S >> 1);
+		_set_motor_speed_pid(MotorDirForward, MotorLeft, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S >> 1);
+		_set_motor_speed_pid(MotorDirForward, MotorRight, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S >> 1);
 		taskEXIT_CRITICAL();
 		// sum_dist += (ENCODER_SPEED_DIRECTIONAL[0] + ENCODER_SPEED_DIRECTIONAL[1]) * MOVE_PID_LOOP_PERIOD_TICKS / 2000;
 		osDelayUntil(time_ticks + MOVE_PID_LOOP_PERIOD_TICKS);
@@ -352,7 +352,7 @@ void move_adjust_forward_pos_cm(uint32_t centimeters) {
 // Move at a slower speed, for more precise control
 void move_adjust_backward_pos_cm(uint32_t centimeters) {
 	uint32_t time_ticks = osKernelGetTickCount();
-	uint32_t end_ticks = time_ticks + 10000 * centimeters / MOVE_DEFAULT_SPEED_MM_S;
+	uint32_t end_ticks = time_ticks + 10000 * centimeters / MOVE_DEFAULT_SPEED_STRAIGHT_MM_S;
 	_pid_reset(time_ticks);
 	encoder_reset_counters_backward();
 	servo_point_center();
@@ -363,8 +363,8 @@ void move_adjust_backward_pos_cm(uint32_t centimeters) {
 		time_ticks = osKernelGetTickCount();
 
 		taskENTER_CRITICAL();
-		_set_motor_speed_pid(MotorDirBackward, MotorLeft, MOVE_DEFAULT_SPEED_MM_S >> 1);
-		_set_motor_speed_pid(MotorDirBackward, MotorRight, MOVE_DEFAULT_SPEED_MM_S >> 1);
+		_set_motor_speed_pid(MotorDirBackward, MotorLeft, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S >> 1);
+		_set_motor_speed_pid(MotorDirBackward, MotorRight, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S >> 1);
 		taskEXIT_CRITICAL();
 
 		osDelayUntil(time_ticks + MOVE_PID_LOOP_PERIOD_TICKS);
@@ -397,8 +397,8 @@ void move_turn_forward_pid_degrees(MoveDirection direction, uint16_t degrees) {
 	uint32_t target_ticks = start_ticks + (uint32_t) degrees * MOVE_PID_TURN_TICKS_PER_DEGREE;
 	uint32_t target_dist_mm = degrees * MOVE_PID_TURN_OUTER_MM_PER_DEGREE * (1 + MOVE_PID_TURN_REDUCTION_FACTOR);
 
-	uint16_t left_motor_speed = direction == MoveDirLeft ? MOVE_DEFAULT_SPEED_MM_S * MOVE_PID_TURN_REDUCTION_FACTOR : MOVE_DEFAULT_SPEED_MM_S;
-	uint16_t right_motor_speed = direction == MoveDirRight ? MOVE_DEFAULT_SPEED_MM_S * MOVE_PID_TURN_REDUCTION_FACTOR : MOVE_DEFAULT_SPEED_MM_S;;
+	uint16_t left_motor_speed = direction == MoveDirLeft ? MOVE_DEFAULT_SPEED_TURN_MM_S * MOVE_PID_TURN_REDUCTION_FACTOR : MOVE_DEFAULT_SPEED_TURN_MM_S;
+	uint16_t right_motor_speed = direction == MoveDirRight ? MOVE_DEFAULT_SPEED_TURN_MM_S * MOVE_PID_TURN_REDUCTION_FACTOR : MOVE_DEFAULT_SPEED_TURN_MM_S;
 	_pid_reset(time_ticks);
 	encoder_reset_counters_forward();
 
@@ -432,8 +432,8 @@ void move_turn_backward_pid_degrees(MoveDirection direction, uint16_t degrees) {
 	uint32_t target_ticks = start_ticks + (uint32_t) degrees * MOVE_PID_TURN_TICKS_PER_DEGREE;
 	uint32_t target_dist_mm = degrees * MOVE_PID_TURN_OUTER_MM_PER_DEGREE * (1 + MOVE_PID_TURN_REDUCTION_FACTOR);
 
-	uint16_t left_motor_speed = direction == MoveDirLeft ? MOVE_DEFAULT_SPEED_MM_S * MOVE_PID_TURN_REDUCTION_FACTOR : MOVE_DEFAULT_SPEED_MM_S;
-	uint16_t right_motor_speed = direction == MoveDirRight ? MOVE_DEFAULT_SPEED_MM_S * MOVE_PID_TURN_REDUCTION_FACTOR : MOVE_DEFAULT_SPEED_MM_S;;
+	uint16_t left_motor_speed = direction == MoveDirLeft ? MOVE_DEFAULT_SPEED_TURN_MM_S * MOVE_PID_TURN_REDUCTION_FACTOR : MOVE_DEFAULT_SPEED_TURN_MM_S;
+	uint16_t right_motor_speed = direction == MoveDirRight ? MOVE_DEFAULT_SPEED_TURN_MM_S * MOVE_PID_TURN_REDUCTION_FACTOR : MOVE_DEFAULT_SPEED_TURN_MM_S;
 	_pid_reset(time_ticks);
 	encoder_reset_counters_backward();
 
@@ -449,7 +449,7 @@ void move_turn_backward_pid_degrees(MoveDirection direction, uint16_t degrees) {
 		taskEXIT_CRITICAL();
 
 		osDelayUntil(time_ticks + MOVE_PID_LOOP_PERIOD_TICKS);
-	} while((ENCODER_POS_DIRECTIONAL_BACKWARD[0] + ENCODER_POS_DIRECTIONAL_BACKWARD[1]) < target_dist_mm);
+	} while((ENCODER_POS_DIRECTIONAL_BACKWARD[0] + ENCODER_POS_DIRECTIONAL_BACKWARD[1]) < target_dist_mm * MOVE_PID_BACKWARD_MULITPLIER);
 
 	motor_stop();
 	servo_point_center();
@@ -501,9 +501,9 @@ void move_in_place_turn_cardinal(uint8_t cardinal_direction)
 	MoveDirection for_dir = clockwise ? MoveDirRight : MoveDirLeft;
 	for (uint8_t i = 0; i < num_turns; i++)
 	{
-		move_turn_backward_by(rev_dir, 12);
+		move_turn_backward_pid_degrees(rev_dir, 11);
 		osDelay(100);
-		move_turn_forward_by(for_dir, 11);
+		move_turn_forward_pid_degrees(for_dir, 10);
 		osDelay(100);
 	}
 }
