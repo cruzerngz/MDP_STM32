@@ -98,7 +98,7 @@ void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t 
 	uint32_t time_ticks = osKernelGetTickCount();
 
 	#ifdef MOVE_LOW_GRIP_SURFACE
-	uint32_t target = (uint32_t)dist_mm * 2 * MOVE_PID_SLIP_MULTIPLIER;
+	uint32_t target = (uint32_t)dist_mm * 2;
 	#else
 	uint32_t target = (uint32_t)dist_mm * 2;
 	#endif
@@ -193,7 +193,7 @@ void move_forward_pid_cm(uint32_t centimeters)
 // Move a specified distance using the encoder
 void move_backward_pid_cm(uint32_t centimeters)
 {
-	_move_in_direction_speed(MotorDirBackward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S, (uint32_t)centimeters * 10 * MOVE_PID_SLIP_MULTIPLIER);
+	_move_in_direction_speed(MotorDirBackward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S, (uint32_t)centimeters * 10);
 	osDelay(MOVE_PID_LOOP_PERIOD_TICKS << 2);
 
 	int32_t delta_cm = centimeters - (ENCODER_POS_DIRECTIONAL_BACKWARD[0] + ENCODER_POS_DIRECTIONAL_BACKWARD[1]) / 20;
