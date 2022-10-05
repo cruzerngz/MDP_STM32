@@ -244,7 +244,7 @@ int main(void)
   encoder_poll_roHandle = osThreadNew(encoder_poller, NULL, &encoder_poll_ro_attributes);
 
   /* creation of ir_adc_task */
-  ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
+//  ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
 
   /* creation of ir_adc_poller_t */
   ir_adc_poller_tHandle = osThreadNew(ir_adc_poller, NULL, &ir_adc_poller_t_attributes);
@@ -898,14 +898,14 @@ void movement(void *argument)
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveB\r\n", 10, HAL_MAX_DELAY);
 //                move_backward_calc(mvmt_dist);
                 move_backward_pid_cm(mvmt_dist);
-                USART3_SEND_CHAR('&'); // algo needs this to know when to send the next command
+                USART3_SEND_AMP(); // algo needs this to know when to send the next command
             }
             else if (move_dir > 0)
             {
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveF\r\n", 10, HAL_MAX_DELAY);
 //                 move_forward_calc(mvmt_dist);
                  move_forward_pid_cm(mvmt_dist);
-                 USART3_SEND_CHAR('&');
+                 USART3_SEND_AMP();
 //                move_to_obstacle();
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveOK\r\n", 10, HAL_MAX_DELAY);
             }
@@ -918,12 +918,12 @@ void movement(void *argument)
             if (move_dir < 0)
             {
                 move_turn_backward_pid_degrees(turn_dir > 0 ? MoveDirRight : MoveDirLeft, turn_angle);
-                USART3_SEND_CHAR('&');
+                USART3_SEND_AMP();
             }
             else if (move_dir > 0)
             {
                 move_turn_forward_pid_degrees(turn_dir > 0 ? MoveDirRight : MoveDirLeft, turn_angle);
-                USART3_SEND_CHAR('&');
+                USART3_SEND_AMP();
             }
 
             turn_angle = 0;
@@ -932,13 +932,13 @@ void movement(void *argument)
         if (cardinal != 0)
         {
             move_in_place_turn_cardinal(cardinal);
-            USART3_SEND_CHAR('&');
+            USART3_SEND_AMP();
             cardinal = 0;
         }
 
         if(appr_obstacle == 1) {
           move_to_obstacle();
-          USART3_SEND_CHAR('&');
+          USART3_SEND_AMP();
           appr_obstacle = 0;
         }
 
