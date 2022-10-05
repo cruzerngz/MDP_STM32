@@ -19,8 +19,9 @@
 #define SERVO_CENTERING_OFFSET 1
 
 // left and right offsets are not the same
-#define SERVO_LEFT_LIMIT 50
-#define SERVO_RIGHT_LIMIT 55
+// left and right limits give the same wheel angle
+#define SERVO_LEFT_LIMIT 44
+#define SERVO_RIGHT_LIMIT 75
 
 #define SERVO_LEFT_MAX (SERVO_CENTER - SERVO_LEFT_LIMIT)
 #define SERVO_RIGHT_MAX (SERVO_CENTER + SERVO_RIGHT_LIMIT)
