@@ -31,6 +31,7 @@
 #include "oled.h"
 #include "encoder.h"
 #include "ir_adc.h"
+#include "imu_smooth.h"
 
 /* USER CODE END Includes */
 
@@ -1107,10 +1108,13 @@ void ir_adc_poller(void *argument)
 void imu_read_routine(void *argument)
 {
   /* USER CODE BEGIN imu_read_routine */
+	static uint32_t time_ticks = 0;
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+		time_ticks = osKernelGetTickCount();
+
+    osDelay(time_ticks + IMU_POLLING_RATE_TICKS);
   }
   /* USER CODE END imu_read_routine */
 }

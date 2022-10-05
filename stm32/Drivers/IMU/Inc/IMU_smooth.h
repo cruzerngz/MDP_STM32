@@ -14,6 +14,8 @@
 //#define IMU_ENABLE_SMOOTHING
 
 
+#define IMU_POLLING_RATE_TICKS 20 // 50 hz
+
 // number of samples to take when calculating a rolling avg
 #define IMU_NUM_SAMPLES_AVG 2
 // Number of update intervals to wait before updating the rolling average
