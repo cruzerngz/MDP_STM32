@@ -193,7 +193,7 @@ void move_forward_pid_cm(uint32_t centimeters)
 // Move a specified distance using the encoder
 void move_backward_pid_cm(uint32_t centimeters)
 {
-	_move_in_direction_speed(MotorDirBackward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S, centimeters * 10);
+	_move_in_direction_speed(MotorDirBackward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S, (uint32_t)centimeters * 10 * MOVE_PID_SLIP_MULTIPLIER);
 	osDelay(MOVE_PID_LOOP_PERIOD_TICKS << 2);
 
 	int32_t delta_cm = centimeters - (ENCODER_POS_DIRECTIONAL_BACKWARD[0] + ENCODER_POS_DIRECTIONAL_BACKWARD[1]) / 20;
@@ -243,7 +243,7 @@ void move_turn_backward_pid_degrees(MoveDirection direction, uint16_t degrees) {
 
 	osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
 	uint32_t outer_dist_travelled = direction == MoveDirLeft ? ENCODER_POS_DIRECTIONAL_BACKWARD[1] : ENCODER_POS_DIRECTIONAL_BACKWARD[0];
-	uint32_t target_dist = (uint32_t)MOVE_PID_TURN_OUTER_MM_PER_DEGREE * degrees;
+	uint32_t target_dist = (uint32_t)MOVE_PID_TURN_OUTER_MM_PER_DEGREE * degrees * MOVE_PID_SLIP_MULTIPLIER;
 	int32_t delta = target_dist - outer_dist_travelled;
 	int32_t delta_deg = delta / MOVE_PID_TURN_OUTER_MM_PER_DEGREE;
 

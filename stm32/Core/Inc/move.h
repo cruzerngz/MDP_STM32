@@ -31,7 +31,7 @@
 // when turining with servo magnitude 5
 #define MOVE_PID_TURN_REDUCTION_FACTOR 0.584097859f
 #define MOVE_PID_TURN_TICKS_PER_DEGREE 34.07755365f
-#define MOVE_PID_TURN_OUTER_MM_PER_DEGREE 7.1f
+#define MOVE_PID_TURN_OUTER_MM_PER_DEGREE 7.05f
 #endif
 
 // 5.5, 16.0, 0.13 slight overshoot (no resistance on wheels)
