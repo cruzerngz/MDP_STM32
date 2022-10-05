@@ -53,6 +53,8 @@
 ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
 
+I2C_HandleTypeDef hi2c1;
+
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
@@ -109,6 +111,13 @@ const osThreadAttr_t ir_adc_poller_t_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
+/* Definitions for imu_poller */
+osThreadId_t imu_pollerHandle;
+const osThreadAttr_t imu_poller_attributes = {
+  .name = "imu_poller",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* USER CODE BEGIN PV */
 /* USER CODE END PV */
 
@@ -122,6 +131,7 @@ static void MX_USART3_UART_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_I2C1_Init(void);
 void StartDefaultTask(void *argument);
 void movement(void *argument);
 void state_machine(void *argument);
@@ -129,6 +139,7 @@ void encoder(void *argument);
 void encoder_poller(void *argument);
 void ir_adc(void *argument);
 void ir_adc_poller(void *argument);
+void imu_read_routine(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -175,6 +186,7 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_ADC1_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
     OLED_Init();
 
@@ -227,10 +239,13 @@ int main(void)
   encoder_poll_roHandle = osThreadNew(encoder_poller, NULL, &encoder_poll_ro_attributes);
 
   /* creation of ir_adc_task */
-//   ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
+  ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
 
   /* creation of ir_adc_poller_t */
   ir_adc_poller_tHandle = osThreadNew(ir_adc_poller, NULL, &ir_adc_poller_t_attributes);
+
+  /* creation of imu_poller */
+  imu_pollerHandle = osThreadNew(imu_read_routine, NULL, &imu_poller_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
     /* add threads, ... */
@@ -358,6 +373,40 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
 
 }
 
@@ -1046,6 +1095,24 @@ void ir_adc_poller(void *argument)
         osDelayUntil(ticks + IR_ADC_POLLING_RATE_TICKS);
     }
   /* USER CODE END ir_adc_poller */
+}
+
+/* USER CODE BEGIN Header_imu_read_routine */
+/**
+* @brief Function implementing the imu_poller thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_imu_read_routine */
+void imu_read_routine(void *argument)
+{
+  /* USER CODE BEGIN imu_read_routine */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END imu_read_routine */
 }
 
 /**

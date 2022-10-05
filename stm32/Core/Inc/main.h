@@ -84,6 +84,10 @@ void Error_Handler(void);
 #define PWMA_GPIO_Port GPIOC
 #define PWMB_Pin GPIO_PIN_7
 #define PWMB_GPIO_Port GPIOC
+#define IMU_SCL_Pin GPIO_PIN_6
+#define IMU_SCL_GPIO_Port GPIOB
+#define IMU_SDA_Pin GPIO_PIN_7
+#define IMU_SDA_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
