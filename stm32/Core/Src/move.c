@@ -43,48 +43,6 @@ void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t 
 
 void _move_turn(MoveDirection move_dir, MotorDirection dir, uint32_t speed_mm_s, uint32_t degrees);
 
-/**
- * Sequence of moves to visually check that the motors and servo are functioning together
- */
-void move_test_startup()
-{
-
-	// isolated moves
-	forward(MotorSpeed1);
-	stop();
-	_adjust_backward(MOTOR_ADJUST_SPEED);
-	stop();
-	osDelay(100);
-
-	backward(MotorSpeed1);
-	stop();
-	_adjust_forward(MOTOR_ADJUST_SPEED);
-	stop();
-	osDelay(100);
-
-	steer(ServoDirLeft, ServoMag1);
-	osDelay(100);
-
-	steer(ServoDirRight, ServoMag1);
-	osDelay(100);
-
-	steer_straight();
-	osDelay(300);
-
-	// combined moves
-	forward_left(MotorSpeed1, ServoDirLeft, ServoMag1);
-	osDelay(300);
-
-	backward_left(MotorSpeed1, ServoDirLeft, ServoMag1);
-	osDelay(300);
-
-	forward_right(MotorSpeed1, ServoDirRight, ServoMag1);
-	osDelay(300);
-
-	backward_right(MotorSpeed1, ServoDirRight, ServoMag1);
-	osDelay(300);
-}
-
 #define SERVO_FULL_LOCK_DELAY 300
 #define DELAY_45 2650
 #define DELAY_90 2650
@@ -363,6 +321,7 @@ void move_to_obstacle(void)
 {
 	int32_t ir_diff = 0;
 	int32_t ticks = 0;
+	MotorDirection dir;
 	do
 	{
 		ticks = osKernelGetTickCount();
@@ -370,15 +329,20 @@ void move_to_obstacle(void)
 		ir_diff = (int32_t)(1250 - IR_ADC_AVERAGE_READOUT);
 		taskEXIT_CRITICAL();
 
+		// dir = ir_diff > 0 ? MotorDirForward : MotorDirBackward;
+		// _set_motor_speed_pid(dir, MotorLeft, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S >> 1);
+		// _set_motor_speed_pid(dir, MotorRight, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S >> 1);
+
 		if (ir_diff > 0)
 		{
-			forward(MotorSpeed1);
+			motor_forward(MotorSpeed1);
 		}
 		else
 		{
-			backward(MotorSpeed1);
+			motor_backward(MotorSpeed1);
 		}
-		osDelayUntil(ticks + 25);
+		// osDelayUntil(ticks + 25);
+		osDelayUntil(ticks + MOVE_PID_LOOP_PERIOD_TICKS);
 	} while (abs(ir_diff) > 20);
 
 	motor_stop();
@@ -407,9 +371,9 @@ void _set_motor_speed_pid(MotorDirection dir, MotorSide side, uint16_t speed_mm_
 	_motor_set_pwm(dir, side, new_pwm_val);
 }
 
-_set_motor_first_pwm_val(MotorDirection dir, MotorSide side, uint16_t speed_mm_s) {
+// _set_motor_first_pwm_val(MotorDirection dir, MotorSide side, uint16_t speed_mm_s) {
 
-}
+// }
 
 /*
  * Start of hardcoded movement functions

@@ -235,10 +235,10 @@ int main(void)
   movement_taskHandle = osThreadNew(movement, NULL, &movement_task_attributes);
 
   /* creation of uart_state_mach */
-  uart_state_machHandle = osThreadNew(state_machine, NULL, &uart_state_mach_attributes);
+  // uart_state_machHandle = osThreadNew(state_machine, NULL, &uart_state_mach_attributes);
 
   /* creation of encoder_display */
-//  encoder_displayHandle = osThreadNew(encoder, NULL, &encoder_display_attributes);
+ encoder_displayHandle = osThreadNew(encoder, NULL, &encoder_display_attributes);
 
   /* creation of encoder_poll_ro */
   encoder_poll_roHandle = osThreadNew(encoder_poller, NULL, &encoder_poll_ro_attributes);
@@ -247,7 +247,7 @@ int main(void)
   // ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
 
   /* creation of ir_adc_poller_t */
-  ir_adc_poller_tHandle = osThreadNew(ir_adc_poller, NULL, &ir_adc_poller_t_attributes);
+  // ir_adc_poller_tHandle = osThreadNew(ir_adc_poller, NULL, &ir_adc_poller_t_attributes);
 
   /* creation of imu_poller */
   // imu_pollerHandle = osThreadNew(imu_read_routine, NULL, &imu_poller_attributes);
@@ -1049,29 +1049,30 @@ void ir_adc(void *argument)
     for (;;)
     {
         taskENTER_CRITICAL();
-        sprintf(
-        		buffer_ADC,
-				"%04d %04d %04d %06d %06d %06d %06d %06d %06d\r\n",
-				IR_ADC_AVERAGE_READOUT,
-				ENCODER_SPEED_DIRECTIONAL[0],
-				ENCODER_SPEED_DIRECTIONAL[1],
-        ENCODER_POS[0],
-        ENCODER_POS[1],
-        ENCODER_POS_DIRECTIONAL_FORWARD[0],
-        ENCODER_POS_DIRECTIONAL_FORWARD[1],
-        ENCODER_POS_DIRECTIONAL_BACKWARD[0],
-        ENCODER_POS_DIRECTIONAL_BACKWARD[1]
+				// IMU_GyroRead(&IMU_instance);
+        // sprintf(
+        // 		buffer_ADC,
+						// "asd\r\n"
+				// "%04d %04d %04d %06d %06d %06d %06d %06d %06d\r\n",
+				// IR_ADC_AVERAGE_READOUT,
+				// ENCODER_SPEED_DIRECTIONAL[0],
+				// ENCODER_SPEED_DIRECTIONAL[1],
+        // ENCODER_POS[0],
+        // ENCODER_POS[1],
+        // ENCODER_POS_DIRECTIONAL_FORWARD[0],
+        // ENCODER_POS_DIRECTIONAL_FORWARD[1],
+        // ENCODER_POS_DIRECTIONAL_BACKWARD[0],
+        // ENCODER_POS_DIRECTIONAL_BACKWARD[1]
 
-				// "%08d %08d\r\n",
-				// (int32_t)IMU_data.gyro[2],
-				// (int32_t) IMU_yaw
-		);
-
+				// "%.2f %.2f\r\n",
+				// IMU_instance.gyro[2],
+				// IMU_yaw
+		// );
         taskEXIT_CRITICAL();
 
         HAL_UART_Transmit(&huart3, (uint8_t *)buffer_ADC, strlen(buffer_ADC), HAL_MAX_DELAY);
 
-        osDelayUntil(ticks + IR_ADC_POLLING_RATE_TICKS);
+        osDelayUntil(ticks + 100);
     }
 
   /* USER CODE END ir_adc */
@@ -1126,7 +1127,7 @@ void imu_read_routine(void *argument)
 		IMU_Poll(&IMU_data);
 		taskEXIT_CRITICAL();
 
-    osDelay(time_ticks + IMU_POLLING_RATE_TICKS);
+    osDelayUntil(time_ticks + IMU_POLLING_RATE_TICKS);
   }
   /* USER CODE END imu_read_routine */
 }

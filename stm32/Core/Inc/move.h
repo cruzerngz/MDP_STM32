@@ -10,19 +10,19 @@
 #ifndef INC_MOVE_H_
 #define INC_MOVE_H_
 
-// #define MOVE_LOW_GRIP_SURFACE // define this to enable slippery surface constants in computation
+#define MOVE_LOW_GRIP_SURFACE // define this to enable slippery surface constants in computation
 
 // 5.5, 16.0, 0.13 slight overshoot (no resistance on wheels)
 
 #ifdef MOVE_LOW_GRIP_SURFACE // low grip surface mode, AKA the SCSE wing brick floor
 
-#define MOVE_KP 9.0f//4.0f//6.0f //4.0f
-#define MOVE_KI 30.0f//1.0f//6.0f //4.5f //40.0f
+#define MOVE_KP 7.0f//4.0f//6.0f //4.0f
+#define MOVE_KI 24.0f//1.0f//6.0f //4.5f //40.0f
 #define MOVE_KD 0.0f//0.3f //0.2f //0.13f
 
 // default speeds
-#define MOVE_DEFAULT_SPEED_STRAIGHT_MM_S 150
-#define MOVE_DEFAULT_SPEED_TURN_MM_S 100
+#define MOVE_DEFAULT_SPEED_STRAIGHT_MM_S 175
+#define MOVE_DEFAULT_SPEED_TURN_MM_S 115
 #define MOVE_PID_LOOP_PERIOD_TICKS 50 // pid refresh ticks
 
 // difference in motor speed between outside and inside wheels
