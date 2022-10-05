@@ -244,13 +244,13 @@ int main(void)
   encoder_poll_roHandle = osThreadNew(encoder_poller, NULL, &encoder_poll_ro_attributes);
 
   /* creation of ir_adc_task */
-//  ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
+  // ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
 
   /* creation of ir_adc_poller_t */
   ir_adc_poller_tHandle = osThreadNew(ir_adc_poller, NULL, &ir_adc_poller_t_attributes);
 
   /* creation of imu_poller */
-  imu_pollerHandle = osThreadNew(imu_read_routine, NULL, &imu_poller_attributes);
+  // imu_pollerHandle = osThreadNew(imu_read_routine, NULL, &imu_poller_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
     /* add threads, ... */
@@ -1061,6 +1061,10 @@ void ir_adc(void *argument)
         ENCODER_POS_DIRECTIONAL_FORWARD[1],
         ENCODER_POS_DIRECTIONAL_BACKWARD[0],
         ENCODER_POS_DIRECTIONAL_BACKWARD[1]
+
+				// "%08d %08d\r\n",
+				// (int32_t)IMU_data.gyro[2],
+				// (int32_t) IMU_yaw
 		);
 
         taskEXIT_CRITICAL();
@@ -1117,7 +1121,11 @@ void imu_read_routine(void *argument)
   for(;;)
   {
 		time_ticks = osKernelGetTickCount();
+
+		taskENTER_CRITICAL();
 		IMU_Poll(&IMU_data);
+		taskEXIT_CRITICAL();
+
     osDelay(time_ticks + IMU_POLLING_RATE_TICKS);
   }
   /* USER CODE END imu_read_routine */
