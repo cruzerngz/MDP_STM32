@@ -167,8 +167,8 @@ void _move_turn(MoveDirection move_dir, MotorDirection dir, uint32_t speed_mm_s,
 		time_ticks = osKernelGetTickCount();
 
 		taskENTER_CRITICAL();
-		_set_motor_speed_pid(dir, MotorLeft, left_motor_speed);
-		_set_motor_speed_pid(dir, MotorRight, right_motor_speed);
+		_set_motor_speed_pid(dir, MotorLeft, dir == MoveDirRight ? left_motor_speed * MOVE_OUTER_OVERDRIVE_RATIO : left_motor_speed);
+		_set_motor_speed_pid(dir, MotorRight, dir == MoveDirLeft ? right_motor_speed * MOVE_OUTER_OVERDRIVE_RATIO : right_motor_speed);
 		total_dist = *ENCODER_LEFT + *ENCODER_RIGHT;
 		taskEXIT_CRITICAL();
 
