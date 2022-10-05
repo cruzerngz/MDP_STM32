@@ -173,5 +173,6 @@ void IMU_Poll(IMUData_t *data) {
 #else
 	_icm_to_imu_data(IMU_INSTANCE, data);
 	IMU_yaw += IMU_INSTANCE->gyro[2] * (float)((curr_ticks - prev_ticks) / 1000);
+	prev_ticks = curr_ticks;
 #endif
 }
