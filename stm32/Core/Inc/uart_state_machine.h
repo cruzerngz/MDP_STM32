@@ -39,6 +39,16 @@ extern volatile int8_t FLAG_TURN_DIR;
 // 0-indexed, max 15, steps of 22.5 degrees clockwise
 extern volatile uint8_t FLAG_IN_PLACE_CARDINAL;
 
+
+// config values    
+extern volatile uint8_t FLAG_KP;
+extern volatile uint8_t FLAG_KI;
+extern volatile uint8_t FLAG_KD;
+extern volatile uint8_t FLAG_DEFAULT_SPEED_STRAIGHT;
+extern volatile uint8_t FLAG_DEFAULT_SPEED_TURN;
+
+
+
 // Testing out the state machine and movement
 typedef enum {
 	StateMachineTestForward,

@@ -30,6 +30,42 @@ typedef enum {
 	StateMachineModeSelect = '\\' // this is a single backslash
 } StateMachineDriveMode;
 
+
+/**
+ * Config mode states + substates
+ */
+typedef enum {
+	ConfigIdle,
+	ConfigPID,
+	ConfigDefaultSpeed,
+    ConfigLowGripFlag,
+
+	ConfigPIDKp,
+	ConfigPIDKi,
+	ConfigPIDKd,
+    ConfigDefaultSpeedStraight,
+    ConfigDefaultSpeedTurn,
+} ConfigStates;
+
+/**
+ * @brief Config mode commands + subcommands
+ *
+ */
+typedef enum {
+    ConfigReset = 'q',
+    ConfigK = 'k',
+    ConfigSpeed = 's',
+    ConfigLowGrip = 'g',
+
+    ConfigKp = 'p',
+    ConfigKi = 'i',
+    ConfigKd = 'd',
+    ConfigSpeedStraight = 's',
+    ConfigSpeedTurn = 't',
+    ConfigLowGripTrue = 't',
+    ConfigLowGripFalse = 'f',
+} ConfigCommands;
+
 /**
  * Fine control mode states
  */

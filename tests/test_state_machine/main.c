@@ -223,6 +223,8 @@ TEST test_config_set_kp() {
     ASSERT_EQ(state_machine_interpreter('1'), '_');
     ASSERT_EQ(state_machine_interpreter('0'), '_');
     ASSERT_EQ(state_machine_interpreter(';'), ';');
+
+    PASS();
 }
 
 /**
@@ -238,6 +240,8 @@ TEST test_config_set_ki() {
     ASSERT_EQ(state_machine_interpreter('1'), '_');
     ASSERT_EQ(state_machine_interpreter('0'), '_');
     ASSERT_EQ(state_machine_interpreter(';'), ';');
+
+    PASS();
 }
 
 /**
@@ -253,6 +257,8 @@ TEST test_config_set_kd() {
     ASSERT_EQ(state_machine_interpreter('1'), '_');
     ASSERT_EQ(state_machine_interpreter('0'), '_');
     ASSERT_EQ(state_machine_interpreter(';'), ';');
+    
+    PASS();
 }
 
 /**
@@ -269,6 +275,8 @@ TEST test_config_set_straight_speed() {
     ASSERT_EQ(state_machine_interpreter('0'), '_');
     ASSERT_EQ(state_machine_interpreter('0'), '_');
     ASSERT_EQ(state_machine_interpreter(';'), ';');
+    
+    PASS();
 }
 
 /**
@@ -285,6 +293,8 @@ TEST test_config_set_turn_speed() {
     ASSERT_EQ(state_machine_interpreter('0'), '_');
     ASSERT_EQ(state_machine_interpreter('0'), '_');
     ASSERT_EQ(state_machine_interpreter(';'), ';');
+    
+    PASS();
 }
 
 /**
@@ -297,6 +307,8 @@ TEST test_config_set_low_grip_flag() {
     ASSERT_EQ(state_machine_interpreter('c'), ';');
     ASSERT_EQ(state_machine_interpreter('g'), '.');
     ASSERT_EQ(state_machine_interpreter('t'), ';'); // t for true, f for false
+    
+    PASS();
 }
 
 /**
