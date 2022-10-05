@@ -16,8 +16,8 @@
 #define MOVE_KI 30.0f//1.0f//6.0f //4.5f //40.0f
 #define MOVE_KD 0.0f//0.3f //0.2f //0.13f
 
-#define MOVE_DEFAULT_SPEED_STRAIGHT_MM_S 200
-#define MOVE_DEFAULT_SPEED_TURN_MM_S 75
+#define MOVE_DEFAULT_SPEED_STRAIGHT_MM_S 225
+#define MOVE_DEFAULT_SPEED_TURN_MM_S 125
 #define MOVE_PID_LOOP_PERIOD_TICKS 50 // pid refresh ticks
 
 // difference in motor speed between outside and inside wheels
