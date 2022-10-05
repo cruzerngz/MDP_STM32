@@ -43,29 +43,6 @@ void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t 
 
 void _move_turn(MoveDirection move_dir, MotorDirection dir, uint32_t speed_mm_s, uint32_t degrees);
 
-void _adjust_forward(MotorSpeed speed);
-void _adjust_backward(MotorSpeed speed);
-
-/**
- * (Calibration) Adjust forward after moving backward
- */
-void _adjust_forward(MotorSpeed speed)
-{
-	//	steer(dir, mag);
-	//	osDelay(MOVE_DELAY_TICKS);
-	forward(speed);
-}
-
-/**
- * (Calibration) Adjust backward after moving forward
- */
-void _adjust_backward(MotorSpeed speed)
-{
-	//	steer(dir, mag);
-	//	osDelay(MOVE_DELAY_TICKS);
-	backward(speed);
-}
-
 /**
  * Sequence of moves to visually check that the motors and servo are functioning together
  */
@@ -106,98 +83,6 @@ void move_test_startup()
 
 	backward_right(MotorSpeed1, ServoDirRight, ServoMag1);
 	osDelay(300);
-}
-
-/**
- * Go through all motor & servo combined movements
- */
-void move_showcase()
-{
-	// TODO!
-}
-
-/** Isolated moveset functions */
-
-/**
- * (Motor only) Move forward at a specified speed
- */
-void forward(MotorSpeed speed)
-{ // assume needs calibration
-	motor_forward(speed);
-}
-
-/**
- * (Motor only) Move backward at a specified speed
- */
-void backward(MotorSpeed speed)
-{ // assume needs calibration
-	motor_backward(speed);
-}
-
-/**
- * (Motor only) Stop moving
- */
-void stop()
-{
-	motor_stop();
-}
-
-/**
- * (Servo only) Turn the wheels in a certain direction and magnitude
- */
-void steer(ServoDirection dir, ServoMagnitude mag)
-{
-	servo_point(dir, mag);
-}
-
-/**
- * (Servo only) Turn the wheels straight
- */
-void steer_straight()
-{
-	servo_point_center();
-}
-
-/** Combined moveset functions */
-
-/**
- * (Motor & servo) Turn the wheels to an angled left and move forward
- */
-void forward_left(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag)
-{
-	steer(dir, mag);
-	osDelay(MOVE_DELAY_TICKS);
-	forward(speed);
-}
-
-/**
- * (Motor & servo) Turn the wheels to an angled right and move forward
- */
-void forward_right(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag)
-{
-	steer(dir, mag);
-	osDelay(MOVE_DELAY_TICKS);
-	forward(speed);
-}
-
-/**
- * (Motor & servo) Turn the wheels to an angled left and move backward
- */
-void backward_left(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag)
-{
-	steer(dir, mag);
-	osDelay(MOVE_DELAY_TICKS);
-	backward(speed);
-}
-
-/**
- * (Motor & servo) Turn the wheels to an angled right and move backward
- */
-void backward_right(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag)
-{
-	steer(dir, mag);
-	osDelay(MOVE_DELAY_TICKS);
-	backward(speed);
 }
 
 #define SERVO_FULL_LOCK_DELAY 300

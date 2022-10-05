@@ -71,7 +71,6 @@ extern float MOTOR_INTEGRATION_SUM[2];
 
 // init and showcase functions
 void move_test_startup();
-void move_showcase();
 
 // isolated moveset functions
 void forward(MotorSpeed speed); // assume needs calibration
@@ -80,32 +79,20 @@ void steer(ServoDirection dir, ServoMagnitude mag);
 void steer_straight();
 void stop();
 
-// combined moveset functions
-void forward_left(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag);
-void forward_right(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag);
-
-void backward_left(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag);
-void backward_right(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag);
-
 // dynamic movement functions, require the use of the encoder
 void move_forward_calc(uint32_t centimeters);
 void move_backward_calc(uint32_t centimeters);
 
 void move_forward_pid_cm(uint32_t centimeters);
 void move_backward_pid_cm(uint32_t centimeters);
-void move_adjust_forward_pos_cm(uint32_t centimeters);
-void move_adjust_backward_pos_cm(uint32_t centimeters);
 
 void move_turn_forward_by(MoveDirection direction, uint16_t degrees);
 void move_turn_backward_by(MoveDirection direction, uint16_t degrees);
 
 void move_turn_forward_pid_degrees(MoveDirection direction, uint16_t degrees);
 void move_turn_backward_pid_degrees(MoveDirection direction, uint16_t degrees);
-void move_turn_forward_adjust_pos_degrees(MoveDirection direction, uint16_t degrees);
-void move_turn_backward_adjust_pos_degrees(MoveDirection direction, uint16_t degrees);
 
 void move_in_place_turn_by(MoveDirection direction, uint16_t degrees);
-
 void move_in_place_turn_cardinal(uint8_t cardinal_direction);
 
 void move_to_obstacle(void);
@@ -124,11 +111,5 @@ void move_hard_right_45();
 void move_hard_right_90();
 void move_hard_right_135();
 void move_hard_right_180();
-
-// calibration functions for forward() and backward()
-// maybe make these private functions?
-//void adjust_forward(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag);
-//void adjust_backward(MotorSpeed speed, ServoDirection dir, ServoMagnitude mag);
-
 
 #endif /* INC_MOVE_H_ */
