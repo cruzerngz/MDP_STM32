@@ -410,17 +410,17 @@ uint8_t _toy_car_interpreter(uint8_t command) {
 uint8_t _toy_car_interpreter_drive(uint8_t command) {
 	switch(command) {
 	case ToyCarMoveForward:
-		forward(GLOBAL_TOY_CAR_SPEED);
+		motor_forward(GLOBAL_TOY_CAR_SPEED);
 		return StateMachineFullAck;
 		break;
 
 	case ToyCarMoveBackward:
-		backward(GLOBAL_TOY_CAR_SPEED);
+		motor_backward(GLOBAL_TOY_CAR_SPEED);
 		return StateMachineFullAck;
 		break;
 
 	case ToyCarMoveStop:
-		stop();
+		motor_stop();
 		return StateMachineFullAck;
 		break;
 
@@ -435,7 +435,7 @@ uint8_t _toy_car_interpreter_drive(uint8_t command) {
 		break;
 
 	case ToyCarMoveWheelsCenter:
-		steer_straight();
+		servo_point_center();
 		return StateMachineFullAck;
 		break;
 
