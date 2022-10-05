@@ -358,48 +358,14 @@ void move_backward_pid_cm(uint32_t centimeters)
 	else if(delta_cm > 0) _move_in_direction_speed(MotorDirBackward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S >> 1, delta_cm * 10); //move_adjust_forward_pos_cm(delta_cm);
 }
 
-// Turn at a slower speed, for more precise control
-void move_turn_forward_adjust_pos_degrees(MoveDirection direction, uint16_t degrees) {
-
-}
-
-// Turn at a slower speed, for more precise control
-void move_turn_backward_adjust_pos_degrees(MoveDirection direction, uint16_t degrees) {
-
-}
-
-/*
+/**
  * @brief Uses servo mag 5 for turns (slightly tighter than previous implementation)
  * Turning circle (inner wheel to inner wheel, 180 degrees) approx 46cm
  * @param direction
  * @param degrees
  */
 void move_turn_forward_pid_degrees(MoveDirection direction, uint16_t degrees) {
-	uint32_t time_ticks = osKernelGetTickCount();
-	uint32_t start_ticks = time_ticks;
-	uint32_t target_ticks = start_ticks + (uint32_t) degrees * MOVE_PID_TURN_TICKS_PER_DEGREE;
-	uint32_t target_dist_mm = degrees * MOVE_PID_TURN_OUTER_MM_PER_DEGREE * (1 + MOVE_PID_TURN_REDUCTION_FACTOR);
-
-	uint16_t left_motor_speed = direction == MoveDirLeft ? MOVE_DEFAULT_SPEED_TURN_MM_S * MOVE_PID_TURN_REDUCTION_FACTOR : MOVE_DEFAULT_SPEED_TURN_MM_S;
-	uint16_t right_motor_speed = direction == MoveDirRight ? MOVE_DEFAULT_SPEED_TURN_MM_S * MOVE_PID_TURN_REDUCTION_FACTOR : MOVE_DEFAULT_SPEED_TURN_MM_S;
-	_pid_reset(time_ticks);
-	encoder_reset_counters_forward();
-
-	servo_point(direction, ServoMag5);
-	osDelay(SERVO_FULL_LOCK_DELAY);
-
-	do {
-		time_ticks = osKernelGetTickCount();
-
-		taskENTER_CRITICAL();
-		_set_motor_speed_pid(MotorDirForward, MotorLeft, left_motor_speed);
-		_set_motor_speed_pid(MotorDirForward, MotorRight, right_motor_speed);
-		taskEXIT_CRITICAL();
-
-		osDelayUntil(time_ticks + MOVE_PID_LOOP_PERIOD_TICKS);
-	} while((ENCODER_POS_DIRECTIONAL_FORWARD[0] + ENCODER_POS_DIRECTIONAL_FORWARD[1]) < target_dist_mm);
-
-	motor_stop();
+	_move_turn(direction, MotorDirForward, MOVE_DEFAULT_SPEED_TURN_MM_S, degrees);
 	servo_point_center();
 }
 
@@ -410,31 +376,7 @@ void move_turn_forward_pid_degrees(MoveDirection direction, uint16_t degrees) {
  * @param degrees
  */
 void move_turn_backward_pid_degrees(MoveDirection direction, uint16_t degrees) {
-	uint32_t time_ticks = osKernelGetTickCount();
-	uint32_t start_ticks = time_ticks;
-	uint32_t target_ticks = start_ticks + (uint32_t) degrees * MOVE_PID_TURN_TICKS_PER_DEGREE;
-	uint32_t target_dist_mm = degrees * MOVE_PID_TURN_OUTER_MM_PER_DEGREE * (1 + MOVE_PID_TURN_REDUCTION_FACTOR);
-
-	uint16_t left_motor_speed = direction == MoveDirLeft ? MOVE_DEFAULT_SPEED_TURN_MM_S * MOVE_PID_TURN_REDUCTION_FACTOR : MOVE_DEFAULT_SPEED_TURN_MM_S;
-	uint16_t right_motor_speed = direction == MoveDirRight ? MOVE_DEFAULT_SPEED_TURN_MM_S * MOVE_PID_TURN_REDUCTION_FACTOR : MOVE_DEFAULT_SPEED_TURN_MM_S;
-	_pid_reset(time_ticks);
-	encoder_reset_counters_backward();
-
-	servo_point(direction, ServoMag5);
-	osDelay(SERVO_FULL_LOCK_DELAY);
-
-	do {
-		time_ticks = osKernelGetTickCount();
-
-		taskENTER_CRITICAL();
-		_set_motor_speed_pid(MotorDirBackward, MotorLeft, left_motor_speed);
-		_set_motor_speed_pid(MotorDirBackward, MotorRight, right_motor_speed);
-		taskEXIT_CRITICAL();
-
-		osDelayUntil(time_ticks + MOVE_PID_LOOP_PERIOD_TICKS);
-	} while((ENCODER_POS_DIRECTIONAL_BACKWARD[0] + ENCODER_POS_DIRECTIONAL_BACKWARD[1]) < target_dist_mm * MOVE_PID_BACKWARD_MULITPLIER);
-
-	motor_stop();
+	_move_turn(direction, MotorDirBackward, MOVE_DEFAULT_SPEED_TURN_MM_S, degrees);
 	servo_point_center();
 }
 
