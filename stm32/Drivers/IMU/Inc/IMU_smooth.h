@@ -34,8 +34,10 @@ typedef struct {
 	float temp_C;
 } IMUData_t;
 
+extern float IMU_yaw;
 
 void IMU_S_Initialise(ICM20948 *dev, I2C_HandleTypeDef *i2cHandle, UART_HandleTypeDef *uart);
+void IMU_reset_yaw();
 void IMU_Poll(IMUData_t *data);
 
 

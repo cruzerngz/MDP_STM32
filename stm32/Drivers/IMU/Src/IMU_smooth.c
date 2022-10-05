@@ -8,7 +8,10 @@
 #include "math.h"
 #include "IMU_smooth.h"
 #include "stm32f4xx_hal.h"
+#include "cmsis_os.h"
 
+float IMU_yaw = 0.0f;
+static uint32_t prev_ticks = 0;
 
 static ICM20948 *IMU_INSTANCE = NULL;
 IMUData_t IMU_QUEUE[IMU_NUM_SAMPLES_AVG] = {0};
@@ -135,11 +138,17 @@ void IMU_S_Initialise(ICM20948 *dev, I2C_HandleTypeDef *i2cHandle, UART_HandleTy
 	}
 }
 
+void IMU_reset_yaw() {
+	IMU_yaw = 0.0f;
+}
+
 /**
  * Main function of this translation unit.
  * Returns the average IMU readings inside a custom struct
  */
 void IMU_Poll(IMUData_t *data) {
+	static curr_ticks = 0;
+	curr_ticks = osKernelGetTickCount();
 	IMU_ReadAll(IMU_INSTANCE);
 
 #ifdef IMU_ENABLE_SMOOTHING
@@ -163,5 +172,6 @@ void IMU_Poll(IMUData_t *data) {
 
 #else
 	_icm_to_imu_data(IMU_INSTANCE, data);
+	IMU_yaw += IMU_INSTANCE->gyro[2] * (float)((curr_ticks - prev_ticks) / 1000);
 #endif
 }
