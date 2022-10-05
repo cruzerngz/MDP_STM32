@@ -120,6 +120,10 @@ const osThreadAttr_t imu_poller_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE BEGIN PV */
+
+static ICM20948 IMU_instance = {0};
+static IMUData_t IMU_data = {0};
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -200,8 +204,8 @@ int main(void)
     motor_init_gpio_right(GPIOA, BIN1_Pin, BIN2_Pin);
     motor_stop();
     servo_init(&htim1, TIM_CHANNEL_4);
-
     encoder_init(&htim2, &htim3, TIM_CHANNEL_ALL, TIM_CHANNEL_ALL);
+		IMU_S_Initialise(&IMU_instance, &hi2c1, &huart3);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -1113,7 +1117,7 @@ void imu_read_routine(void *argument)
   for(;;)
   {
 		time_ticks = osKernelGetTickCount();
-
+		IMU_Poll(&IMU_data);
     osDelay(time_ticks + IMU_POLLING_RATE_TICKS);
   }
   /* USER CODE END imu_read_routine */
