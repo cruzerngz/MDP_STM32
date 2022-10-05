@@ -54,7 +54,9 @@ static float MOTOR_PREV_TICKS[2] = {0.0f}; // pid global
 
 // private function prototypes
 void _pid_reset(uint32_t time_ticks);
-void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t centimeters);
+void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t dist_mm);
+
+void _move_turn(MoveDirection move_dir, MotorDirection dir, uint32_t speed_mm_s, uint32_t dist_mm);
 
 void _adjust_forward(MotorSpeed speed);
 void _adjust_backward(MotorSpeed speed);
@@ -261,6 +263,45 @@ void _pid_reset(uint32_t time_ticks) {
 	MOTOR_PREV_TICKS[0] = time_ticks;
 	MOTOR_PREV_TICKS[1] = time_ticks;
 }
+
+// Internal move function
+void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t dist_mm) {
+	servo_point_center();
+	uint32_t time_ticks = osKernelGetTickCount();
+	uint32_t target = dist_mm * 20;
+	volatile uint32_t *ENCODER_LEFT;
+	volatile uint32_t *ENCODER_RIGHT;
+
+	_pid_reset(time_ticks);
+	if(dir == MotorDirForward) {
+		encoder_reset_counters_forward();
+		ENCODER_LEFT = ENCODER_POS_DIRECTIONAL_FORWARD;
+		ENCODER_RIGHT = ENCODER_POS_DIRECTIONAL_FORWARD + 1;
+	}
+	if(dir == MotorDirBackward) {
+		encoder_reset_counters_backward();
+		ENCODER_LEFT = ENCODER_POS_DIRECTIONAL_BACKWARD;
+		ENCODER_RIGHT = ENCODER_POS_DIRECTIONAL_BACKWARD + 1;
+	}
+
+	do {
+		time_ticks = osKernelGetTickCount();
+
+		taskENTER_CRITICAL();
+		_set_motor_speed_pid(dir, MotorLeft, speed_mm_s);
+		_set_motor_speed_pid(dir, MotorRight, speed_mm_s);
+		taskEXIT_CRITICAL();
+		osDelayUntil(time_ticks + MOVE_PID_LOOP_PERIOD_TICKS);
+	} while(((*ENCODER_LEFT + *ENCODER_RIGHT)) < target); // while still in delay loop
+
+	motor_stop();
+}
+
+// Internal turn function
+void _move_turn(MoveDirection move_dir, MotorDirection dir, uint32_t speed_mm_s, uint32_t dist_mm) {
+
+}
+
 
 // Move a specified distance using the encoder
 void move_forward_pid_cm(uint32_t centimeters)
