@@ -24,7 +24,7 @@
 // when turining with servo magnitude 5
 #define MOVE_PID_TURN_REDUCTION_FACTOR 0.584097859f
 #define MOVE_PID_TURN_TICKS_PER_DEGREE 34.07755365f
-#define MOVE_PID_TURN_OUTER_MM_PER_DEGREE 7.266666666666f
+#define MOVE_PID_TURN_OUTER_MM_PER_DEGREE 7.06666666666f
 
 // multiplier for turning backwards, to account for wheel slip
 #define MOVE_PID_BACKWARD_MULITPLIER 1.02f

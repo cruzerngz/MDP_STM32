@@ -15,6 +15,7 @@
 #include "motor.h"
 #include "ir_adc.h"
 #include "encoder.h"
+#include "IMU_smooth.h"
 
 // private macros
 #define MOVE_DELAY_TICKS 100
@@ -365,7 +366,27 @@ void move_backward_pid_cm(uint32_t centimeters)
  * @param degrees
  */
 void move_turn_forward_pid_degrees(MoveDirection direction, uint16_t degrees) {
+	// IMU_reset_yaw();
 	_move_turn(direction, MotorDirForward, MOVE_DEFAULT_SPEED_TURN_MM_S, degrees);
+
+	osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
+
+	uint32_t outer_dist_travelled = direction == MoveDirLeft ? ENCODER_POS_DIRECTIONAL_FORWARD[1] : ENCODER_POS_DIRECTIONAL_FORWARD[0];
+	uint32_t target_dist = (uint32_t)MOVE_PID_TURN_OUTER_MM_PER_DEGREE * degrees;
+
+	int32_t delta = target_dist - outer_dist_travelled;
+	int32_t delta_deg = delta / MOVE_PID_TURN_OUTER_MM_PER_DEGREE;
+
+
+
+	// int32_t delta = (uint32_t) degrees - fabs(IMU_yaw);
+	if(delta > 0) {
+		_move_turn(direction, MotorDirForward, MOVE_DEFAULT_SPEED_TURN_MM_S >> 1, delta_deg);
+	}
+	if(delta < 0) {
+		_move_turn(direction, MotorDirBackward, MOVE_DEFAULT_SPEED_TURN_MM_S >> 1, abs(delta_deg));
+	}
+
 	servo_point_center();
 }
 
@@ -377,6 +398,20 @@ void move_turn_forward_pid_degrees(MoveDirection direction, uint16_t degrees) {
  */
 void move_turn_backward_pid_degrees(MoveDirection direction, uint16_t degrees) {
 	_move_turn(direction, MotorDirBackward, MOVE_DEFAULT_SPEED_TURN_MM_S, degrees);
+
+	osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
+	uint32_t outer_dist_travelled = direction == MoveDirLeft ? ENCODER_POS_DIRECTIONAL_BACKWARD[1] : ENCODER_POS_DIRECTIONAL_BACKWARD[0];
+	uint32_t target_dist = (uint32_t)MOVE_PID_TURN_OUTER_MM_PER_DEGREE * degrees;
+	int32_t delta = target_dist - outer_dist_travelled;
+	int32_t delta_deg = delta / MOVE_PID_TURN_OUTER_MM_PER_DEGREE;
+
+	// int32_t delta = (uint32_t) degrees - fabs(IMU_yaw);
+	if(delta > 0) {
+		_move_turn(direction, MotorDirBackward, MOVE_DEFAULT_SPEED_TURN_MM_S >> 1, delta_deg);
+	}
+	if(delta < 0) {
+		_move_turn(direction, MotorDirForward, MOVE_DEFAULT_SPEED_TURN_MM_S >> 1, abs(delta_deg));
+	}
 	servo_point_center();
 }
 
@@ -426,9 +461,9 @@ void move_in_place_turn_cardinal(uint8_t cardinal_direction)
 	MoveDirection for_dir = clockwise ? MoveDirRight : MoveDirLeft;
 	for (uint8_t i = 0; i < num_turns; i++)
 	{
-		move_turn_backward_pid_degrees(rev_dir, 11);
+		move_turn_backward_pid_degrees(rev_dir, 12);
 		osDelay(100);
-		move_turn_forward_pid_degrees(for_dir, 10);
+		move_turn_forward_pid_degrees(for_dir, 11);
 		osDelay(100);
 	}
 }
