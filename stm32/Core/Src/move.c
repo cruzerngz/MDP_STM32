@@ -37,22 +37,6 @@ float MOTOR_INTEGRATION_SUM[2] = {0.0f}; // pid global
 static float MOTOR_PREV_ERROR[2] = {0.0f}; // pid global
 static float MOTOR_PREV_TICKS[2] = {0.0f}; // pid global
 
-
-// /*
-//  * Global struct containing the current effector states
-//  */
-// static struct global_state
-// {
-//     uint32_t servo;
-//     uint32_t motor_left;
-//     uint32_t motor_right;
-// } GLOBAL_EFFECTOR_STATE = {
-//     .servo = SERVO_CENTER, // move SERVO_CENTER out of private namespace and use it here
-//     .motor_left = 0,
-//     .motor_right = 0};
-
-
-
 // private function prototypes
 void _pid_reset(uint32_t time_ticks);
 void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t dist_mm);
@@ -269,9 +253,16 @@ void _pid_reset(uint32_t time_ticks) {
 void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t dist_mm) {
 	servo_point_center();
 	uint32_t time_ticks = osKernelGetTickCount();
-	uint32_t target = dist_mm * 2;
+
+	#ifdef MOVE_LOW_GRIP_SURFACE
+	uint32_t target = (uint32_t)dist_mm * 2 * MOVE_PID_SLIP_MULTIPLIER;
+	#else
+	uint32_t target = (uint32_t)dist_mm * 2;
+	#endif
+
 	volatile uint32_t *ENCODER_LEFT;
 	volatile uint32_t *ENCODER_RIGHT;
+	uint32_t total_dist = 0;
 
 	_pid_reset(time_ticks);
 	if(dir == MotorDirForward) {
@@ -291,9 +282,10 @@ void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t 
 		taskENTER_CRITICAL();
 		_set_motor_speed_pid(dir, MotorLeft, speed_mm_s);
 		_set_motor_speed_pid(dir, MotorRight, speed_mm_s);
+		total_dist = *ENCODER_LEFT + *ENCODER_RIGHT;
 		taskEXIT_CRITICAL();
 		osDelayUntil(time_ticks + MOVE_PID_LOOP_PERIOD_TICKS);
-	} while(((*ENCODER_LEFT + *ENCODER_RIGHT)) < target); // while still in delay loop
+	} while(total_dist < target); // while still in delay loop
 
 	motor_stop();
 }
@@ -302,11 +294,17 @@ void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t 
 void _move_turn(MoveDirection move_dir, MotorDirection dir, uint32_t speed_mm_s, uint32_t degrees) {
 	servo_point(move_dir, ServoMag5);
 	uint32_t time_ticks = osKernelGetTickCount();
+	#ifdef MOVE_LOW_GRIP_SURFACE
+	uint32_t target_dist_mm = degrees * MOVE_PID_TURN_OUTER_MM_PER_DEGREE * (1 + MOVE_PID_TURN_REDUCTION_FACTOR) * MOVE_PID_SLIP_MULTIPLIER;
+	#else
 	uint32_t target_dist_mm = degrees * MOVE_PID_TURN_OUTER_MM_PER_DEGREE * (1 + MOVE_PID_TURN_REDUCTION_FACTOR);
+
+	#endif
 	uint16_t left_motor_speed = move_dir == MoveDirLeft ? MOVE_DEFAULT_SPEED_TURN_MM_S * MOVE_PID_TURN_REDUCTION_FACTOR : MOVE_DEFAULT_SPEED_TURN_MM_S;
 	uint16_t right_motor_speed = move_dir == MoveDirRight ? MOVE_DEFAULT_SPEED_TURN_MM_S * MOVE_PID_TURN_REDUCTION_FACTOR : MOVE_DEFAULT_SPEED_TURN_MM_S;
 	volatile uint32_t *ENCODER_LEFT;
 	volatile uint32_t *ENCODER_RIGHT;
+	uint32_t total_dist = 0;
 
 	_pid_reset(time_ticks);
 	if(dir == MotorDirForward) {
@@ -328,10 +326,11 @@ void _move_turn(MoveDirection move_dir, MotorDirection dir, uint32_t speed_mm_s,
 		taskENTER_CRITICAL();
 		_set_motor_speed_pid(dir, MotorLeft, left_motor_speed);
 		_set_motor_speed_pid(dir, MotorRight, right_motor_speed);
+		total_dist = *ENCODER_LEFT + *ENCODER_RIGHT;
 		taskEXIT_CRITICAL();
 
 		osDelayUntil(time_ticks + MOVE_PID_LOOP_PERIOD_TICKS);
-	} while((*ENCODER_LEFT + *ENCODER_RIGHT) < target_dist_mm);
+	} while(total_dist < target_dist_mm);
 
 	motor_stop();
 }
@@ -459,13 +458,18 @@ void move_in_place_turn_cardinal(uint8_t cardinal_direction)
 
 	MoveDirection rev_dir = clockwise ? MoveDirLeft : MoveDirRight;
 	MoveDirection for_dir = clockwise ? MoveDirRight : MoveDirLeft;
+
+	if(cardinal_direction == 4 || cardinal_direction == 12) move_forward_pid_cm(20);
+
 	for (uint8_t i = 0; i < num_turns; i++)
 	{
-		move_turn_backward_pid_degrees(rev_dir, 12);
-		osDelay(100);
+		move_turn_backward_pid_degrees(rev_dir, 11);
+		osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
 		move_turn_forward_pid_degrees(for_dir, 11);
-		osDelay(100);
+		osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
 	}
+
+	if(cardinal_direction == 4 || cardinal_direction == 12) move_backward_pid_cm(10);
 }
 
 // Move to minimum forward clearance from obstacle
@@ -518,6 +522,9 @@ void _set_motor_speed_pid(MotorDirection dir, MotorSide side, uint16_t speed_mm_
 	_motor_set_pwm(dir, side, new_pwm_val);
 }
 
+_set_motor_first_pwm_val(MotorDirection dir, MotorSide side, uint16_t speed_mm_s) {
+
+}
 
 /*
  * Start of hardcoded movement functions

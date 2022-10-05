@@ -229,7 +229,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+//  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of movement_task */
   movement_taskHandle = osThreadNew(movement, NULL, &movement_task_attributes);
@@ -238,7 +238,7 @@ int main(void)
   uart_state_machHandle = osThreadNew(state_machine, NULL, &uart_state_mach_attributes);
 
   /* creation of encoder_display */
-  encoder_displayHandle = osThreadNew(encoder, NULL, &encoder_display_attributes);
+//  encoder_displayHandle = osThreadNew(encoder, NULL, &encoder_display_attributes);
 
   /* creation of encoder_poll_ro */
   encoder_poll_roHandle = osThreadNew(encoder_poller, NULL, &encoder_poll_ro_attributes);
