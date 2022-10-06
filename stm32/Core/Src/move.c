@@ -43,7 +43,7 @@ void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t 
 
 void _move_turn(MoveDirection move_dir, MotorDirection dir, uint32_t speed_mm_s, uint32_t degrees);
 
-#define SERVO_FULL_LOCK_DELAY 400
+#define SERVO_FULL_LOCK_DELAY 450
 #define DELAY_45 2650
 #define DELAY_90 2650
 #define DELAY_135 4500
@@ -99,9 +99,9 @@ void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t 
 	if(dist_mm < 100) speed_mm_s = speed_mm_s >> 1; // reduce speed for slow runs
 
 	#ifdef MOVE_LOW_GRIP_SURFACE
-	uint32_t target = (uint32_t)dist_mm * 2;
+	uint32_t target = (uint32_t)dist_mm;
 	#else
-	uint32_t target = (uint32_t)dist_mm * 2;
+	uint32_t target = (uint32_t)dist_mm;
 	#endif
 
 	volatile uint32_t *ENCODER_LEFT;
@@ -124,9 +124,9 @@ void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t 
 		time_ticks = osKernelGetTickCount();
 
 		taskENTER_CRITICAL();
-		_set_motor_speed_pid(dir, MotorLeft, speed_mm_s);
+		_set_motor_speed_pid(dir, MotorLeft, (uint32_t)speed_mm_s * MOVE_LEFT_MOTOR_MULTIPLIER);
 		_set_motor_speed_pid(dir, MotorRight, speed_mm_s);
-		total_dist = *ENCODER_LEFT + *ENCODER_RIGHT;
+		total_dist = (*ENCODER_LEFT + *ENCODER_RIGHT) >> 1;
 		taskEXIT_CRITICAL();
 		osDelayUntil(time_ticks + MOVE_PID_LOOP_PERIOD_TICKS);
 	} while(total_dist < target); // while still in delay loop
@@ -305,7 +305,7 @@ void move_in_place_turn_cardinal(uint8_t cardinal_direction)
 	MoveDirection for_dir = clockwise ? MoveDirRight : MoveDirLeft;
 
 	if(cardinal_direction == 4 || cardinal_direction == 12) {
-        move_forward_pid_cm(17);
+        move_forward_pid_cm(25);
         // move_forward_pid_cm(5);
 		osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
 

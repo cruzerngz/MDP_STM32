@@ -10,11 +10,12 @@
 #ifndef INC_MOVE_H_
 #define INC_MOVE_H_
 
-// #define MOVE_LOW_GRIP_SURFACE // define this to enable slippery surface constants in computation
-// #define MOVE_MAX_TURN // define this to enable tighter turns (as tight as the servo allows) TODO
+#define MOVE_LOW_GRIP_SURFACE // define this to enable slippery surface constants in computation
+#define MOVE_MAX_TURN // define this to enable tighter turns (as tight as the servo allows) TODO
 // #define MOVE_TURN_OVERDRIVE // define this to enable even tighter turns, uses the outer wheel TODO
 
-
+// small overdrive for left motor
+#define MOVE_LEFT_MOTOR_MULTIPLIER 1.025f
 
 #ifdef MOVE_TURN_OVERDRIVE
 #define MOVE_OUTER_OVERDRIVE_RATIO 1.2f
@@ -23,15 +24,15 @@
 #endif
 
 #ifdef MOVE_MAX_TURN
-#define MOVE_PID_TURN_REDUCTION_FACTOR 0.52326685f
+#define MOVE_PID_TURN_REDUCTION_FACTOR 0.525f
 // #define MOVE_PID_TURN_TICKS_PER_DEGREE 34.07755365f
-#define MOVE_PID_TURN_OUTER_MM_PER_DEGREE 6.79f
+#define MOVE_PID_TURN_OUTER_MM_PER_DEGREE 6.75f
 #else
 // difference in motor speed between outside and inside wheels
 // when turining with servo magnitude 5
 #define MOVE_PID_TURN_REDUCTION_FACTOR 0.58897f
 #define MOVE_PID_TURN_TICKS_PER_DEGREE 34.07755365f
-#define MOVE_PID_TURN_OUTER_MM_PER_DEGREE 7.05f
+#define MOVE_PID_TURN_OUTER_MM_PER_DEGREE 7.07f
 #define MOVE_PID_INNER_WHEEL_UNDERDRIVE 0.9f
 #define MOVE_PID_OUTER_WHEEL_OVERDRIVE 1.11f
 #endif
@@ -41,17 +42,17 @@
 #ifdef MOVE_LOW_GRIP_SURFACE // low grip surface mode, AKA the SCSE wing brick floor
 
 #define MOVE_KP 7.0f//4.0f//6.0f //4.0f
-#define MOVE_KI 24.0f//1.0f//6.0f //4.5f //40.0f
+#define MOVE_KI 18.0f//1.0f//6.0f //4.5f //40.0f
 #define MOVE_KD 0.0f//0.3f //0.2f //0.13f
 
 // default speeds
-#define MOVE_DEFAULT_SPEED_STRAIGHT_MM_S 175
-#define MOVE_DEFAULT_SPEED_TURN_MM_S 115
+#define MOVE_DEFAULT_SPEED_STRAIGHT_MM_S 200
+#define MOVE_DEFAULT_SPEED_TURN_MM_S 150
 #define MOVE_PID_LOOP_PERIOD_TICKS 50 // pid refresh ticks
 
 // multiplier for turning backwards, to account for wheel slip
-#define MOVE_PID_SLIP_MULTIPLIER 1.0255f
-#define MOVE_REVERSE_MULTIPLIER 1.01f
+#define MOVE_PID_SLIP_MULTIPLIER 1.0f //1.0255f
+#define MOVE_REVERSE_MULTIPLIER 1.1f //1.01f
 
 #else
 
@@ -61,7 +62,7 @@
 
 // default speeds
 #define MOVE_DEFAULT_SPEED_STRAIGHT_MM_S 275
-#define MOVE_DEFAULT_SPEED_TURN_MM_S 250
+#define MOVE_DEFAULT_SPEED_TURN_MM_S 225
 #define MOVE_PID_LOOP_PERIOD_TICKS 50 // pid refresh ticks
 
 // multiplier for turning backwards, to account for wheel slip

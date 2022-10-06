@@ -195,6 +195,15 @@ void servo_point_center() {
 	case ServoDirCenter:
 		*SERVO_PWM_REGISTER = SERVO_CENTER;
 	}
+
+	// // testing
+	// HAL_Delay(25);
+	// *SERVO_PWM_REGISTER = SERVO_CENTER + 5;
+	// HAL_Delay(25);
+	// *SERVO_PWM_REGISTER = SERVO_CENTER - 5;
+	// HAL_Delay(25);
+	// *SERVO_PWM_REGISTER = SERVO_CENTER;
+
 	SERVO_CURR_DIR = ServoDirCenter;
 //	*SERVO_PWM_REGISTER = SERVO_CENTER;
 }
