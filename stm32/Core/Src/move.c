@@ -302,7 +302,31 @@ void move_in_place_turn_cardinal(uint8_t cardinal_direction)
 	MoveDirection rev_dir = clockwise ? MoveDirLeft : MoveDirRight;
 	MoveDirection for_dir = clockwise ? MoveDirRight : MoveDirLeft;
 
-	if(cardinal_direction == 4 || cardinal_direction == 12) move_forward_pid_cm(20);
+	if(cardinal_direction == 4 || cardinal_direction == 12) {
+        // move_forward_pid_cm(20);
+        move_forward_pid_cm(5);
+
+        for (uint8_t i = 0; i < 2; i++)
+        {
+            move_turn_backward_pid_degrees(rev_dir, 11);
+            osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
+            move_turn_forward_pid_degrees(for_dir, 11);
+            osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
+        }
+
+        move_forward_pid_cm(10);
+
+        for (uint8_t i = 0; i < 2; i++)
+        {
+            move_turn_backward_pid_degrees(rev_dir, 11);
+            osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
+            move_turn_forward_pid_degrees(for_dir, 11);
+            osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
+        }
+
+        move_backward_pid_cm(20);
+        return;
+    }
 
 	for (uint8_t i = 0; i < num_turns; i++)
 	{
@@ -312,7 +336,7 @@ void move_in_place_turn_cardinal(uint8_t cardinal_direction)
 		osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
 	}
 
-	if(cardinal_direction == 4 || cardinal_direction == 12) move_backward_pid_cm(10);
+	// if(cardinal_direction == 4 || cardinal_direction == 12) move_backward_pid_cm(10);
 }
 
 // Move to minimum forward clearance from obstacle

@@ -10,7 +10,7 @@
 #ifndef INC_MOVE_H_
 #define INC_MOVE_H_
 
-#define MOVE_LOW_GRIP_SURFACE // define this to enable slippery surface constants in computation
+// #define MOVE_LOW_GRIP_SURFACE // define this to enable slippery surface constants in computation
 // #define MOVE_MAX_TURN // define this to enable tighter turns (as tight as the servo allows) TODO
 // #define MOVE_TURN_OVERDRIVE // define this to enable even tighter turns, uses the outer wheel TODO
 
