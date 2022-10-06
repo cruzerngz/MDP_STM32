@@ -233,25 +233,25 @@ int main(void)
 //  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of movement_task */
-  // movement_taskHandle = osThreadNew(movement, NULL, &movement_task_attributes);
+  movement_taskHandle = osThreadNew(movement, NULL, &movement_task_attributes);
 
   /* creation of uart_state_mach */
   // uart_state_machHandle = osThreadNew(state_machine, NULL, &uart_state_mach_attributes);
 
   /* creation of encoder_display */
-//  encoder_displayHandle = osThreadNew(encoder, NULL, &encoder_display_attributes);
+ encoder_displayHandle = osThreadNew(encoder, NULL, &encoder_display_attributes);
 
   /* creation of encoder_poll_ro */
-  // encoder_poll_roHandle = osThreadNew(encoder_poller, NULL, &encoder_poll_ro_attributes);
+  encoder_poll_roHandle = osThreadNew(encoder_poller, NULL, &encoder_poll_ro_attributes);
 
   /* creation of ir_adc_task */
-  ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
+  // ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
 
   /* creation of ir_adc_poller_t */
   // ir_adc_poller_tHandle = osThreadNew(ir_adc_poller, NULL, &ir_adc_poller_t_attributes);
 
   /* creation of imu_poller */
-  imu_pollerHandle = osThreadNew(imu_read_routine, NULL, &imu_poller_attributes);
+  // imu_pollerHandle = osThreadNew(imu_read_routine, NULL, &imu_poller_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
     /* add threads, ... */

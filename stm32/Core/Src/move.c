@@ -43,7 +43,7 @@ void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t 
 
 void _move_turn(MoveDirection move_dir, MotorDirection dir, uint32_t speed_mm_s, uint32_t degrees);
 
-#define SERVO_FULL_LOCK_DELAY 300
+#define SERVO_FULL_LOCK_DELAY 400
 #define DELAY_45 2650
 #define DELAY_90 2650
 #define DELAY_135 4500
@@ -305,28 +305,31 @@ void move_in_place_turn_cardinal(uint8_t cardinal_direction)
 	MoveDirection for_dir = clockwise ? MoveDirRight : MoveDirLeft;
 
 	if(cardinal_direction == 4 || cardinal_direction == 12) {
-        // move_forward_pid_cm(20);
-        move_forward_pid_cm(5);
+        move_forward_pid_cm(17);
+        // move_forward_pid_cm(5);
+		osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
 
         for (uint8_t i = 0; i < 2; i++)
         {
-            move_turn_backward_pid_degrees(rev_dir, 11);
+            move_turn_backward_pid_degrees(rev_dir, 22);
             osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
-            move_turn_forward_pid_degrees(for_dir, 11);
+            move_turn_forward_pid_degrees(for_dir, 22);
             osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
         }
 
-        move_forward_pid_cm(10);
+        // move_forward_pid_cm(10);
+		// osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
 
-        for (uint8_t i = 0; i < 2; i++)
-        {
-            move_turn_backward_pid_degrees(rev_dir, 11);
-            osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
-            move_turn_forward_pid_degrees(for_dir, 11);
-            osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
-        }
+        // for (uint8_t i = 0; i < 2; i++)
+        // {
+        //     move_turn_backward_pid_degrees(rev_dir, 11);
+        //     osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
+        //     move_turn_forward_pid_degrees(for_dir, 11);
+        //     osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
+        // }
 
         move_backward_pid_cm(20);
+		// osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
         return;
     }
 

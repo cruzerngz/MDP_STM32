@@ -60,8 +60,8 @@
 #define MOVE_KD 0.0f//0.3f //0.2f //0.13f
 
 // default speeds
-#define MOVE_DEFAULT_SPEED_STRAIGHT_MM_S 300
-#define MOVE_DEFAULT_SPEED_TURN_MM_S 275
+#define MOVE_DEFAULT_SPEED_STRAIGHT_MM_S 275
+#define MOVE_DEFAULT_SPEED_TURN_MM_S 250
 #define MOVE_PID_LOOP_PERIOD_TICKS 50 // pid refresh ticks
 
 // multiplier for turning backwards, to account for wheel slip
