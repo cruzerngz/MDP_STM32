@@ -96,6 +96,7 @@ void _pid_reset(uint32_t time_ticks) {
 void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t dist_mm) {
 	servo_point_center();
 	uint32_t time_ticks = osKernelGetTickCount();
+	if(dist_mm < 100) speed_mm_s = speed_mm_s >> 1; // reduce speed for slow runs
 
 	#ifdef MOVE_LOW_GRIP_SURFACE
 	uint32_t target = (uint32_t)dist_mm * 2;
@@ -136,6 +137,7 @@ void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t 
 // Internal turn function
 void _move_turn(MoveDirection move_dir, MotorDirection dir, uint32_t speed_mm_s, uint32_t degrees) {
 	servo_point(move_dir, ServoMag5);
+	if(degrees < 10) speed_mm_s = speed_mm_s >> 1;
 	uint32_t time_ticks = osKernelGetTickCount();
 	#ifdef MOVE_LOW_GRIP_SURFACE
 	uint32_t target_dist_mm = degrees * MOVE_PID_TURN_OUTER_MM_PER_DEGREE * (1 + MOVE_PID_TURN_REDUCTION_FACTOR) * MOVE_PID_SLIP_MULTIPLIER;

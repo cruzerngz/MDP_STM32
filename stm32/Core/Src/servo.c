@@ -26,7 +26,7 @@ static uint16_t SERVO_RIGHT_MAGS[] = {
 	16,
 	31,
 	41,
-	56,
+	60,
 	SERVO_RIGHT_LIMIT
 };
 

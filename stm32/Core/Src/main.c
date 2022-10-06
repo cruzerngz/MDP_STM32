@@ -205,7 +205,8 @@ int main(void)
     motor_stop();
     servo_init(&htim1, TIM_CHANNEL_4);
     encoder_init(&htim2, &htim3, TIM_CHANNEL_ALL, TIM_CHANNEL_ALL);
-		IMU_S_Initialise(&IMU_instance, &hi2c1, &huart3);
+		// IMU_S_Initialise(&IMU_instance, &hi2c1, &huart3);
+    IMU_Initialise(&IMU_instance, &hi2c1, &huart3);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -232,25 +233,25 @@ int main(void)
 //  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of movement_task */
-  movement_taskHandle = osThreadNew(movement, NULL, &movement_task_attributes);
+  // movement_taskHandle = osThreadNew(movement, NULL, &movement_task_attributes);
 
   /* creation of uart_state_mach */
   // uart_state_machHandle = osThreadNew(state_machine, NULL, &uart_state_mach_attributes);
 
   /* creation of encoder_display */
- encoder_displayHandle = osThreadNew(encoder, NULL, &encoder_display_attributes);
+//  encoder_displayHandle = osThreadNew(encoder, NULL, &encoder_display_attributes);
 
   /* creation of encoder_poll_ro */
-  encoder_poll_roHandle = osThreadNew(encoder_poller, NULL, &encoder_poll_ro_attributes);
+  // encoder_poll_roHandle = osThreadNew(encoder_poller, NULL, &encoder_poll_ro_attributes);
 
   /* creation of ir_adc_task */
-  // ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
+  ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
 
   /* creation of ir_adc_poller_t */
   // ir_adc_poller_tHandle = osThreadNew(ir_adc_poller, NULL, &ir_adc_poller_t_attributes);
 
   /* creation of imu_poller */
-  // imu_pollerHandle = osThreadNew(imu_read_routine, NULL, &imu_poller_attributes);
+  imu_pollerHandle = osThreadNew(imu_read_routine, NULL, &imu_poller_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
     /* add threads, ... */
@@ -1048,6 +1049,8 @@ void ir_adc(void *argument)
 
     for (;;)
     {
+        ticks = osKernelGetTickCount();
+        HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
         taskENTER_CRITICAL();
 				// IMU_GyroRead(&IMU_instance);
         // sprintf(
@@ -1064,15 +1067,16 @@ void ir_adc(void *argument)
         // ENCODER_POS_DIRECTIONAL_BACKWARD[0],
         // ENCODER_POS_DIRECTIONAL_BACKWARD[1]
 
-				// "%.2f %.2f\r\n",
-				// IMU_instance.gyro[2],
+				// "%7.2f\r\n",
+				// IMU_instance.gyro[2]
 				// IMU_yaw
 		// );
         taskEXIT_CRITICAL();
 
-        HAL_UART_Transmit(&huart3, (uint8_t *)buffer_ADC, strlen(buffer_ADC), HAL_MAX_DELAY);
+        // HAL_UART_Transmit(&huart3, (uint8_t *)buffer_ADC, strlen(buffer_ADC), HAL_MAX_DELAY);
 
-        osDelayUntil(ticks + 100);
+        // osDelayUntil(ticks + 100);
+        osDelay(100);
     }
 
   /* USER CODE END ir_adc */
@@ -1124,10 +1128,12 @@ void imu_read_routine(void *argument)
 		time_ticks = osKernelGetTickCount();
 
 		taskENTER_CRITICAL();
-		IMU_Poll(&IMU_data);
+		// IMU_Poll(&IMU_data);
+    // IMU_GyroRead(&IMU_instance);
 		taskEXIT_CRITICAL();
 
-    osDelayUntil(time_ticks + IMU_POLLING_RATE_TICKS);
+    // osDelayUntil(time_ticks + IMU_POLLING_RATE_TICKS);
+    osDelay(100);
   }
   /* USER CODE END imu_read_routine */
 }
