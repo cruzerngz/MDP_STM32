@@ -312,6 +312,91 @@ TEST test_config_set_low_grip_flag() {
 }
 
 /**
+ * @brief Test the switching to left lane
+ *
+ * @return TEST
+ */
+TEST test_high_speed_lane_change_left() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+    
+    PASS();
+}
+
+/**
+ * @brief Test the switching to right lane
+ *
+ * @return TEST
+ */
+TEST test_high_speed_lane_change_right() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+    
+    PASS();
+}
+
+/**
+ * @brief Test the big switching to left lane
+ *
+ * @return TEST
+ */
+TEST test_high_speed_big_lane_change_left() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+    
+    PASS();
+}
+
+/**
+ * @brief Test the big switching to right lane
+ *
+ * @return TEST
+ */
+TEST test_high_speed_big_lane_change_right() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+    
+    PASS();
+}
+
+/**
+ * @brief Test U turn around obstacle to the left
+ *
+ * @return TEST
+ */
+TEST test_high_speed_u_turn_left() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+    
+    PASS();
+}
+
+/**
+ * @brief Test U turn around obstacle to the right
+ *
+ * @return TEST
+ */
+TEST test_high_speed_u_turn_right() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+    
+    PASS();
+}
+
+
+/**
  * @brief Construct a new SUITE object
  * Add tests to be run here
  *
@@ -347,6 +432,19 @@ SUITE(suite_config) {
     RUN_TEST(test_config_set_low_grip_flag);
 }
 
+/**
+ * @brief Construct a new SUITE object
+ * Tests for the high speed state machine
+ */
+SUITE(suite_high_speed) {
+    RUN_TEST(test_high_speed_lane_change_left);
+    RUN_TEST(test_high_speed_lane_change_right);
+    RUN_TEST(test_high_speed_big_lane_change_left);
+    RUN_TEST(test_high_speed_big_lane_change_right);
+    RUN_TEST(test_high_speed_u_turn_left);
+    RUN_TEST(test_high_speed_u_turn_right);
+}
+
 GREATEST_MAIN_DEFS(); // important, right before main
 
 int main(int argc, char **argv) {
@@ -354,6 +452,7 @@ int main(int argc, char **argv) {
 
     RUN_SUITE(suite_fine_control);
     RUN_SUITE(suite_config);
+    RUN_SUITE(suite_high_speed);
 
     GREATEST_MAIN_END();
     return 0;

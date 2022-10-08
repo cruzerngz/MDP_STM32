@@ -40,13 +40,19 @@ extern volatile int8_t FLAG_TURN_DIR;
 extern volatile uint8_t FLAG_IN_PLACE_CARDINAL;
 
 
-// config values    
-extern volatile uint8_t FLAG_KP;
-extern volatile uint8_t FLAG_KI;
-extern volatile uint8_t FLAG_KD;
-extern volatile uint8_t FLAG_DEFAULT_SPEED_STRAIGHT;
-extern volatile uint8_t FLAG_DEFAULT_SPEED_TURN;
+// interrupt flags for high speed task
+extern volatile bool FLAG_CHANGE_LANE;
+extern volatile bool FLAG_CHANGE_BIG_LANE;
+extern volatile bool FLAG_U_TURN;
+extern volatile int8_t FLAG_SWITCH_DIR; // right/left, +1 or -1 only
 
+
+// config values    
+// extern volatile uint8_t FLAG_KP;
+// extern volatile uint8_t FLAG_KI;
+// extern volatile uint8_t FLAG_KD;
+// extern volatile uint8_t FLAG_DEFAULT_SPEED_STRAIGHT;
+// extern volatile uint8_t FLAG_DEFAULT_SPEED_TURN;
 
 
 // Testing out the state machine and movement

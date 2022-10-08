@@ -45,12 +45,24 @@ volatile int8_t 						FLAG_TURN_DIR = 0; // right/left, +1 or -1 only
 // volatile int16_t                        FLAG_DEFAULT_SPEED_STRAIGHT = MOVE_DEFAULT_SPEED_STRAIGHT_MM_S;
 // volatile int16_t                        FLAG_DEFAULT_SPEED_TURN = MOVE_DEFAULT_SPEED_TURN_MM_S;
 
+// flags used for high speed
+volatile bool                    FLAG_CHANGE_LANE = 0;
+volatile bool                    FLAG_CHANGE_BIG_LANE = 0;
+volatile bool                    FLAG_U_TURN = 0;
+volatile int8_t                  FLAG_SWITCH_DIR = 0; // right/left, +1 or -1 only
+
+
 /* STATIC GLOBALS */
 // Some globals are not static for extern unit tests to access them
 
 // default drive mode
 static volatile StateMachineDriveMode 	GLOBAL_DRIVE_MODE = StateMachineModeSelect;
 
+// default starting mode for high speed
+static volatile SpeedStates            GLOBAL_SPEED_MODE = SpeedIdle;
+static volatile bool                   GLOBAL_SPEED_MODE_IS_RESET = 1; // 1 if input contains '\' then 's' (?), to know whether to rmb or refresh the state (lane, biglane, uturn modes)
+// static volatile int8_t                  GLOBAL_SPEED_SWITCH_DIR = 0; // right/left, +1 or -1 only
+// static volatile SpeedStates            GLOBAL_CONFIG_SUB_MODE = ConfigIdle;
 
 // default starting mode for fine control
 static volatile ConfigStates            GLOBAL_CONFIG_MODE = ConfigIdle;
@@ -96,6 +108,12 @@ static volatile ServoMagnitude 			GLOBAL_TOY_CAR_DIR = ServoMag1;
 
 uint8_t _state_machine_mode_interpreter(uint8_t command);
 
+uint8_t _high_speed_interpreter(uint8_t command);
+uint8_t _high_speed_interpreter_idle(uint8_t command);
+uint8_t _high_speed_interpreter_boolean(uint8_t command);
+void _high_speed_reset_intern_flags(void);
+void _high_speed_reset_extern_flags(void);
+
 uint8_t _config_interpreter(uint8_t command);
 uint8_t _config_interpreter_idle(uint8_t command);
 uint8_t _config_interpreter_magnitude(uint8_t command);
@@ -139,6 +157,11 @@ uint8_t state_machine_interpreter(uint8_t command) {
 	}
 
 	switch(GLOBAL_DRIVE_MODE) {
+    case StateMachineSpeed:
+        // TODO or here??
+        return _high_speed_interpreter(command);
+        break;
+
 	case StateMachineFineControl:
 		return _fine_control_interpreter(command);
 		break;
@@ -169,6 +192,18 @@ uint8_t state_machine_interpreter(uint8_t command) {
 
 uint8_t _state_machine_mode_interpreter(uint8_t command) {
 	switch(command) {
+    case StateMachineSpeed:
+		GLOBAL_DRIVE_MODE = StateMachineSpeed;
+        GLOBAL_SPEED_MODE_IS_RESET = 1; // dont keep track of GLOBAL_SPEED_MODE state
+        // TODO or just put the if block here?
+		return StateMachineFullAck;
+		break;
+
+    case StateMachineConfig:
+		GLOBAL_DRIVE_MODE = StateMachineConfig;
+		return StateMachineFullAck;
+		break;
+
 	case StateMachineFineControl:
 		GLOBAL_DRIVE_MODE = StateMachineFineControl;
 		return StateMachineFullAck;
@@ -176,11 +211,6 @@ uint8_t _state_machine_mode_interpreter(uint8_t command) {
 
 	case StateMachineToyCar:
 		GLOBAL_DRIVE_MODE = StateMachineToyCar;
-		return StateMachineFullAck;
-		break;
-
-    case StateMachineConfig:
-		GLOBAL_DRIVE_MODE = StateMachineConfig;
 		return StateMachineFullAck;
 		break;
 
@@ -196,6 +226,160 @@ uint8_t _state_machine_mode_interpreter(uint8_t command) {
 
 	return StateMachineUnknown;
 }
+
+/**
+ * Main entry point to the high speed state machine
+ */
+uint8_t _high_speed_interpreter(uint8_t command) {
+	
+    if (GLOBAL_SPEED_MODE_IS_RESET) { // refresh GLOBAL_SPEED_MODE state
+        GLOBAL_SPEED_MODE = SpeedIdle; 
+    }
+    switch(GLOBAL_SPEED_MODE) {
+	case SpeedIdle:
+		return _high_speed_interpreter_idle(command);
+		break;
+
+    case SpeedLaneChange:
+		// return _high_speed_interpreter_lane(command);
+        // // return 
+		// break;
+
+    case SpeedBigLaneChange:
+		// return _high_speed_interpreter_big_lane(command);
+		// break;
+
+    case SpeedUTurn:
+		// return _high_speed_interpreter_u_turn(command);
+		// break;
+        return _high_speed_interpreter_boolean(command);
+        break;
+
+	default:
+		GLOBAL_SPEED_MODE = SpeedIdle;
+		return StateMachineUnknown;
+	}
+}
+
+uint8_t _high_speed_interpreter_idle(uint8_t command) {
+	switch(command) {
+	case SpeedLane:
+        // at this points, all input are valid and at end of command
+        // now keep track of GLOBAL_SPEED_MODE state
+        GLOBAL_SPEED_MODE_IS_RESET = 0; 
+		GLOBAL_SPEED_MODE = SpeedLaneChange;
+		return StateMachinePartialAck;
+		break;
+
+	case SpeedBigLane:
+        GLOBAL_SPEED_MODE_IS_RESET = 0; 
+		GLOBAL_SPEED_MODE = SpeedBigLaneChange;
+		return StateMachinePartialAck;
+		break;
+
+	case SpeedUTurning:
+        GLOBAL_SPEED_MODE_IS_RESET = 0; 
+		GLOBAL_SPEED_MODE = SpeedUTurn;
+		return StateMachinePartialAck;
+		break;
+
+	default:
+		GLOBAL_SPEED_MODE = SpeedIdle;
+		return StateMachineUnknown;
+		break;
+	}
+}
+
+uint8_t _high_speed_interpreter_boolean(uint8_t command) {
+    if (command != SpeedSwitchRight && command != SpeedSwitchLeft) {
+        _high_speed_reset_intern_flags();
+        return StateMachineUnknown;
+    }
+
+    switch(GLOBAL_SPEED_MODE) {
+    case SpeedLaneChange:
+        FLAG_CHANGE_LANE = 1;
+        FLAG_SWITCH_DIR = (command == SpeedSwitchRight) ? 1 : -1;
+        return StateMachineFullAck;
+        break;
+
+    case SpeedBigLaneChange:
+        FLAG_CHANGE_BIG_LANE = 1;
+        FLAG_SWITCH_DIR = (command == SpeedSwitchRight) ? 1 : -1;
+        return StateMachineFullAck;
+        break;
+
+    case SpeedUTurn:
+        FLAG_U_TURN = 1;
+        FLAG_SWITCH_DIR = (command == SpeedSwitchRight) ? 1 : -1;
+        return StateMachineFullAck;
+        break;
+
+    default: // fallback to idle state
+        _high_speed_reset_intern_flags();
+        return StateMachineUnknown;
+        break;
+	}
+
+    // if (command == SpeedSwitchLeft) {
+    //     FLAG_SWITCH_DIR = -1;
+    //     return StateMachineFullAck;
+    // } 
+    // else if (command == SpeedSwitchRight) {
+    //     FLAG_SWITCH_DIR = 1;
+    //     return StateMachineFullAck;
+    // } else { // fallback to idle state
+	// 	_high_speed_reset_intern_flags();
+	// 	return StateMachineUnknown;
+    // }
+}
+
+// uint8_t _high_speed_set_flags(void) {
+//     switch(GLOBAL_SPEED_MODE) {
+//     case SpeedLaneChange:
+//         FLAG_CHANGE_LANE = 1;
+//         FLAG_SWITCH_DIR = GLOBAL_SPEED_SWITCH_DIR;
+//         return StateMachineFullAck;
+//         break;
+
+//     case SpeedBigLaneChange:
+//         FLAG_CHANGE_BIG_LANE = 1;
+//         FLAG_SWITCH_DIR = GLOBAL_SPEED_SWITCH_DIR;
+//         return StateMachineFullAck;
+//         break;
+
+//     case SpeedUTurn:
+//         FLAG_U_TURN = 1;
+//         FLAG_SWITCH_DIR = GLOBAL_SPEED_SWITCH_DIR;
+//         return StateMachineFullAck;
+//         break;
+
+//     default: // do nothing
+//         return StateMachineUnknown;
+//         break;
+// 	}
+// }
+
+/**
+ * @brief Resets all flags internal to defaults
+ * Resets the high speed mode to idle
+ *
+ */
+void _high_speed_reset_intern_flags(void) {
+	GLOBAL_SPEED_MODE = SpeedIdle;
+}
+
+/**
+ * @brief Resets all extern flags (FLAG_*) to defaults
+ *
+ */
+void _high_speed_reset_extern_flags(void) {
+    FLAG_CHANGE_LANE = 0;
+    FLAG_CHANGE_BIG_LANE = 0;
+    FLAG_U_TURN = 0;
+    FLAG_SWITCH_DIR = 0;
+}
+
 
 /**
  * Main entry point to the config state machine
@@ -286,7 +470,10 @@ uint8_t _config_interpreter_boolean(uint8_t command) {
     else if (command == ConfigLowGripFalse) {
         _GLOBAL_MOVE_SURFACE_LOW_GRIP = false;
         return StateMachineFullAck;
-    } 
+    } else { // fallback to idle state
+		_config_reset_intern_flags();
+		return StateMachineUnknown;
+	}
 }
 
 uint8_t _config_interpreter_ingest_magnitude(uint8_t command) {

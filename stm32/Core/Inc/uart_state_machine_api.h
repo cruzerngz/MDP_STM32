@@ -24,12 +24,34 @@ typedef enum {
 
 // state machine valid drive mode (and its commands)
 typedef enum {
+    StateMachineSpeed = 's', // high speed mode
+    StateMachineConfig = 'c',
 	StateMachineFineControl = 'f',
 	StateMachineToyCar = 't',
-	StateMachineConfig = 'c',
 	StateMachineModeSelect = '\\' // this is a single backslash
 } StateMachineDriveMode;
 
+/**
+ * High speed mode states
+ */
+typedef enum {
+    SpeedIdle,
+    SpeedLaneChange,
+    SpeedBigLaneChange,
+    SpeedUTurn
+} SpeedStates;
+
+/**
+ * High speed mode commands + subcommands
+ */
+typedef enum {
+    SpeedLane = 'l',
+    SpeedBigLane = 'b',
+    SpeedUTurning = 'u',
+
+    SpeedSwitchLeft = 'l',
+    SpeedSwitchRight = 'r',
+} SpeedCommands;
 
 /**
  * Config mode states + substates
