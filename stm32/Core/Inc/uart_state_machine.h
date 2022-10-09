@@ -40,7 +40,7 @@ extern volatile int8_t FLAG_TURN_DIR;
 extern volatile uint8_t FLAG_IN_PLACE_CARDINAL;
 
 
-// interrupt flags for high speed task
+// interrupt flags for high speed mode
 extern volatile bool FLAG_CHANGE_LANE;
 extern volatile bool FLAG_CHANGE_BIG_LANE;
 extern volatile bool FLAG_U_TURN;
