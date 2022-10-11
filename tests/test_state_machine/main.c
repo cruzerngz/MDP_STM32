@@ -211,13 +211,543 @@ TEST test_fine_control_approach_obstacle() {
 }
 
 /**
- * @brief Test the modification of
+ * @brief Test the modification of KP
  *
  * @return TEST
  */
-TEST test_config() {
+TEST test_config_set_kp() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('c'), ';');
+    ASSERT_EQ(state_machine_interpreter('k'), '.');
+    ASSERT_EQ(state_machine_interpreter('p'), '_');
+    ASSERT_EQ(state_machine_interpreter('1'), '_');
+    ASSERT_EQ(state_machine_interpreter('0'), '_');
+    ASSERT_EQ(state_machine_interpreter(';'), ';');
 
+    PASS();
 }
+
+/**
+ * @brief Test the modification of KI
+ *
+ * @return TEST
+ */
+TEST test_config_set_ki() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('c'), ';');
+    ASSERT_EQ(state_machine_interpreter('k'), '.');
+    ASSERT_EQ(state_machine_interpreter('i'), '_');
+    ASSERT_EQ(state_machine_interpreter('1'), '_');
+    ASSERT_EQ(state_machine_interpreter('0'), '_');
+    ASSERT_EQ(state_machine_interpreter(';'), ';');
+
+    PASS();
+}
+
+/**
+ * @brief Test the modification of KD
+ *
+ * @return TEST
+ */
+TEST test_config_set_kd() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('c'), ';');
+    ASSERT_EQ(state_machine_interpreter('k'), '.');
+    ASSERT_EQ(state_machine_interpreter('d'), '_');
+    ASSERT_EQ(state_machine_interpreter('1'), '_');
+    ASSERT_EQ(state_machine_interpreter('0'), '_');
+    ASSERT_EQ(state_machine_interpreter(';'), ';');
+    
+    PASS();
+}
+
+/**
+ * @brief Test the modification of default straight speed
+ *
+ * @return TEST
+ */
+TEST test_config_set_straight_speed() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('c'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), '.');
+    ASSERT_EQ(state_machine_interpreter('s'), '_');
+    ASSERT_EQ(state_machine_interpreter('2'), '_');
+    ASSERT_EQ(state_machine_interpreter('0'), '_');
+    ASSERT_EQ(state_machine_interpreter('0'), '_');
+    ASSERT_EQ(state_machine_interpreter(';'), ';');
+    
+    PASS();
+}
+
+/**
+ * @brief Test the modification of default turn speed
+ *
+ * @return TEST
+ */
+TEST test_config_set_turn_speed() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('c'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), '.');
+    ASSERT_EQ(state_machine_interpreter('t'), '_');
+    ASSERT_EQ(state_machine_interpreter('1'), '_');
+    ASSERT_EQ(state_machine_interpreter('0'), '_');
+    ASSERT_EQ(state_machine_interpreter('0'), '_');
+    ASSERT_EQ(state_machine_interpreter(';'), ';');
+    
+    PASS();
+}
+
+/**
+ * @brief Test the setting of low grip surface flag
+ *
+ * @return TEST
+ */
+TEST test_config_set_low_grip_flag() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('c'), ';');
+    ASSERT_EQ(state_machine_interpreter('g'), '.');
+    ASSERT_EQ(state_machine_interpreter('t'), ';'); // t for true, f for false
+    
+    PASS();
+}
+
+/**
+ * @brief Test the switching to left lane
+ *
+ * @return TEST
+ */
+TEST test_high_speed_lane_change_left() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+    
+    PASS();
+}
+
+/**
+ * @brief Test the switching to right lane
+ *
+ * @return TEST
+ */
+TEST test_high_speed_lane_change_right() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+    
+    PASS();
+}
+
+TEST test_high_speed_lane_change_multiple() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');    
+    
+    PASS();
+}
+
+TEST test_high_speed_lane_change_left_no_prefix() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    PASS();
+}
+
+TEST test_high_speed_lane_change_right_no_prefix() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+    
+    PASS();
+}
+
+TEST test_high_speed_lane_change_multiple_no_prefix() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('l'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+    
+    PASS();
+}
+
+
+/**
+ * @brief Test the big switching to left lane
+ *
+ * @return TEST
+ */
+TEST test_high_speed_big_lane_change_left() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+    
+    PASS();
+}
+
+/**
+ * @brief Test the big switching to right lane
+ *
+ * @return TEST
+ */
+TEST test_high_speed_big_lane_change_right() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+    
+    PASS();
+}
+
+TEST test_high_speed_big_lane_change_multiple() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');    
+    
+    PASS();
+}
+
+TEST test_high_speed_big_lane_change_left_no_prefix() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    PASS();
+}
+
+TEST test_high_speed_big_lane_change_right_no_prefix() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+    
+    PASS();
+}
+
+TEST test_high_speed_big_lane_change_multiple_no_prefix() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('b'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+    
+    PASS();
+}
+
+
+/**
+ * @brief Test U turn around obstacle to the left
+ *
+ * @return TEST
+ */
+TEST test_high_speed_u_turn_left() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+    
+    PASS();
+}
+
+/**
+ * @brief Test U turn around obstacle to the right
+ *
+ * @return TEST
+ */
+TEST test_high_speed_u_turn_right() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+    
+    PASS();
+}
+
+TEST test_high_speed_u_turn_multiple() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');    
+    
+    PASS();
+}
+
+TEST test_high_speed_u_turn_left_no_prefix() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    PASS();
+}
+
+TEST test_high_speed_u_turn_right_no_prefix() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+    
+    PASS();
+}
+
+TEST test_high_speed_u_turn_multiple_no_prefix() {
+    ASSERT_EQ(state_machine_interpreter('\\'), ';');
+    ASSERT_EQ(state_machine_interpreter('s'), ';');
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('r'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+
+    ASSERT_EQ(state_machine_interpreter('u'), '.');
+    ASSERT_EQ(state_machine_interpreter('l'), ';');
+    
+    PASS();
+}
+
 
 /**
  * @brief Construct a new SUITE object
@@ -247,7 +777,42 @@ SUITE(suite_fine_control) {
  * Tests for the config sub-state machine
  */
 SUITE(suite_config) {
+    RUN_TEST(test_config_set_kd);
+    RUN_TEST(test_config_set_ki);
+    RUN_TEST(test_config_set_kp);
+    RUN_TEST(test_config_set_straight_speed);
+    RUN_TEST(test_config_set_turn_speed);
+    RUN_TEST(test_config_set_low_grip_flag);
+}
 
+/**
+ * @brief Construct a new SUITE object
+ * Tests for the high speed state machine
+ */
+SUITE(suite_high_speed) {
+    RUN_TEST(test_high_speed_lane_change_left);
+    RUN_TEST(test_high_speed_lane_change_right);
+    RUN_TEST(test_high_speed_lane_change_multiple);
+
+    RUN_TEST(test_high_speed_lane_change_left_no_prefix);
+    RUN_TEST(test_high_speed_lane_change_right_no_prefix);
+    RUN_TEST(test_high_speed_lane_change_multiple_no_prefix);
+
+    RUN_TEST(test_high_speed_big_lane_change_left);
+    RUN_TEST(test_high_speed_big_lane_change_right);
+    RUN_TEST(test_high_speed_big_lane_change_multiple);
+
+    RUN_TEST(test_high_speed_big_lane_change_left_no_prefix);
+    RUN_TEST(test_high_speed_big_lane_change_right_no_prefix);
+    RUN_TEST(test_high_speed_big_lane_change_multiple_no_prefix);
+
+    RUN_TEST(test_high_speed_u_turn_left);
+    RUN_TEST(test_high_speed_u_turn_right);
+    RUN_TEST(test_high_speed_u_turn_multiple);
+
+    RUN_TEST(test_high_speed_u_turn_left_no_prefix);
+    RUN_TEST(test_high_speed_u_turn_right_no_prefix);
+    RUN_TEST(test_high_speed_u_turn_multiple_no_prefix);
 }
 
 GREATEST_MAIN_DEFS(); // important, right before main
@@ -257,6 +822,7 @@ int main(int argc, char **argv) {
 
     RUN_SUITE(suite_fine_control);
     RUN_SUITE(suite_config);
+    RUN_SUITE(suite_high_speed);
 
     GREATEST_MAIN_END();
     return 0;

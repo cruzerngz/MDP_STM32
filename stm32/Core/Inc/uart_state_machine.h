@@ -10,6 +10,8 @@
 #include "stdint.h"
 #include "stdio.h"
 
+#include "globals.h"
+
 #ifndef INC_UART_STATE_MACHINE_H_
 #define INC_UART_STATE_MACHINE_H_
 
@@ -36,6 +38,22 @@ extern volatile int8_t FLAG_TURN_DIR;
 // Cardinal directions the car can do for in-place turn
 // 0-indexed, max 15, steps of 22.5 degrees clockwise
 extern volatile uint8_t FLAG_IN_PLACE_CARDINAL;
+
+
+// interrupt flags for high speed mode
+extern volatile bool FLAG_CHANGE_LANE;
+extern volatile bool FLAG_CHANGE_BIG_LANE;
+extern volatile bool FLAG_U_TURN;
+extern volatile int8_t FLAG_SWITCH_DIR; // right/left, +1 or -1 only
+
+
+// config values    
+// extern volatile uint8_t FLAG_KP;
+// extern volatile uint8_t FLAG_KI;
+// extern volatile uint8_t FLAG_KD;
+// extern volatile uint8_t FLAG_DEFAULT_SPEED_STRAIGHT;
+// extern volatile uint8_t FLAG_DEFAULT_SPEED_TURN;
+
 
 // Testing out the state machine and movement
 typedef enum {
