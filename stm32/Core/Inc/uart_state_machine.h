@@ -45,7 +45,7 @@ extern volatile bool FLAG_CHANGE_LANE;
 extern volatile bool FLAG_CHANGE_BIG_LANE;
 extern volatile bool FLAG_U_TURN;
 extern volatile int8_t FLAG_SWITCH_DIR; // right/left, +1 or -1 only
-
+extern volatile int16_t FLAG_LANE_DISTANCE;
 
 // config values    
 // extern volatile uint8_t FLAG_KP;

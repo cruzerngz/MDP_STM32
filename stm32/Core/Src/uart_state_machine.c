@@ -46,10 +46,11 @@ volatile int8_t 						FLAG_TURN_DIR = 0; // right/left, +1 or -1 only
 // volatile int16_t                        FLAG_DEFAULT_SPEED_TURN = MOVE_DEFAULT_SPEED_TURN_MM_S;
 
 // flags used for high speed
-volatile bool                    FLAG_CHANGE_LANE = 0;
-volatile bool                    FLAG_CHANGE_BIG_LANE = 0;
-volatile bool                    FLAG_U_TURN = 0;
-volatile int8_t                  FLAG_SWITCH_DIR = 0; // right/left, +1 or -1 only
+volatile bool                           FLAG_CHANGE_LANE = 0;
+volatile bool                           FLAG_CHANGE_BIG_LANE = 0;
+volatile bool                           FLAG_U_TURN = 0;
+volatile int8_t                         FLAG_SWITCH_DIR = 0; // right/left, +1 or -1 only
+volatile int16_t                        FLAG_LANE_DISTANCE = 0;
 
 
 /* STATIC GLOBALS */
@@ -58,8 +59,12 @@ volatile int8_t                  FLAG_SWITCH_DIR = 0; // right/left, +1 or -1 on
 // default drive mode
 static volatile StateMachineDriveMode 	GLOBAL_DRIVE_MODE = StateMachineModeSelect;
 
+
 // default starting mode for high speed
-static volatile SpeedStates            GLOBAL_SPEED_MODE = SpeedIdle;
+static volatile SpeedStates             GLOBAL_SPEED_MODE = SpeedIdle;
+static volatile int16_t                 GLOBAL_SPEED_MAGNITUDE = 0;
+static volatile int8_t                  GLOBAL_SPEED_SWITCH_DIR = 0;
+static volatile bool                    GLOBAL_SPEED_INGEST = false;
 // static volatile bool                   GLOBAL_SPEED_MODE_IS_RESET = 1; // 1 if input contains '\s', to distinguish between substate and command with same input
 // static volatile bool                   GLOBAL_SPEED_MODE_IS_PREFIX_SET = 0; // whether \s was sent previously
 
@@ -109,7 +114,11 @@ uint8_t _state_machine_mode_interpreter(uint8_t command);
 
 uint8_t _high_speed_interpreter(uint8_t command);
 uint8_t _high_speed_interpreter_idle(uint8_t command);
+uint8_t _high_speed_interpreter_lane_change(uint8_t command);
 uint8_t _high_speed_interpreter_boolean(uint8_t command);
+uint8_t _high_speed_interpreter_ingest_magnitude(uint8_t command);
+
+uint8_t _high_speed_lane_change_set_flags(void);
 void _high_speed_reset_intern_flags(void);
 void _high_speed_reset_extern_flags(void);
 
@@ -238,6 +247,9 @@ uint8_t _high_speed_interpreter(uint8_t command) {
 		break;
 
     case SpeedLaneChange:
+        return _high_speed_interpreter_lane_change(command);
+        break;
+
     case SpeedBigLaneChange:
     case SpeedUTurn:
         return _high_speed_interpreter_boolean(command);
@@ -277,6 +289,26 @@ uint8_t _high_speed_interpreter_idle(uint8_t command) {
 	}
 }
 
+
+uint8_t _high_speed_interpreter_lane_change(uint8_t command) {
+    if (GLOBAL_SPEED_INGEST) {
+        return _high_speed_interpreter_ingest_magnitude(command);
+
+    } else {
+        // l or r is sent in
+        if (command == SpeedSwitchRight) GLOBAL_SPEED_SWITCH_DIR = 1;
+        else if (command == SpeedSwitchLeft) GLOBAL_SPEED_SWITCH_DIR = -1;
+        else {
+            _high_speed_reset_intern_flags();
+            return StateMachineUnknown;
+        }
+
+        GLOBAL_SPEED_INGEST = true;
+        GLOBAL_SPEED_MAGNITUDE = 0;
+        return StateMachineInputField;
+    }
+}
+
 uint8_t _high_speed_interpreter_boolean(uint8_t command) {
     if (command != SpeedSwitchRight && command != SpeedSwitchLeft) {
         _high_speed_reset_intern_flags();
@@ -284,12 +316,12 @@ uint8_t _high_speed_interpreter_boolean(uint8_t command) {
     }
 
     switch(GLOBAL_SPEED_MODE) {
-    case SpeedLaneChange:
-        FLAG_CHANGE_LANE = 1;
-        FLAG_SWITCH_DIR = (command == SpeedSwitchRight) ? 1 : -1;
-        _high_speed_reset_intern_flags();
-        return StateMachineFullAck;
-        break;
+    // case SpeedLaneChange:
+    //     FLAG_CHANGE_LANE = 1;
+    //     FLAG_SWITCH_DIR = (command == SpeedSwitchRight) ? 1 : -1;
+    //     _high_speed_reset_intern_flags();
+    //     return StateMachineFullAck;
+    //     break;
 
     case SpeedBigLaneChange:
         FLAG_CHANGE_BIG_LANE = 1;
@@ -313,6 +345,40 @@ uint8_t _high_speed_interpreter_boolean(uint8_t command) {
 }
 
 
+uint8_t _high_speed_interpreter_ingest_magnitude(uint8_t command) {
+	uint8_t command_as_int = command - ASCII_OFFSET;
+	uint8_t reply;
+
+    // done giving value input
+	if(command == StateMachineFullAck) {
+		reply = _high_speed_lane_change_set_flags();
+		_high_speed_reset_intern_flags(); 
+
+		return reply;
+	}
+
+	else if(command_as_int >= 0 && command_as_int <= 9 ) {
+		GLOBAL_SPEED_MAGNITUDE = (GLOBAL_SPEED_MAGNITUDE * 10) + command_as_int;
+		return StateMachineInputField;
+		// continue with ingest
+
+	} else { // fallback to idle state
+		_config_reset_intern_flags();
+		return StateMachineUnknown;
+	}
+
+	return StateMachineUnknown;
+}
+
+
+uint8_t _high_speed_lane_change_set_flags(void) {
+    FLAG_CHANGE_LANE = 1;
+    FLAG_SWITCH_DIR = GLOBAL_SPEED_SWITCH_DIR;
+    FLAG_LANE_DISTANCE = GLOBAL_SPEED_MAGNITUDE;
+    return StateMachineFullAck;
+}
+
+
 /**
  * @brief Resets all flags internal to defaults
  * Resets the high speed mode to idle
@@ -320,6 +386,9 @@ uint8_t _high_speed_interpreter_boolean(uint8_t command) {
  */
 void _high_speed_reset_intern_flags(void) {
 	GLOBAL_SPEED_MODE = SpeedIdle;
+    GLOBAL_SPEED_MAGNITUDE = 0;
+    GLOBAL_SPEED_INGEST = false;
+    GLOBAL_SPEED_SWITCH_DIR = 0;
 }
 
 /**
@@ -331,6 +400,7 @@ void _high_speed_reset_extern_flags(void) {
     FLAG_CHANGE_BIG_LANE = 0;
     FLAG_U_TURN = 0;
     FLAG_SWITCH_DIR = 0;
+    FLAG_LANE_DISTANCE = 0;
 }
 
 
@@ -403,9 +473,7 @@ uint8_t _config_interpreter_magnitude(uint8_t command) {
         else if (command == ConfigSpeedStraight) GLOBAL_CONFIG_SUB_MODE = ConfigDefaultSpeedStraight;
         else if (command == ConfigSpeedTurn) GLOBAL_CONFIG_SUB_MODE = ConfigDefaultSpeedTurn;
         else {
-            GLOBAL_CONFIG_MODE = ConfigIdle;
-            GLOBAL_CONFIG_SUB_MODE = ConfigIdle;
-            GLOBAL_CONFIG_INGEST = false;
+            _config_reset_intern_flags();
             return StateMachineUnknown;
         }
 
