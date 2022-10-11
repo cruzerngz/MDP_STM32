@@ -343,6 +343,68 @@ HAL_StatusTypeDef IMU_GyroRead(ICM20948 *dev)
 
 }
 
+void IMU_GyroReadYaw(ICM20948 *dev, float *yaw) {
+   uint8_t u8Buf[2] = {0}; // reset to zero
+    int16_t gyroRaw[3] = {0};  // reset to zero
+    int16_t gyroDiff[3];
+    // int16_t temp;
+    static int16_t gyroOld[3]= {0, 0, 0};  // previous value
+
+	#ifdef DEBUG_GYRO
+	static uint8_t uart_buffer[70] = {0};
+	#endif
+
+    // ret=IMU_ReadOneByte(dev, REG_ADD_GYRO_YOUT_L, &u8Buf[0]);
+    // ret=IMU_ReadOneByte(dev, REG_ADD_GYRO_YOUT_H, &u8Buf[1]);
+    // gyroRaw[1] = (u8Buf[1]<<8)|u8Buf[0] -  gyro_offset[1];
+    // gyroDiff[1] = gyroRaw[1] - gyroOld[1];  // change in value
+    // gyroOld[1] = gyroRaw[1];
+
+    ret=IMU_ReadOneByte(dev, REG_ADD_GYRO_ZOUT_L, &u8Buf[0]);
+    ret=IMU_ReadOneByte(dev, REG_ADD_GYRO_ZOUT_H, &u8Buf[1]);
+    gyroRaw[2] = (u8Buf[1]<<8)|u8Buf[0] -  gyro_offset[2];
+    gyroDiff[2] = gyroRaw[2] - gyroOld[2];  // change in value
+    gyroOld[2] = gyroRaw[2];
+
+    // ret=IMU_ReadOneByte(dev, REG_ADD_GYRO_XOUT_L, &u8Buf[0]);
+    // ret=IMU_ReadOneByte(dev, REG_ADD_GYRO_XOUT_H, &u8Buf[1]);
+    // // temp = (u8Buf[1]<<8)|u8Buf[0]; // for debugging
+    // gyroRaw[0] = (u8Buf[1]<<8)|u8Buf[0] - gyro_offset[0];
+    // gyroDiff[0] = gyroRaw[0] - gyroOld[0];  // change in value
+    // gyroOld[0] = gyroRaw[0];
+
+	#ifdef DEBUG_GYRO
+	sprintf(uart_buffer, (uint8_t *)"%+06d %+06d %+06d\r\n", gyroOld[0], gyroOld[1], gyroOld[2]);
+	HAL_UART_Transmit(dev->uart, uart_buffer, sizeof(uart_buffer), HAL_MAX_DELAY);
+	#endif
+
+	/* extend to 32 bit SIGNED integers (two's complement)*/
+    int32_t gyroRawSigned[3];
+
+
+	//if ( (gyroDiff[0] & 0x00008000) == 0x00008000 )  //32 bit - no need to check
+	//	gyroRawSigned[0] = gyroRaw[0] | 0xFFFF0000;
+	//else
+		gyroRawSigned[0] = gyroRaw[0];
+
+	//if ( (gyroDiff[1] & 0x00008000) == 0x00008000 )
+	//	gyroRawSigned[1] = gyroRaw[1] | 0xFFFF0000;
+	//else
+		// gyroRawSigned[1] = gyroRaw[1];
+
+	//if ( (gyroDiff[2] & 0x00008000) == 0x800008000 )
+	//	gyroRawSigned[2] = gyroRaw[2] | 0xFFFF0000;
+	//else
+		gyroRawSigned[2] = gyroRaw[2];
+
+
+	// gyro full scale set to +/-500 dps, sensitivity scale factor = 65.5 LSB/dps
+	// degree per second = value/65.5
+	// dev->gyro[0] = 0.0152671755725191f * gyroRawSigned[0];
+	// dev->gyro[1] = 0.0152671755725191f * gyroRawSigned[1];
+	*yaw = 0.0152671755725191f * gyroRawSigned[2];
+}
+
 //// Returns the absolute position by the gyro
 //HAL_StatusTypeDef IMU_GyroRead(ICM20948 *dev) {
 //

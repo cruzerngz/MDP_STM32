@@ -96,7 +96,7 @@ osThreadId_t encoder_poll_roHandle;
 const osThreadAttr_t encoder_poll_ro_attributes = {
   .name = "encoder_poll_ro",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityBelowNormal,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for ir_adc_task */
 osThreadId_t ir_adc_taskHandle;
@@ -230,7 +230,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-//  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  // defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of movement_task */
   movement_taskHandle = osThreadNew(movement, NULL, &movement_task_attributes);
@@ -239,7 +239,7 @@ int main(void)
   // uart_state_machHandle = osThreadNew(state_machine, NULL, &uart_state_mach_attributes);
 
   /* creation of encoder_display */
- encoder_displayHandle = osThreadNew(encoder, NULL, &encoder_display_attributes);
+  encoder_displayHandle = osThreadNew(encoder, NULL, &encoder_display_attributes);
 
   /* creation of encoder_poll_ro */
   encoder_poll_roHandle = osThreadNew(encoder_poller, NULL, &encoder_poll_ro_attributes);
@@ -985,12 +985,13 @@ void encoder(void *argument)
     for (;;)
     {
         ticks = osKernelGetTickCount();
-
+        // float stuff = 3.14141414 * 0.1234123f * ticks;
+        // IMU_GyroRead(&IMU_instance);
         taskENTER_CRITICAL();
         // note here that strings are max 16 (+1 null) chars long
         sprintf(oled_lines[0], "L<%05lu  %05lu>R", ENCODER_POS_DIRECTIONAL_FORWARD[0], ENCODER_POS_DIRECTIONAL_FORWARD[1]);
         sprintf(oled_lines[1], "L<%+05d  %+05d>R", ENCODER_SPEED_DIRECTIONAL[0], ENCODER_SPEED_DIRECTIONAL[1]);
-        sprintf(oled_lines[2], "               "); // blank line
+        sprintf(oled_lines[2], "%010d", (int)(IMU_instance.gyro[2] * 100)); // blank line
         taskEXIT_CRITICAL();
 
         OLED_ShowString(0, 0, (uint8_t *)oled_lines[0]);
@@ -1023,8 +1024,9 @@ void encoder_poller(void *argument)
 
     {
         ticks = osKernelGetTickCount();
-
+        HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
         taskENTER_CRITICAL();
+        // IMU_GyroRead(&IMU_instance);
         encoder_poll();
         taskEXIT_CRITICAL();
 
@@ -1046,12 +1048,17 @@ void ir_adc(void *argument)
     // static uint16_t IR_READOUT = 0;
     static uint32_t ticks = 0;
     static char buffer_ADC[100] = {0};
+    float yaw = 0.0f;
 
     for (;;)
     {
         ticks = osKernelGetTickCount();
         HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
         taskENTER_CRITICAL();
+        // IMU_GyroReadYaw(&IMU_instance, &yaw);
+
+        // sprintf(buffer_ADC, "%010d", (int)(yaw * 100)); // blank line
+
 				// IMU_GyroRead(&IMU_instance);
         // sprintf(
         // 		buffer_ADC,
@@ -1073,7 +1080,7 @@ void ir_adc(void *argument)
 		// );
         taskEXIT_CRITICAL();
 
-        // HAL_UART_Transmit(&huart3, (uint8_t *)buffer_ADC, strlen(buffer_ADC), HAL_MAX_DELAY);
+        // HAL_UART_Transmit(&huart3, (uint8_t *)buffer_ADC, 11, HAL_MAX_DELAY);
 
         // osDelayUntil(ticks + 100);
         osDelay(100);

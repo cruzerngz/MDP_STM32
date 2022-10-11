@@ -21,6 +21,7 @@ HAL_StatusTypeDef Gyro_calibrate(ICM20948 *dev);
 HAL_StatusTypeDef IMU_TempRead(ICM20948 *dev);
 HAL_StatusTypeDef IMU_AccelRead(ICM20948 *dev);
 HAL_StatusTypeDef IMU_GyroRead(ICM20948 *dev); // read change in pos
+void IMU_GyroReadYaw(ICM20948 *dev, float *yaw);
 HAL_StatusTypeDef IMU_GyroReadAbs(ICM20948 *dev); // read absolute pos (not impl'd)
 void IMU_ReadAll(ICM20948 *dev);
 
