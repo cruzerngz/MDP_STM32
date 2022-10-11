@@ -31,7 +31,8 @@
 #include "oled.h"
 #include "encoder.h"
 #include "ir_adc.h"
-#include "imu_smooth.h"
+#include "IMU_smooth.h"
+// #include "IMU.h"
 
 /* USER CODE END Includes */
 
@@ -118,6 +119,11 @@ const osThreadAttr_t imu_poller_attributes = {
   .name = "imu_poller",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for MUTEX_IMU */
+osMutexId_t MUTEX_IMUHandle;
+const osMutexAttr_t MUTEX_IMU_attributes = {
+  .name = "MUTEX_IMU"
 };
 /* USER CODE BEGIN PV */
 
@@ -211,6 +217,9 @@ int main(void)
 
   /* Init scheduler */
   osKernelInitialize();
+  /* Create the mutex(es) */
+  /* creation of MUTEX_IMU */
+  MUTEX_IMUHandle = osMutexNew(&MUTEX_IMU_attributes);
 
   /* USER CODE BEGIN RTOS_MUTEX */
     /* add mutexes, ... */
@@ -230,7 +239,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-//  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  // defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of movement_task */
   movement_taskHandle = osThreadNew(movement, NULL, &movement_task_attributes);
@@ -239,7 +248,7 @@ int main(void)
   // uart_state_machHandle = osThreadNew(state_machine, NULL, &uart_state_mach_attributes);
 
   /* creation of encoder_display */
- encoder_displayHandle = osThreadNew(encoder, NULL, &encoder_display_attributes);
+  encoder_displayHandle = osThreadNew(encoder, NULL, &encoder_display_attributes);
 
   /* creation of encoder_poll_ro */
   encoder_poll_roHandle = osThreadNew(encoder_poller, NULL, &encoder_poll_ro_attributes);
@@ -978,7 +987,7 @@ void encoder(void *argument)
   /* USER CODE BEGIN encoder */
     static uint32_t ticks = 0;
     static char oled_lines[6][17] = {0};
-
+    static float asd = 3.14f;
     OLED_Display_On();
 
     /* Infinite loop */
@@ -987,10 +996,12 @@ void encoder(void *argument)
         ticks = osKernelGetTickCount();
 
         taskENTER_CRITICAL();
+        // IMU_TempRead(&IMU_instance);
+        // IMU_AccelRead(&IMU_instance);
         // note here that strings are max 16 (+1 null) chars long
         sprintf(oled_lines[0], "L<%05lu  %05lu>R", ENCODER_POS_DIRECTIONAL_FORWARD[0], ENCODER_POS_DIRECTIONAL_FORWARD[1]);
         sprintf(oled_lines[1], "L<%+05d  %+05d>R", ENCODER_SPEED_DIRECTIONAL[0], ENCODER_SPEED_DIRECTIONAL[1]);
-        sprintf(oled_lines[2], "               "); // blank line
+        sprintf(oled_lines[2], "%.2f", IMU_yaw); // blank line
         taskEXIT_CRITICAL();
 
         OLED_ShowString(0, 0, (uint8_t *)oled_lines[0]);
@@ -1128,7 +1139,7 @@ void imu_read_routine(void *argument)
 		time_ticks = osKernelGetTickCount();
 
 		taskENTER_CRITICAL();
-		// IMU_Poll(&IMU_data);
+		IMU_Poll(&IMU_data);
     // IMU_GyroRead(&IMU_instance);
 		taskEXIT_CRITICAL();
 

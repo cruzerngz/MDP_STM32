@@ -282,12 +282,8 @@ HAL_StatusTypeDef IMU_GyroRead(ICM20948 *dev)
     uint8_t u8Buf[2] = {0}; // reset to zero
     int16_t gyroRaw[3] = {0};  // reset to zero
     int16_t gyroDiff[3];
-    // int16_t temp;
+    int16_t temp;
     static int16_t gyroOld[3]= {0, 0, 0};  // previous value
-
-	#ifdef DEBUG_GYRO
-	static uint8_t uart_buffer[70] = {0};
-	#endif
 
     ret=IMU_ReadOneByte(dev, REG_ADD_GYRO_YOUT_L, &u8Buf[0]);
     ret=IMU_ReadOneByte(dev, REG_ADD_GYRO_YOUT_H, &u8Buf[1]);
@@ -303,15 +299,10 @@ HAL_StatusTypeDef IMU_GyroRead(ICM20948 *dev)
 
     ret=IMU_ReadOneByte(dev, REG_ADD_GYRO_XOUT_L, &u8Buf[0]);
     ret=IMU_ReadOneByte(dev, REG_ADD_GYRO_XOUT_H, &u8Buf[1]);
-    // temp = (u8Buf[1]<<8)|u8Buf[0]; // for debugging
+    temp = (u8Buf[1]<<8)|u8Buf[0]; // for debugging
     gyroRaw[0] = (u8Buf[1]<<8)|u8Buf[0] - gyro_offset[0];
     gyroDiff[0] = gyroRaw[0] - gyroOld[0];  // change in value
     gyroOld[0] = gyroRaw[0];
-
-	#ifdef DEBUG_GYRO
-	sprintf(uart_buffer, (uint8_t *)"%+06d %+06d %+06d\r\n", gyroOld[0], gyroOld[1], gyroOld[2]);
-	HAL_UART_Transmit(dev->uart, uart_buffer, sizeof(uart_buffer), HAL_MAX_DELAY);
-	#endif
 
 	/* extend to 32 bit SIGNED integers (two's complement)*/
     int32_t gyroRawSigned[3];
