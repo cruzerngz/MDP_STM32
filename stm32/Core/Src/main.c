@@ -78,17 +78,10 @@ const osThreadAttr_t movement_task_attributes = {
   .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for uart_state_mach */
-osThreadId_t uart_state_machHandle;
-const osThreadAttr_t uart_state_mach_attributes = {
-  .name = "uart_state_mach",
-  .stack_size = 400 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-};
-/* Definitions for encoder_display */
-osThreadId_t encoder_displayHandle;
-const osThreadAttr_t encoder_display_attributes = {
-  .name = "encoder_display",
+/* Definitions for oled_display_ta */
+osThreadId_t oled_display_taHandle;
+const osThreadAttr_t oled_display_ta_attributes = {
+  .name = "oled_display_ta",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
@@ -99,10 +92,10 @@ const osThreadAttr_t encoder_poll_ro_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityBelowNormal,
 };
-/* Definitions for ir_adc_task */
-osThreadId_t ir_adc_taskHandle;
-const osThreadAttr_t ir_adc_task_attributes = {
-  .name = "ir_adc_task",
+/* Definitions for uart_out_task */
+osThreadId_t uart_out_taskHandle;
+const osThreadAttr_t uart_out_task_attributes = {
+  .name = "uart_out_task",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
@@ -113,10 +106,10 @@ const osThreadAttr_t ir_adc_poller_t_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
-/* Definitions for imu_poller */
-osThreadId_t imu_pollerHandle;
-const osThreadAttr_t imu_poller_attributes = {
-  .name = "imu_poller",
+/* Definitions for imu_poller_task */
+osThreadId_t imu_poller_taskHandle;
+const osThreadAttr_t imu_poller_task_attributes = {
+  .name = "imu_poller_task",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
@@ -145,12 +138,11 @@ static void MX_ADC1_Init(void);
 static void MX_I2C1_Init(void);
 void StartDefaultTask(void *argument);
 void movement(void *argument);
-void state_machine(void *argument);
-void encoder(void *argument);
+void oled_display(void *argument);
 void encoder_poller(void *argument);
-void ir_adc(void *argument);
+void uart_out(void *argument);
 void ir_adc_poller(void *argument);
-void imu_read_routine(void *argument);
+void imu_poller(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -244,23 +236,20 @@ int main(void)
   /* creation of movement_task */
   movement_taskHandle = osThreadNew(movement, NULL, &movement_task_attributes);
 
-  /* creation of uart_state_mach */
-  // uart_state_machHandle = osThreadNew(state_machine, NULL, &uart_state_mach_attributes);
-
-  /* creation of encoder_display */
-  encoder_displayHandle = osThreadNew(encoder, NULL, &encoder_display_attributes);
+  /* creation of oled_display_ta */
+  oled_display_taHandle = osThreadNew(oled_display, NULL, &oled_display_ta_attributes);
 
   /* creation of encoder_poll_ro */
   encoder_poll_roHandle = osThreadNew(encoder_poller, NULL, &encoder_poll_ro_attributes);
 
-  /* creation of ir_adc_task */
-  // ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
+  /* creation of uart_out_task */
+  // uart_out_taskHandle = osThreadNew(uart_out, NULL, &uart_out_task_attributes);
 
   /* creation of ir_adc_poller_t */
   // ir_adc_poller_tHandle = osThreadNew(ir_adc_poller, NULL, &ir_adc_poller_t_attributes);
 
-  /* creation of imu_poller */
-  // imu_pollerHandle = osThreadNew(imu_read_routine, NULL, &imu_poller_attributes);
+  /* creation of imu_poller_task */
+  // imu_poller_taskHandle = osThreadNew(imu_poller, NULL, &imu_poller_task_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
     /* add threads, ... */
@@ -843,12 +832,10 @@ void StartDefaultTask(void *argument)
     /* Infinite loop */
     for (;;)
     {
-    	ticks = osKernelGetTickCount();
-   	// move_backward_pid_cm(20);
-  	// _set_motor_speed_pid(MotorDirForward, MotorLeft, 200);
-  	// _set_motor_speed_pid(MotorDirForward, MotorRight, 200);
-    // osDelayUntil(ticks + MOVE_PID_LOOP_PERIOD_TICKS); //20 hz
-    	osDelay(1000);
+    	// ticks = osKernelGetTickCount();
+      // HAL_GPIO_TogglePin(BUZZER_GPIO_Port, BUZZER_Pin);
+      // IMU_GyroRead(&IMU_instance);
+    	// osDelay(1);
     }
   /* USER CODE END 5 */
 }
@@ -957,51 +944,32 @@ void movement(void *argument)
   /* USER CODE END movement */
 }
 
-/* USER CODE BEGIN Header_state_machine */
+/* USER CODE BEGIN Header_oled_display */
 /**
- * @brief Function implementing the uart_state_mach thread.
- * @param argument: Not used
- * @retval None
- */
-/* USER CODE END Header_state_machine */
-void state_machine(void *argument)
+* @brief Function implementing the oled_display_ta thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_oled_display */
+void oled_display(void *argument)
 {
-  /* USER CODE BEGIN state_machine */
-    /* Infinite loop */
-    for (;;)
-    {
-        osDelay(1);
-    }
-  /* USER CODE END state_machine */
-}
+  /* USER CODE BEGIN oled_display */
+  uint32_t ticks = 0;
+  char oled_lines[6][17] = {0};
 
-/* USER CODE BEGIN Header_encoder */
-/**
- * @brief Function implementing the encoder_display thread.
- * @param argument: Not used
- * @retval None
- */
-/* USER CODE END Header_encoder */
-void encoder(void *argument)
-{
-  /* USER CODE BEGIN encoder */
-    static uint32_t ticks = 0;
-    static char oled_lines[6][17] = {0};
-    static float asd = 3.14f;
-    OLED_Display_On();
+  OLED_Display_On();
+  /* Infinite loop */
+  for(;;)
+  {
 
-    /* Infinite loop */
-    for (;;)
-    {
         ticks = osKernelGetTickCount();
-
         taskENTER_CRITICAL();
         // IMU_TempRead(&IMU_instance);
         // IMU_AccelRead(&IMU_instance);
         // note here that strings are max 16 (+1 null) chars long
         sprintf(oled_lines[0], "L<%05lu  %05lu>R", ENCODER_POS_DIRECTIONAL_FORWARD[0], ENCODER_POS_DIRECTIONAL_FORWARD[1]);
         sprintf(oled_lines[1], "L<%+05d  %+05d>R", ENCODER_SPEED_DIRECTIONAL[0], ENCODER_SPEED_DIRECTIONAL[1]);
-        sprintf(oled_lines[2], "%.2f", IMU_yaw); // blank line
+        sprintf(oled_lines[2], "%.2f", IMU_instance.gyro[2]); // blank line
         taskEXIT_CRITICAL();
 
         OLED_ShowString(0, 0, (uint8_t *)oled_lines[0]);
@@ -1011,8 +979,9 @@ void encoder(void *argument)
         OLED_Refresh_Gram();
 
         osDelayUntil(ticks + 100); // 10hz display freq
-    }
-  /* USER CODE END encoder */
+
+  }
+  /* USER CODE END oled_display */
 }
 
 /* USER CODE BEGIN Header_encoder_poller */
@@ -1034,6 +1003,7 @@ void encoder_poller(void *argument)
 
     {
         ticks = osKernelGetTickCount();
+        HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
 
         taskENTER_CRITICAL();
         encoder_poll();
@@ -1044,53 +1014,22 @@ void encoder_poller(void *argument)
   /* USER CODE END encoder_poller */
 }
 
-/* USER CODE BEGIN Header_ir_adc */
+/* USER CODE BEGIN Header_uart_out */
 /**
- * @brief Function implementing the ir_adc_task thread.
- * @param argument: Not used
- * @retval None
- */
-/* USER CODE END Header_ir_adc */
-void ir_adc(void *argument)
+* @brief Function implementing the uart_out_task thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_uart_out */
+void uart_out(void *argument)
 {
-  /* USER CODE BEGIN ir_adc */
-    // static uint16_t IR_READOUT = 0;
-    static uint32_t ticks = 0;
-    static char buffer_ADC[100] = {0};
-
-    for (;;)
-    {
-        ticks = osKernelGetTickCount();
-        HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
-        taskENTER_CRITICAL();
-				// IMU_GyroRead(&IMU_instance);
-        // sprintf(
-        // 		buffer_ADC,
-						// "asd\r\n"
-				// "%04d %04d %04d %06d %06d %06d %06d %06d %06d\r\n",
-				// IR_ADC_AVERAGE_READOUT,
-				// ENCODER_SPEED_DIRECTIONAL[0],
-				// ENCODER_SPEED_DIRECTIONAL[1],
-        // ENCODER_POS[0],
-        // ENCODER_POS[1],
-        // ENCODER_POS_DIRECTIONAL_FORWARD[0],
-        // ENCODER_POS_DIRECTIONAL_FORWARD[1],
-        // ENCODER_POS_DIRECTIONAL_BACKWARD[0],
-        // ENCODER_POS_DIRECTIONAL_BACKWARD[1]
-
-				// "%7.2f\r\n",
-				// IMU_instance.gyro[2]
-				// IMU_yaw
-		// );
-        taskEXIT_CRITICAL();
-
-        // HAL_UART_Transmit(&huart3, (uint8_t *)buffer_ADC, strlen(buffer_ADC), HAL_MAX_DELAY);
-
-        // osDelayUntil(ticks + 100);
-        osDelay(100);
-    }
-
-  /* USER CODE END ir_adc */
+  /* USER CODE BEGIN uart_out */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1000);
+  }
+  /* USER CODE END uart_out */
 }
 
 /* USER CODE BEGIN Header_ir_adc_poller */
@@ -1122,31 +1061,32 @@ void ir_adc_poller(void *argument)
   /* USER CODE END ir_adc_poller */
 }
 
-/* USER CODE BEGIN Header_imu_read_routine */
+/* USER CODE BEGIN Header_imu_poller */
 /**
-* @brief Function implementing the imu_poller thread.
+* @brief Function implementing the imu_poller_task thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_imu_read_routine */
-void imu_read_routine(void *argument)
+/* USER CODE END Header_imu_poller */
+void imu_poller(void *argument)
 {
-  /* USER CODE BEGIN imu_read_routine */
-	static uint32_t time_ticks = 0;
+  /* USER CODE BEGIN imu_poller */
+  uint32_t ticks = 0;
   /* Infinite loop */
   for(;;)
   {
-		time_ticks = osKernelGetTickCount();
+    ticks = osKernelGetTickCount();
+    HAL_GPIO_TogglePin(BUZZER_GPIO_Port, BUZZER_Pin);
 
-		taskENTER_CRITICAL();
-		IMU_Poll(&IMU_data);
-    // IMU_GyroRead(&IMU_instance);
-		taskEXIT_CRITICAL();
+    // taskENTER_CRITICAL();
+    osMutexAcquire(MUTEX_IMUHandle, osWaitForever);
+    IMU_GyroRead(&IMU_instance);
+    osMutexRelease(MUTEX_IMUHandle);
+    // taskEXIT_CRITICAL();
 
-    // osDelayUntil(time_ticks + IMU_POLLING_RATE_TICKS);
-    osDelay(100);
+    osDelayUntil(ticks + 100);
   }
-  /* USER CODE END imu_read_routine */
+  /* USER CODE END imu_poller */
 }
 
 /**
