@@ -11,8 +11,8 @@
 #ifndef INC_MOVE_H_
 #define INC_MOVE_H_
 
-#define MOVE_LOW_GRIP_SURFACE // define this to enable slippery surface constants in computation
-#define MOVE_MAX_TURN // define this to enable tighter turns (as tight as the servo allows) TODO
+// #define MOVE_LOW_GRIP_SURFACE // define this to enable slippery surface constants in computation
+// #define MOVE_MAX_TURN // define this to enable tighter turns (as tight as the servo allows) TODO
 // #define MOVE_TURN_OVERDRIVE // define this to enable even tighter turns, uses the outer wheel TODO
 
 // small overdrive for left motor
@@ -62,8 +62,8 @@
 #define MOVE_KD 0.0f//0.3f //0.2f //0.13f
 
 // default speeds
-#define MOVE_DEFAULT_SPEED_STRAIGHT_MM_S 275
-#define MOVE_DEFAULT_SPEED_TURN_MM_S 225
+#define MOVE_DEFAULT_SPEED_STRAIGHT_MM_S 350
+#define MOVE_DEFAULT_SPEED_TURN_MM_S 300
 #define MOVE_PID_LOOP_PERIOD_TICKS 50 // pid refresh ticks
 
 // multiplier for turning backwards, to account for wheel slip
