@@ -6,6 +6,7 @@
  */
 #include "motor.h"
 #include "servo.h"
+#include "stdbool.h"
 
 #ifndef INC_MOVE_H_
 #define INC_MOVE_H_
@@ -77,7 +78,8 @@
 // Exposed here as another enum
 typedef enum {
 	MoveDirLeft = ServoDirLeft,
-	MoveDirRight = ServoDirRight
+	MoveDirRight = ServoDirRight,
+	MoveDirCenter
 } MoveDirection;
 
 // temp
@@ -97,19 +99,24 @@ void stop();
 void move_forward_calc(uint32_t centimeters);
 void move_backward_calc(uint32_t centimeters);
 
-void move_forward_pid_cm(uint32_t centimeters);
-void move_backward_pid_cm(uint32_t centimeters);
+void move_forward_pid_cm(uint32_t centimeters, bool no_check);
+void move_backward_pid_cm(uint32_t centimeters, bool no_check);
 
 void move_turn_forward_by(MoveDirection direction, uint16_t degrees);
 void move_turn_backward_by(MoveDirection direction, uint16_t degrees);
 
-void move_turn_forward_pid_degrees(MoveDirection direction, uint16_t degrees);
-void move_turn_backward_pid_degrees(MoveDirection direction, uint16_t degrees);
+void move_turn_forward_pid_degrees(MoveDirection direction, uint16_t degrees, bool no_check);
+void move_turn_backward_pid_degrees(MoveDirection direction, uint16_t degrees, bool no_check);
 
 void move_in_place_turn_by(MoveDirection direction, uint16_t degrees);
 void move_in_place_turn_cardinal(uint8_t cardinal_direction);
 
 void move_to_obstacle(void);
+
+void move_f_operation_1(uint16_t displacement, MoveDirection dir);
+void move_f_operation_2(uint16_t displacement, MoveDirection dir);
+void move_f_operation_u_turn(MoveDirection dir);
+void move_f_operation_3(uint16_t displacement, MoveDirection dir);
 
 void _set_motor_first_pwm_val(MotorDirection dir, MotorSide side, uint16_t speed_mm_s);
 void _set_motor_speed_pid(MotorDirection dir, MotorSide side, uint16_t speed_mm_s);

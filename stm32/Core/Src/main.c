@@ -23,6 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stdbool.h"
 #include "string.h"
 #include "inttypes.h"
 
@@ -898,14 +899,14 @@ void movement(void *argument)
             {
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveB\r\n", 10, HAL_MAX_DELAY);
 //                move_backward_calc(mvmt_dist);
-                move_backward_pid_cm(mvmt_dist);
+                move_backward_pid_cm(mvmt_dist, false);
                 USART3_SEND_AMP(); // algo needs this to know when to send the next command
             }
             else if (move_dir > 0)
             {
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveF\r\n", 10, HAL_MAX_DELAY);
 //                 move_forward_calc(mvmt_dist);
-                 move_forward_pid_cm(mvmt_dist);
+                 move_forward_pid_cm(mvmt_dist, false);
                  USART3_SEND_AMP();
 //                move_to_obstacle();
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveOK\r\n", 10, HAL_MAX_DELAY);
@@ -918,12 +919,12 @@ void movement(void *argument)
 
             if (move_dir < 0)
             {
-                move_turn_backward_pid_degrees(turn_dir > 0 ? MoveDirRight : MoveDirLeft, turn_angle);
+                move_turn_backward_pid_degrees(turn_dir > 0 ? MoveDirRight : MoveDirLeft, turn_angle, false);
                 USART3_SEND_AMP();
             }
             else if (move_dir > 0)
             {
-                move_turn_forward_pid_degrees(turn_dir > 0 ? MoveDirRight : MoveDirLeft, turn_angle);
+                move_turn_forward_pid_degrees(turn_dir > 0 ? MoveDirRight : MoveDirLeft, turn_angle, false);
                 USART3_SEND_AMP();
             }
 

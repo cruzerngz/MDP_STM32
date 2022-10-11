@@ -182,25 +182,30 @@ void _move_turn(MoveDirection move_dir, MotorDirection dir, uint32_t speed_mm_s,
 
 
 // Move a specified distance using the encoder
-void move_forward_pid_cm(uint32_t centimeters)
+void move_forward_pid_cm(uint32_t centimeters, bool no_check)
 {
 	_move_in_direction_speed(MotorDirForward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S, centimeters * 10);
-	osDelay(MOVE_PID_LOOP_PERIOD_TICKS << 2);
 
-	int32_t delta_cm = centimeters - (ENCODER_POS_DIRECTIONAL_FORWARD[0] + ENCODER_POS_DIRECTIONAL_FORWARD[1]) / 20;
-	if(delta_cm < 0) _move_in_direction_speed(MotorDirBackward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S >> 1, abs(delta_cm * 10)); //move_adjust_backward_pos_cm(abs(delta_cm));
-	else if(delta_cm > 0) _move_in_direction_speed(MotorDirForward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S >> 1, delta_cm * 10); //move_adjust_forward_pos_cm(delta_cm);
+	if(no_check == false) {
+		osDelay(MOVE_PID_LOOP_PERIOD_TICKS << 2);
+		int32_t delta_cm = centimeters - (ENCODER_POS_DIRECTIONAL_FORWARD[0] + ENCODER_POS_DIRECTIONAL_FORWARD[1]) / 20;
+		if(delta_cm < 0) _move_in_direction_speed(MotorDirBackward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S >> 1, abs(delta_cm * 10)); //move_adjust_backward_pos_cm(abs(delta_cm));
+		else if(delta_cm > 0) _move_in_direction_speed(MotorDirForward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S >> 1, delta_cm * 10); //move_adjust_forward_pos_cm(delta_cm);
+	}
 }
 
 // Move a specified distance using the encoder
-void move_backward_pid_cm(uint32_t centimeters)
+void move_backward_pid_cm(uint32_t centimeters, bool no_check)
 {
 	_move_in_direction_speed(MotorDirBackward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S, (uint32_t)centimeters * 10);
-	osDelay(MOVE_PID_LOOP_PERIOD_TICKS << 2);
 
-	int32_t delta_cm = centimeters - (ENCODER_POS_DIRECTIONAL_BACKWARD[0] + ENCODER_POS_DIRECTIONAL_BACKWARD[1]) / 20;
-	if(delta_cm < 0) _move_in_direction_speed(MotorDirForward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S >> 1, abs(delta_cm * 10)); //move_adjust_backward_pos_cm(abs(delta_cm));
-	else if(delta_cm > 0) _move_in_direction_speed(MotorDirBackward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S >> 1, delta_cm * 10); //move_adjust_forward_pos_cm(delta_cm);
+	if(no_check == false) {
+		osDelay(MOVE_PID_LOOP_PERIOD_TICKS << 2);
+
+		int32_t delta_cm = centimeters - (ENCODER_POS_DIRECTIONAL_BACKWARD[0] + ENCODER_POS_DIRECTIONAL_BACKWARD[1]) / 20;
+		if(delta_cm < 0) _move_in_direction_speed(MotorDirForward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S >> 1, abs(delta_cm * 10)); //move_adjust_backward_pos_cm(abs(delta_cm));
+		else if(delta_cm > 0) _move_in_direction_speed(MotorDirBackward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S >> 1, delta_cm * 10); //move_adjust_forward_pos_cm(delta_cm);
+	}
 }
 
 /**
@@ -209,26 +214,28 @@ void move_backward_pid_cm(uint32_t centimeters)
  * @param direction
  * @param degrees
  */
-void move_turn_forward_pid_degrees(MoveDirection direction, uint16_t degrees) {
+void move_turn_forward_pid_degrees(MoveDirection direction, uint16_t degrees, bool no_check) {
 	// IMU_reset_yaw();
 	_move_turn(direction, MotorDirForward, MOVE_DEFAULT_SPEED_TURN_MM_S, degrees);
 
-	osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
+	if(no_check == false) {
+		osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
 
-	uint32_t outer_dist_travelled = direction == MoveDirLeft ? ENCODER_POS_DIRECTIONAL_FORWARD[1] : ENCODER_POS_DIRECTIONAL_FORWARD[0];
-	uint32_t target_dist = (uint32_t)MOVE_PID_TURN_OUTER_MM_PER_DEGREE * degrees;
+		uint32_t outer_dist_travelled = direction == MoveDirLeft ? ENCODER_POS_DIRECTIONAL_FORWARD[1] : ENCODER_POS_DIRECTIONAL_FORWARD[0];
+		uint32_t target_dist = (uint32_t)MOVE_PID_TURN_OUTER_MM_PER_DEGREE * degrees;
 
-	int32_t delta = target_dist - outer_dist_travelled;
-	int32_t delta_deg = delta / MOVE_PID_TURN_OUTER_MM_PER_DEGREE;
+		int32_t delta = target_dist - outer_dist_travelled;
+		int32_t delta_deg = delta / MOVE_PID_TURN_OUTER_MM_PER_DEGREE;
 
 
 
-	// int32_t delta = (uint32_t) degrees - fabs(IMU_yaw);
-	if(delta > 0) {
-		_move_turn(direction, MotorDirForward, MOVE_DEFAULT_SPEED_TURN_MM_S >> 1, delta_deg);
-	}
-	if(delta < 0) {
-		_move_turn(direction, MotorDirBackward, MOVE_DEFAULT_SPEED_TURN_MM_S >> 1, abs(delta_deg));
+		// int32_t delta = (uint32_t) degrees - fabs(IMU_yaw);
+		if(delta > 0) {
+			_move_turn(direction, MotorDirForward, MOVE_DEFAULT_SPEED_TURN_MM_S >> 1, delta_deg);
+		}
+		if(delta < 0) {
+			_move_turn(direction, MotorDirBackward, MOVE_DEFAULT_SPEED_TURN_MM_S >> 1, abs(delta_deg));
+		}
 	}
 
 	servo_point_center();
@@ -240,22 +247,25 @@ void move_turn_forward_pid_degrees(MoveDirection direction, uint16_t degrees) {
  * @param direction
  * @param degrees
  */
-void move_turn_backward_pid_degrees(MoveDirection direction, uint16_t degrees) {
+void move_turn_backward_pid_degrees(MoveDirection direction, uint16_t degrees, bool no_check) {
 	_move_turn(direction, MotorDirBackward, MOVE_DEFAULT_SPEED_TURN_MM_S, degrees);
 
-	osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
-	uint32_t outer_dist_travelled = direction == MoveDirLeft ? ENCODER_POS_DIRECTIONAL_BACKWARD[1] : ENCODER_POS_DIRECTIONAL_BACKWARD[0];
-	uint32_t target_dist = (uint32_t)MOVE_PID_TURN_OUTER_MM_PER_DEGREE * degrees * MOVE_PID_SLIP_MULTIPLIER;
-	int32_t delta = target_dist - outer_dist_travelled;
-	int32_t delta_deg = delta / MOVE_PID_TURN_OUTER_MM_PER_DEGREE;
+	if(no_check == false) {
+		osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
+		uint32_t outer_dist_travelled = direction == MoveDirLeft ? ENCODER_POS_DIRECTIONAL_BACKWARD[1] : ENCODER_POS_DIRECTIONAL_BACKWARD[0];
+		uint32_t target_dist = (uint32_t)MOVE_PID_TURN_OUTER_MM_PER_DEGREE * degrees * MOVE_PID_SLIP_MULTIPLIER;
+		int32_t delta = target_dist - outer_dist_travelled;
+		int32_t delta_deg = delta / MOVE_PID_TURN_OUTER_MM_PER_DEGREE;
 
-	// int32_t delta = (uint32_t) degrees - fabs(IMU_yaw);
-	if(delta > 0) {
-		_move_turn(direction, MotorDirBackward, MOVE_DEFAULT_SPEED_TURN_MM_S >> 1, delta_deg);
+		// int32_t delta = (uint32_t) degrees - fabs(IMU_yaw);
+		if(delta > 0) {
+			_move_turn(direction, MotorDirBackward, MOVE_DEFAULT_SPEED_TURN_MM_S >> 1, delta_deg);
+		}
+		if(delta < 0) {
+			_move_turn(direction, MotorDirForward, MOVE_DEFAULT_SPEED_TURN_MM_S >> 1, abs(delta_deg));
+		}
 	}
-	if(delta < 0) {
-		_move_turn(direction, MotorDirForward, MOVE_DEFAULT_SPEED_TURN_MM_S >> 1, abs(delta_deg));
-	}
+
 	servo_point_center();
 }
 
@@ -305,15 +315,15 @@ void move_in_place_turn_cardinal(uint8_t cardinal_direction)
 	MoveDirection for_dir = clockwise ? MoveDirRight : MoveDirLeft;
 
 	if(cardinal_direction == 4 || cardinal_direction == 12) {
-        move_forward_pid_cm(25);
+        move_forward_pid_cm(25, false);
         // move_forward_pid_cm(5);
 		osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
 
         for (uint8_t i = 0; i < 2; i++)
         {
-            move_turn_backward_pid_degrees(rev_dir, 22);
+            move_turn_backward_pid_degrees(rev_dir, 22, false);
             osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
-            move_turn_forward_pid_degrees(for_dir, 22);
+            move_turn_forward_pid_degrees(for_dir, 22, false);
             osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
         }
 
@@ -328,16 +338,16 @@ void move_in_place_turn_cardinal(uint8_t cardinal_direction)
         //     osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
         // }
 
-        move_backward_pid_cm(20);
+        move_backward_pid_cm(20, false);
 		// osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
         return;
     }
 
 	for (uint8_t i = 0; i < num_turns; i++)
 	{
-		move_turn_backward_pid_degrees(rev_dir, 11);
+		move_turn_backward_pid_degrees(rev_dir, 11, false);
 		osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
-		move_turn_forward_pid_degrees(for_dir, 11);
+		move_turn_forward_pid_degrees(for_dir, 11, false);
 		osDelay(MOVE_PID_LOOP_PERIOD_TICKS);
 	}
 
@@ -403,6 +413,32 @@ void _set_motor_speed_pid(MotorDirection dir, MotorSide side, uint16_t speed_mm_
 // _set_motor_first_pwm_val(MotorDirection dir, MotorSide side, uint16_t speed_mm_s) {
 
 // }
+
+
+// move fastest task
+
+void move_f_operation_1(uint16_t displacement, MoveDirection dir) {
+	move_turn_forward_pid_degrees(dir, 45, true);
+	move_turn_backward_pid_degrees(dir == MoveDirLeft ? MoveDirRight : MoveDirLeft, 45, true);
+	move_forward_pid_cm(displacement - 30, true);
+}
+
+void move_f_operation_2(uint16_t displacement, MoveDirection dir) {
+	move_forward_pid_cm(20, true);
+	move_turn_forward_pid_degrees(dir, 60, true);
+	move_forward_pid_cm(20, true);
+	move_turn_backward_pid_degrees(dir == MoveDirLeft ? MoveDirRight : MoveDirLeft, 60, true);
+
+	move_forward_pid_cm(displacement - 40 - 30, true);
+}
+
+void move_f_operation_u_turn(MoveDirection dir) {
+
+}
+
+void move_f_operation_3(uint16_t displacement, MoveDirection dir) {
+
+}
 
 /*
  * Start of hardcoded movement functions
