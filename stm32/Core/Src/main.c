@@ -907,7 +907,7 @@ void movement(void *argument)
             {
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveF\r\n", 10, HAL_MAX_DELAY);
 //                 move_forward_calc(mvmt_dist);
-                move_f_operation_2(50, MoveDirRight);
+                move_f_operation_2(70, MoveDirRight);
                 //  move_forward_pid_cm(mvmt_dist, false);
                  USART3_SEND_AMP();
 //                move_to_obstacle();

@@ -133,7 +133,7 @@ void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t 
 		osDelayUntil(time_ticks + MOVE_PID_LOOP_PERIOD_TICKS);
 	} while(total_dist < target); // while still in delay loop
 
-	if(no_stop == false) motor_stop();
+	if(no_stop == false) {motor_stop();}
 }
 
 // Internal turn function
@@ -165,7 +165,7 @@ void _move_turn(MoveDirection move_dir, MotorDirection dir, uint32_t speed_mm_s,
 		ENCODER_RIGHT = ENCODER_POS_DIRECTIONAL_BACKWARD + 1;
 	}
 
-	osDelay(SERVO_FULL_LOCK_DELAY);
+	if(no_stop == false) {osDelay(SERVO_FULL_LOCK_DELAY);}
 
 	do {
 		time_ticks = osKernelGetTickCount();
@@ -179,14 +179,14 @@ void _move_turn(MoveDirection move_dir, MotorDirection dir, uint32_t speed_mm_s,
 		osDelayUntil(time_ticks + MOVE_PID_LOOP_PERIOD_TICKS);
 	} while(total_dist < target_dist_mm);
 
-	if(no_stop == false) motor_stop();
+	if(no_stop == false) {motor_stop();}
 }
 
 
 // Move a specified distance using the encoder
 void move_forward_pid_cm(uint32_t centimeters, bool no_check)
 {
-	_move_in_direction_speed(MotorDirForward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S, centimeters * 10, false);
+	_move_in_direction_speed(MotorDirForward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S, centimeters * 10, no_check);
 
 	if(no_check == false) {
 		osDelay(MOVE_PID_LOOP_PERIOD_TICKS << 2);
@@ -420,18 +420,18 @@ void _set_motor_speed_pid(MotorDirection dir, MotorSide side, uint16_t speed_mm_
 // move fastest task
 
 void move_f_operation_1(uint16_t displacement, MoveDirection dir) {
-	move_turn_forward_pid_degrees(dir, 45, true);
-	move_turn_forward_pid_degrees(dir == MoveDirLeft ? MoveDirRight : MoveDirLeft, 45, true);
+	move_turn_forward_pid_degrees(dir, 30, true);
+	move_turn_forward_pid_degrees(dir == MoveDirLeft ? MoveDirRight : MoveDirLeft, 55, false);
 	// move_forward_pid_cm(displacement - 30, true);
 }
 
 void move_f_operation_2(uint16_t displacement, MoveDirection dir) {
 	move_forward_pid_cm(20, true);
-	move_turn_forward_pid_degrees(dir, 60, true);
+	move_turn_forward_pid_degrees(dir, 55, true);
 	move_forward_pid_cm(20, true);
-	move_turn_forward_pid_degrees(dir == MoveDirLeft ? MoveDirRight : MoveDirLeft, 60, true);
+	move_turn_forward_pid_degrees(dir == MoveDirLeft ? MoveDirRight : MoveDirLeft, 55, false);
 
-	// move_forward_pid_cm(uint16_t(displacement - 40 - 10), true);
+	// move_forward_pid_cm(uint16_t(displacement - 40 - 9), true);
 }
 
 void move_f_operation_u_turn(MoveDirection dir) {
