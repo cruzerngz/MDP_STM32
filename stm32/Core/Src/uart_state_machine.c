@@ -39,6 +39,7 @@ volatile int8_t 						FLAG_TURN_DIR = 0; // right/left, +1 or -1 only
 
 // flags used by config, initialised to be the values defined in move.h
 // used to store the defaults if a reset is needed
+volatile bool 							FLAG_LOW_GRIP = false;
 // volatile int16_t                        FLAG_KP = MOVE_KP;
 // volatile int16_t                        FLAG_KI = MOVE_KI;
 // volatile int16_t                        FLAG_KD = MOVE_KD;
@@ -488,11 +489,11 @@ uint8_t _config_interpreter_magnitude(uint8_t command) {
 
 uint8_t _config_interpreter_boolean(uint8_t command) {
     if (command == ConfigLowGripTrue) {
-        _GLOBAL_MOVE_SURFACE_LOW_GRIP = true;
+        FLAG_LOW_GRIP = true;
         return StateMachineFullAck;
     }
     else if (command == ConfigLowGripFalse) {
-        _GLOBAL_MOVE_SURFACE_LOW_GRIP = false;
+        FLAG_LOW_GRIP = false;
         return StateMachineFullAck;
     } else { // fallback to idle state
 		_config_reset_intern_flags();

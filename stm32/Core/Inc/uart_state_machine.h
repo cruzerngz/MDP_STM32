@@ -39,6 +39,9 @@ extern volatile int8_t FLAG_TURN_DIR;
 // 0-indexed, max 15, steps of 22.5 degrees clockwise
 extern volatile uint8_t FLAG_IN_PLACE_CARDINAL;
 
+// low grip flag, for changing between 2 speed modes on the fly
+extern volatile bool FLAG_LOW_GRIP;
+
 
 // interrupt flags for high speed mode
 extern volatile bool FLAG_CHANGE_LANE;
@@ -47,7 +50,7 @@ extern volatile bool FLAG_U_TURN;
 extern volatile int8_t FLAG_SWITCH_DIR; // right/left, +1 or -1 only
 extern volatile int16_t FLAG_LANE_DISTANCE;
 
-// config values    
+// config values
 // extern volatile uint8_t FLAG_KP;
 // extern volatile uint8_t FLAG_KI;
 // extern volatile uint8_t FLAG_KD;
