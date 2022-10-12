@@ -115,6 +115,7 @@ uint8_t _state_machine_mode_interpreter(uint8_t command);
 uint8_t _high_speed_interpreter(uint8_t command);
 uint8_t _high_speed_interpreter_idle(uint8_t command);
 uint8_t _high_speed_interpreter_lane_change(uint8_t command);
+uint8_t _high_speed_interpreter_big_lane_change(uint8_t command);
 uint8_t _high_speed_interpreter_boolean(uint8_t command);
 uint8_t _high_speed_interpreter_ingest_magnitude(uint8_t command);
 
@@ -238,7 +239,7 @@ uint8_t _state_machine_mode_interpreter(uint8_t command) {
  */
 uint8_t _high_speed_interpreter(uint8_t command) {
     // if (GLOBAL_SPEED_MODE_IS_RESET) { // refresh GLOBAL_SPEED_MODE state
-    //     GLOBAL_SPEED_MODE = SpeedIdle; 
+    //     GLOBAL_SPEED_MODE = SpeedIdle;
     // }
 
     switch(GLOBAL_SPEED_MODE) {
@@ -247,10 +248,10 @@ uint8_t _high_speed_interpreter(uint8_t command) {
 		break;
 
     case SpeedLaneChange:
+	case SpeedBigLaneChange:
         return _high_speed_interpreter_lane_change(command);
         break;
 
-    case SpeedBigLaneChange:
     case SpeedUTurn:
         return _high_speed_interpreter_boolean(command);
         break;
@@ -271,13 +272,13 @@ uint8_t _high_speed_interpreter_idle(uint8_t command) {
 		break;
 
 	case SpeedBigLane:
-        // GLOBAL_SPEED_MODE_IS_RESET = 0; 
+        // GLOBAL_SPEED_MODE_IS_RESET = 0;
 		GLOBAL_SPEED_MODE = SpeedBigLaneChange;
 		return StateMachinePartialAck;
 		break;
 
 	case SpeedUTurning:
-        // GLOBAL_SPEED_MODE_IS_RESET = 0; 
+        // GLOBAL_SPEED_MODE_IS_RESET = 0;
 		GLOBAL_SPEED_MODE = SpeedUTurn;
 		return StateMachinePartialAck;
 		break;
@@ -352,7 +353,7 @@ uint8_t _high_speed_interpreter_ingest_magnitude(uint8_t command) {
     // done giving value input
 	if(command == StateMachineFullAck) {
 		reply = _high_speed_lane_change_set_flags();
-		_high_speed_reset_intern_flags(); 
+		_high_speed_reset_intern_flags();
 
 		return reply;
 	}
@@ -372,7 +373,9 @@ uint8_t _high_speed_interpreter_ingest_magnitude(uint8_t command) {
 
 
 uint8_t _high_speed_lane_change_set_flags(void) {
-    FLAG_CHANGE_LANE = 1;
+	if(GLOBAL_SPEED_MODE == SpeedLaneChange) {FLAG_CHANGE_LANE = true;}
+	else if(GLOBAL_SPEED_MODE == SpeedBigLaneChange) {FLAG_CHANGE_BIG_LANE = true;}
+    // FLAG_CHANGE_LANE = 1;
     FLAG_SWITCH_DIR = GLOBAL_SPEED_SWITCH_DIR;
     FLAG_LANE_DISTANCE = GLOBAL_SPEED_MAGNITUDE;
     return StateMachineFullAck;
@@ -487,7 +490,7 @@ uint8_t _config_interpreter_boolean(uint8_t command) {
     if (command == ConfigLowGripTrue) {
         _GLOBAL_MOVE_SURFACE_LOW_GRIP = true;
         return StateMachineFullAck;
-    } 
+    }
     else if (command == ConfigLowGripFalse) {
         _GLOBAL_MOVE_SURFACE_LOW_GRIP = false;
         return StateMachineFullAck;
@@ -504,7 +507,7 @@ uint8_t _config_interpreter_ingest_magnitude(uint8_t command) {
     // done giving value input
 	if(command == StateMachineFullAck) {
 		reply = _config_set_flags();
-		_config_reset_intern_flags(); 
+		_config_reset_intern_flags();
 
 		return reply;
 	}
