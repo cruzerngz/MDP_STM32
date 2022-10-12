@@ -308,6 +308,8 @@ TEST test_config_set_low_grip_flag() {
     ASSERT_EQ(state_machine_interpreter('g'), '.');
     ASSERT_EQ(state_machine_interpreter('t'), ';'); // t for true, f for false
 
+    ASSERT_EQ(FLAG_LOW_GRIP, true);
+
     PASS();
 }
 
