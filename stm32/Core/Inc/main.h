@@ -49,8 +49,11 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 static uint8_t _AMP_ = '&';
+static uint8_t _CAPTURE_IMAGE_[] = "IMG:CAP";
 // send a message
 #define USART3_SEND_AMP() HAL_UART_Transmit(&huart3, &_AMP_, 1, HAL_MAX_DELAY)
+#define USART3_SEND_IMAGE_CAPTURE() HAL_UART_Transmit(&huart3, _CAPTURE_IMAGE_, 7, HAL_MAX_DELAY)
+
 // #define USART3_SEND_CHAR(_char_) HAL_UART_Transmit(&huart3, (uint8_t *)(_char_), sizeof(_char_), HAL_MAX_DELAY)
 /* USER CODE END EM */
 

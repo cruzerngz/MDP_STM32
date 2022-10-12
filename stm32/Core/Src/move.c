@@ -39,6 +39,13 @@ float MOTOR_INTEGRATION_SUM[2] = {0.0f}; // pid global
 static float MOTOR_PREV_ERROR[2] = {0.0f}; // pid global
 static float MOTOR_PREV_TICKS[2] = {0.0f}; // pid global
 
+// internal state kept of the current outbound lane
+// for the fastest car task
+// so that the return trip is fully automated
+static MoveDirection MOVE_F_OUTBOUND_LANE = MoveDirCenter;
+static uint16_t MOVE_F_OBSTACLE_1_DISPLACEMENT = 0;
+static uint16_t MOVE_F_OBSTACLE_2_DISPLACEMENT = 0;
+
 // private function prototypes
 void _pid_reset(uint32_t time_ticks);
 void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t dist_mm, bool no_stop);
@@ -124,6 +131,8 @@ void _move_in_direction_speed(MotorDirection dir, uint32_t speed_mm_s, uint32_t 
 
 	do {
 		time_ticks = osKernelGetTickCount();
+
+		// int wheels_delta = *ENCODER_LEFT;
 
 		taskENTER_CRITICAL();
 		_set_motor_speed_pid(dir, MotorLeft, (uint32_t)speed_mm_s * MOVE_LEFT_MOTOR_MULTIPLIER);
@@ -419,27 +428,140 @@ void _set_motor_speed_pid(MotorDirection dir, MotorSide side, uint16_t speed_mm_
 
 // move fastest task
 
+// small lane change operation
 void move_f_operation_1(uint16_t displacement, MoveDirection dir) {
-	move_turn_forward_pid_degrees(dir, 30, true);
-	move_turn_forward_pid_degrees(dir == MoveDirLeft ? MoveDirRight : MoveDirLeft, 55, false);
-	// move_forward_pid_cm(displacement - 30, true);
+	MOVE_F_OBSTACLE_1_DISPLACEMENT = displacement; // store the obstacle displacement
+	if(dir != MoveDirCenter)  {
+		MOVE_F_OUTBOUND_LANE = dir;
+	}
+	// continuous turn routine - displaces 20cm to the left/right, covers approx 30cm forwards
+	move_turn_forward_pid_degrees(dir, 35, true);
+	move_turn_forward_pid_degrees(dir == MoveDirLeft ? MoveDirRight : MoveDirLeft, 38, true);
+	if(dir == MoveDirRight) {osDelay(60);}
+	move_forward_pid_cm((uint32_t)displacement * 0.91f - 42, false); // multiplier accounts for "wheel slip"
+	// _move_in_direction_speed(MotorDirBackward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S >> 1, displacement / 10, false);
 }
 
+// big lane change operation
 void move_f_operation_2(uint16_t displacement, MoveDirection dir) {
-	move_forward_pid_cm(20, true);
-	move_turn_forward_pid_degrees(dir, 55, true);
-	move_forward_pid_cm(20, true);
-	move_turn_forward_pid_degrees(dir == MoveDirLeft ? MoveDirRight : MoveDirLeft, 55, false);
 
-	// move_forward_pid_cm(uint16_t(displacement - 40 - 9), true);
+	MOVE_F_OBSTACLE_2_DISPLACEMENT = displacement; // store the obstacle displacment
+
+	if(dir == MOVE_F_OUTBOUND_LANE || dir == MoveDirCenter) { // if already in the lane, do a small lane change
+		move_f_operation_1(displacement, dir);
+		return;
+
+	} else { // if in the wrong lane, do a big lane change
+		MOVE_F_OUTBOUND_LANE = dir;
+		move_turn_forward_pid_degrees(dir, 55, true);
+		move_forward_pid_cm(32, true);
+		move_turn_forward_pid_degrees(dir == MoveDirLeft ? MoveDirRight : MoveDirLeft, 70, true);
+		if(dir == MoveDirRight) {osDelay(75);}
+		motor_stop();
+		servo_point_center();
+
+		// move_forward_pid_cm((uint16_t)(displacement - 30), false);
+	}
+
+}
+
+// Moves to the obstacle, 50cm away
+void move_f_to_obstacle(void) {
+	servo_point_center();
+
+	uint16_t TARGET_IR_READOUT = 750; // ir output at 50cm - calibrate!
+
+	uint32_t time_ticks = osKernelGetTickCount();
+	// uint32_t target = (uint32_t)dist_mm;
+	volatile uint32_t *ENCODER_LEFT;
+	volatile uint32_t *ENCODER_RIGHT;
+	uint32_t total_dist = 0;
+	int32_t ir_diff = 0;
+
+	_pid_reset(time_ticks);
+	encoder_reset_counters_forward();
+	ENCODER_LEFT = ENCODER_POS_DIRECTIONAL_FORWARD;
+	ENCODER_RIGHT = ENCODER_POS_DIRECTIONAL_FORWARD + 1;
+
+	do {
+		time_ticks = osKernelGetTickCount();
+
+		ir_diff = (int32_t)(TARGET_IR_READOUT - IR_ADC_AVERAGE_READOUT);
+
+		if(ir_diff < 0) {
+			taskENTER_CRITICAL();
+			_set_motor_speed_pid(MotorDirBackward, MotorLeft, (uint32_t)MOVE_DEFAULT_SPEED_STRAIGHT_MM_S * MOVE_LEFT_MOTOR_MULTIPLIER);
+			_set_motor_speed_pid(MotorDirBackward, MotorRight, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S);
+			// total_dist = (*ENCODER_LEFT + *ENCODER_RIGHT) >> 1;
+			taskEXIT_CRITICAL();
+
+		} else if(ir_diff > 0) {
+			taskENTER_CRITICAL();
+			_set_motor_speed_pid(MotorDirForward, MotorLeft, (uint32_t)MOVE_DEFAULT_SPEED_STRAIGHT_MM_S * MOVE_LEFT_MOTOR_MULTIPLIER);
+			_set_motor_speed_pid(MotorDirForward, MotorRight, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S);
+			// total_dist = (*ENCODER_LEFT + *ENCODER_RIGHT) >> 1;
+			taskEXIT_CRITICAL();
+
+		}
+
+		osDelayUntil(time_ticks + MOVE_PID_LOOP_PERIOD_TICKS);
+	} while(abs(ir_diff) > 20); // while still in delay loop
+
+	motor_stop();
 }
 
 void move_f_operation_u_turn(MoveDirection dir) {
 
 }
 
-void move_f_operation_3(uint16_t displacement, MoveDirection dir) {
+// move inside the carpark
+void move_f_to_carpark(void) {
+	uint32_t TARGET_IR_READOUT = 3000;
+	int32_t ir_diff = 0;
+	int32_t ticks = 0;
+	MotorDirection dir;
+	do
+	{
+		ticks = osKernelGetTickCount();
+		taskENTER_CRITICAL();
+		ir_diff = (int32_t)(TARGET_IR_READOUT - IR_ADC_AVERAGE_READOUT);
+		taskEXIT_CRITICAL();
 
+		// dir = ir_diff > 0 ? MotorDirForward : MotorDirBackward;
+		// _set_motor_speed_pid(dir, MotorLeft, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S >> 1);
+		// _set_motor_speed_pid(dir, MotorRight, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S >> 1);
+
+		if (ir_diff > 0)
+		{
+			motor_forward(MotorSpeed1);
+		}
+		else
+		{
+			motor_backward(MotorSpeed1);
+		}
+		// osDelayUntil(ticks + 25);
+		osDelayUntil(ticks + MOVE_PID_LOOP_PERIOD_TICKS);
+	} while (abs(ir_diff) > 20);
+
+	motor_stop();
+}
+
+// approach, u-turn and return trip
+void move_f_operation_3(uint16_t displacement, MoveDirection dir) {
+	// move to obstacle
+	move_f_to_obstacle();
+	osDelay(100);
+	move_f_to_obstacle();
+
+	// u-turn
+	move_f_operation_u_turn(MOVE_F_OUTBOUND_LANE == MoveDirLeft ? MoveDirRight : MoveDirLeft);
+	move_forward_pid_cm(MOVE_F_OBSTACLE_2_DISPLACEMENT, true);
+
+	// change lane back to (roughly) center
+	move_f_operation_1(MOVE_F_OBSTACLE_1_DISPLACEMENT, dir);
+
+	// park in front (disabled for now)
+	// move_f_to_obstacle();
 }
 
 /*

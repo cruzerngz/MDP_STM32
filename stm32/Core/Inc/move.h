@@ -62,14 +62,18 @@
 #define MOVE_KD 0.0f//0.3f //0.2f //0.13f
 
 // default speeds
-#define MOVE_DEFAULT_SPEED_STRAIGHT_MM_S 350
-#define MOVE_DEFAULT_SPEED_TURN_MM_S 300
+#define MOVE_DEFAULT_SPEED_STRAIGHT_MM_S 1100 // prev 350
+#define MOVE_DEFAULT_SPEED_TURN_MM_S 740 // prev 300
 #define MOVE_PID_LOOP_PERIOD_TICKS 50 // pid refresh ticks
 
 // multiplier for turning backwards, to account for wheel slip
 #define MOVE_PID_SLIP_MULTIPLIER 1.0275f
 
 #endif
+
+// unused, use move_default speeds for now
+#define MOVE_HIGH_SPEED_STRAIGHT_MM_S 1100
+#define MOVE_HIGH_SPEED_TURN_MM_S 740
 
 // #define MOVE_CAR_OUTER_WHEEL_RADIUS 39.05f
 // #define MOVE_CAR_INNER_WHEEL_RADIUS 22.75f
@@ -112,6 +116,8 @@ void move_in_place_turn_by(MoveDirection direction, uint16_t degrees);
 void move_in_place_turn_cardinal(uint8_t cardinal_direction);
 
 void move_to_obstacle(void);
+void move_f_to_obstacle(void);
+void move_f_to_carpark(void);
 
 void move_f_operation_1(uint16_t displacement, MoveDirection dir);
 void move_f_operation_2(uint16_t displacement, MoveDirection dir);

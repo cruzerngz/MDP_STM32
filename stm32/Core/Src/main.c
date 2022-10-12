@@ -208,6 +208,9 @@ int main(void)
     encoder_init(&htim2, &htim3, TIM_CHANNEL_ALL, TIM_CHANNEL_ALL);
 		// IMU_S_Initialise(&IMU_instance, &hi2c1, &huart3);
     IMU_Initialise(&IMU_instance, &hi2c1, &huart3);
+
+    // send image capture on boot
+    // USART3_SEND_IMAGE_CAPTURE();
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -249,7 +252,7 @@ int main(void)
   // ir_adc_taskHandle = osThreadNew(ir_adc, NULL, &ir_adc_task_attributes);
 
   /* creation of ir_adc_poller_t */
-  // ir_adc_poller_tHandle = osThreadNew(ir_adc_poller, NULL, &ir_adc_poller_t_attributes);
+  ir_adc_poller_tHandle = osThreadNew(ir_adc_poller, NULL, &ir_adc_poller_t_attributes);
 
   /* creation of imu_poller */
   // imu_pollerHandle = osThreadNew(imu_read_routine, NULL, &imu_poller_attributes);
@@ -866,6 +869,12 @@ void movement(void *argument)
     static volatile int8_t move_dir = 0;
     static volatile int8_t turn_dir = 0;
 
+    static volatile bool change_lane = false;
+    static volatile bool change_lane_big = false;
+    static volatile bool u_turn = false;
+    static volatile int8_t switch_dir = 0;
+    static volatile int16_t lane_dist = 0;
+
     // Flags set in the UART interrupt routine set here
     /* Infinite loop */
     for (;;)
@@ -883,6 +892,12 @@ void movement(void *argument)
         move_dir = FLAG_MOVE_DIR;
         turn_dir = FLAG_TURN_DIR;
 
+        change_lane = FLAG_CHANGE_LANE;
+        change_lane_big = FLAG_CHANGE_BIG_LANE;
+        u_turn = FLAG_U_TURN;
+        switch_dir = FLAG_SWITCH_DIR;
+        lane_dist = FLAG_LANE_DISTANCE;
+
         FLAG_MOVEMENT_DISTANCE = 0;
         FLAG_TURN_ANGLE = 0;
         FLAG_IN_PLACE_CARDINAL = 0;
@@ -890,6 +905,12 @@ void movement(void *argument)
 
         FLAG_MOVE_DIR = 0;
         FLAG_TURN_DIR = 0;
+
+        FLAG_CHANGE_LANE = false;
+        FLAG_CHANGE_BIG_LANE = false;
+        FLAG_U_TURN = false;
+        FLAG_SWITCH_DIR = 0; // right/left, +1 or -1 only
+        FLAG_LANE_DISTANCE = 0;
         __enable_irq();
 
         if (mvmt_dist != 0)
@@ -899,16 +920,16 @@ void movement(void *argument)
             {
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveB\r\n", 10, HAL_MAX_DELAY);
 //                move_backward_calc(mvmt_dist);
-                // move_backward_pid_cm(mvmt_dist, false);
-                move_f_operation_1(50, MoveDirLeft);
+                move_backward_pid_cm(mvmt_dist, false);
+                // move_f_operation_1(50, MoveDirLeft);
                 USART3_SEND_AMP(); // algo needs this to know when to send the next command
             }
             else if (move_dir > 0)
             {
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveF\r\n", 10, HAL_MAX_DELAY);
 //                 move_forward_calc(mvmt_dist);
-                move_f_operation_2(70, MoveDirRight);
-                //  move_forward_pid_cm(mvmt_dist, false);
+                // move_f_operation_1(50, MoveDirRight);
+                 move_forward_pid_cm(mvmt_dist, false);
                  USART3_SEND_AMP();
 //                move_to_obstacle();
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveOK\r\n", 10, HAL_MAX_DELAY);
@@ -928,6 +949,7 @@ void movement(void *argument)
             {
                 move_turn_forward_pid_degrees(turn_dir > 0 ? MoveDirRight : MoveDirLeft, turn_angle, false);
                 USART3_SEND_AMP();
+                FLAG_APPROACH_OBSTACLE ^= 1; // do operation 3
             }
 
             turn_angle = 0;
@@ -941,13 +963,24 @@ void movement(void *argument)
         }
 
         if(appr_obstacle == 1) {
-          move_to_obstacle();
+          // move_to_obstacle();
+          move_f_to_obstacle();
+          osDelay(100);
+          move_f_to_obstacle();
           USART3_SEND_AMP();
           appr_obstacle = 0;
         }
 
         // fastest car stuff
+        if(change_lane) {
+          move_f_operation_1(lane_dist, switch_dir == -1 ? MoveDirLeft : MoveDirRight);
+          USART3_SEND_AMP();
+        }
 
+        if(change_lane_big) {
+          move_f_operation_2(lane_dist, switch_dir == -1 ? MoveDirLeft : MoveDirRight);
+          USART3_SEND_AMP();
+        }
 
         osDelayUntil(ticks + 100); // 10hz polling
     }
@@ -993,11 +1026,13 @@ void encoder(void *argument)
         ticks = osKernelGetTickCount();
         // float stuff = 3.14141414 * 0.1234123f * ticks;
         // IMU_GyroRead(&IMU_instance);
+
+
         taskENTER_CRITICAL();
         // note here that strings are max 16 (+1 null) chars long
         sprintf(oled_lines[0], "L<%05lu  %05lu>R", ENCODER_POS_DIRECTIONAL_FORWARD[0], ENCODER_POS_DIRECTIONAL_FORWARD[1]);
         sprintf(oled_lines[1], "L<%+05d  %+05d>R", ENCODER_SPEED_DIRECTIONAL[0], ENCODER_SPEED_DIRECTIONAL[1]);
-        sprintf(oled_lines[2], "%010d", (int)(IMU_instance.gyro[2] * 100)); // blank line
+        sprintf(oled_lines[2], "%04d", IR_ADC_AVERAGE_READOUT); // blank line
         taskEXIT_CRITICAL();
 
         OLED_ShowString(0, 0, (uint8_t *)oled_lines[0]);
@@ -1055,6 +1090,7 @@ void ir_adc(void *argument)
     static uint32_t ticks = 0;
     static char buffer_ADC[100] = {0};
     float yaw = 0.0f;
+    static char SERIALPLOT_ENDL[2] = "\r\n"; // no null terminator
 
     for (;;)
     {
@@ -1066,11 +1102,11 @@ void ir_adc(void *argument)
         // sprintf(buffer_ADC, "%010d", (int)(yaw * 100)); // blank line
 
 				// IMU_GyroRead(&IMU_instance);
-        // sprintf(
-        // 		buffer_ADC,
-						// "asd\r\n"
+        sprintf(
+        		buffer_ADC,
+            "%04d",
 				// "%04d %04d %04d %06d %06d %06d %06d %06d %06d\r\n",
-				// IR_ADC_AVERAGE_READOUT,
+				IR_ADC_AVERAGE_READOUT
 				// ENCODER_SPEED_DIRECTIONAL[0],
 				// ENCODER_SPEED_DIRECTIONAL[1],
         // ENCODER_POS[0],
@@ -1083,13 +1119,14 @@ void ir_adc(void *argument)
 				// "%7.2f\r\n",
 				// IMU_instance.gyro[2]
 				// IMU_yaw
-		// );
+		);
         taskEXIT_CRITICAL();
 
-        // HAL_UART_Transmit(&huart3, (uint8_t *)buffer_ADC, 11, HAL_MAX_DELAY);
+        HAL_UART_Transmit(&huart3, (uint8_t *)buffer_ADC, sizeof buffer_ADC, HAL_MAX_DELAY);
+        HAL_UART_Transmit(&huart3, SERIALPLOT_ENDL, sizeof SERIALPLOT_ENDL, HAL_MAX_DELAY);
 
-        // osDelayUntil(ticks + 100);
-        osDelay(100);
+        osDelayUntil(ticks + 5);
+        // osDelay(100);
     }
 
   /* USER CODE END ir_adc */
