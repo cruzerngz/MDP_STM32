@@ -72,8 +72,8 @@
 #endif
 
 // unused, use move_default speeds for now
-#define MOVE_HIGH_SPEED_STRAIGHT_MM_S 1100
-#define MOVE_HIGH_SPEED_TURN_MM_S 740
+#define MOVE_HIGH_SPEED_STRAIGHT_MM_S 1000
+#define MOVE_HIGH_SPEED_TURN_MM_S 750
 
 // #define MOVE_CAR_OUTER_WHEEL_RADIUS 39.05f
 // #define MOVE_CAR_INNER_WHEEL_RADIUS 22.75f
@@ -119,10 +119,17 @@ void move_to_obstacle(void);
 void move_f_to_obstacle(void);
 void move_f_to_carpark(void);
 
+// higher speed code
+void move_f_operation_1_fast(uint16_t displacement, MoveDirection dir);
+void move_f_operation_2_fast(uint16_t displacement, MoveDirection dir);
+void move_f_operation_u_turn_fast(MoveDirection dir);
+void move_f_operation_3_fast();
+
+// lower speed code
 void move_f_operation_1(uint16_t displacement, MoveDirection dir);
 void move_f_operation_2(uint16_t displacement, MoveDirection dir);
 void move_f_operation_u_turn(MoveDirection dir);
-void move_f_operation_3(uint16_t displacement, MoveDirection dir);
+void move_f_operation_3();
 
 void _set_motor_first_pwm_val(MotorDirection dir, MotorSide side, uint16_t speed_mm_s);
 void _set_motor_speed_pid(MotorDirection dir, MotorSide side, uint16_t speed_mm_s);

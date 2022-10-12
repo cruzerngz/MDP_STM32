@@ -920,7 +920,8 @@ void movement(void *argument)
             {
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveB\r\n", 10, HAL_MAX_DELAY);
 //                move_backward_calc(mvmt_dist);
-                move_backward_pid_cm(mvmt_dist, false);
+                move_backward_pid_cm(mvmt_dist * 0.9, true);
+                _pid_stop(MotorDirBackward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S, mvmt_dist);
                 // move_f_operation_1(50, MoveDirLeft);
                 USART3_SEND_AMP(); // algo needs this to know when to send the next command
             }
@@ -929,7 +930,9 @@ void movement(void *argument)
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveF\r\n", 10, HAL_MAX_DELAY);
 //                 move_forward_calc(mvmt_dist);
                 // move_f_operation_1(50, MoveDirRight);
-                 move_forward_pid_cm(mvmt_dist, false);
+                 move_forward_pid_cm(mvmt_dist * 0.9, true);
+                 _pid_stop(MotorDirForward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S, mvmt_dist);
+                // move_f_operation_1(50, MoveDirLeft);
                  USART3_SEND_AMP();
 //                move_to_obstacle();
                 // HAL_UART_Transmit(&huart3, (uint8_t *)"MoveOK\r\n", 10, HAL_MAX_DELAY);
@@ -949,7 +952,7 @@ void movement(void *argument)
             {
                 move_turn_forward_pid_degrees(turn_dir > 0 ? MoveDirRight : MoveDirLeft, turn_angle, false);
                 USART3_SEND_AMP();
-                FLAG_APPROACH_OBSTACLE ^= 1; // do operation 3
+                // FLAG_APPROACH_OBSTACLE ^= 1; // do operation 3
             }
 
             turn_angle = 0;
@@ -964,22 +967,25 @@ void movement(void *argument)
 
         if(appr_obstacle == 1) {
           // move_to_obstacle();
-          move_f_to_obstacle();
-          osDelay(100);
-          move_f_to_obstacle();
-          USART3_SEND_AMP();
           appr_obstacle = 0;
+          if(FLAG_LOW_GRIP) {move_f_operation_3();}
+          else {move_f_operation_3_fast();}
+          USART3_SEND_AMP();
+
         }
 
         // fastest car stuff
         if(change_lane) {
-          move_f_operation_1(lane_dist, switch_dir == -1 ? MoveDirLeft : MoveDirRight);
+          if(FLAG_LOW_GRIP) {move_f_operation_1(lane_dist, switch_dir == -1 ? MoveDirLeft : MoveDirRight);}
+          else {move_f_operation_1_fast(lane_dist, switch_dir == -1 ? MoveDirLeft : MoveDirRight);}
           USART3_SEND_AMP();
         }
 
         if(change_lane_big) {
-          move_f_operation_2(lane_dist, switch_dir == -1 ? MoveDirLeft : MoveDirRight);
+          if(FLAG_LOW_GRIP) {move_f_operation_2(lane_dist, switch_dir == -1 ? MoveDirLeft : MoveDirRight);}
+          else {move_f_operation_2_fast(lane_dist, switch_dir == -1 ? MoveDirLeft : MoveDirRight);}
           USART3_SEND_AMP();
+          // FLAG_APPROACH_OBSTACLE ^= 1; // enable this for fully automatic movements after second operation
         }
 
         osDelayUntil(ticks + 100); // 10hz polling
