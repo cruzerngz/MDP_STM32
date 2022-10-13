@@ -651,7 +651,7 @@ void move_f_operation_2_fast(uint16_t displacement, MoveDirection dir) {
 				_move_turn(dir, MotorDirForward, MOVE_HIGH_SPEED_TURN_MM_S, MOVE_F_OP2_FAST_TURN_LEFT_A1, true);
 
 				// move_forward_pid_cm(35, true);
-				_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_TURN_MM_S, MOVE_F_OP2_FAST_TURN_DISP, true);
+				_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_TURN_MM_S, MOVE_F_OP2_FAST_TURN_LDISP, true);
 
 				// move_turn_forward_pid_degrees(dir == MoveDirLeft ? MoveDirRight : MoveDirLeft, 70, true);
 				_move_turn(dir == MoveDirLeft ? MoveDirRight : MoveDirLeft, MotorDirForward, MOVE_HIGH_SPEED_TURN_MM_S, MOVE_F_OP2_FAST_TURN_LEFT_A2, true);
@@ -666,7 +666,7 @@ void move_f_operation_2_fast(uint16_t displacement, MoveDirection dir) {
 				_move_turn(dir, MotorDirForward, MOVE_HIGH_SPEED_TURN_MM_S, MOVE_F_OP2_FAST_TURN_RIGHT_A1, true);
 
 				// move_forward_pid_cm(35, true);
-				_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_TURN_MM_S, 350, true);
+				_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_TURN_MM_S, MOVE_F_OP2_FAST_TURN_RDISP, true);
 
 				// move_turn_forward_pid_degrees(dir == MoveDirLeft ? MoveDirRight : MoveDirLeft, 70, true);
 				_move_turn(dir == MoveDirLeft ? MoveDirRight : MoveDirLeft, MotorDirForward, MOVE_HIGH_SPEED_TURN_MM_S, MOVE_F_OP2_FAST_TURN_RIGHT_A2, true);
@@ -687,11 +687,11 @@ void move_f_operation_u_turn_fast(MoveDirection dir) {
 
 	switch(dir) {
 		case MoveDirLeft:
-			_move_turn_wide(dir, MotorDirForward, MOVE_DEFAULT_SPEED_TURN_MM_S, MOVE_F_UTURN_FAST_LEFT, true);
+			_move_turn_wide(dir, MotorDirForward, MOVE_HIGH_SPEED_STRAIGHT_MM_S >> 1, MOVE_F_UTURN_FAST_LEFT, true);
 			break;
 
 		case MoveDirRight:
-			_move_turn_wide(dir, MotorDirForward, MOVE_DEFAULT_SPEED_TURN_MM_S, MOVE_F_UTURN_FAST_RIGHT, true);
+			_move_turn_wide(dir, MotorDirForward, MOVE_HIGH_SPEED_STRAIGHT_MM_S >> 1, MOVE_F_UTURN_FAST_RIGHT, true);
 			break;
 	}
 }
@@ -710,8 +710,9 @@ void move_f_operation_3_fast() {
 	_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_STRAIGHT_MM_S, MOVE_F_OBSTACLE_2_DISPLACEMENT * 5, true);
 	_move_in_direction_speed(MotorDirForward, MOVE_DEFAULT_SPEED_TURN_MM_S, MOVE_F_OBSTACLE_2_DISPLACEMENT * 5, true);
 	// go home
-	move_turn_forward_pid_degrees(move_homebound_lane, carpark_angle << 1, true); // fixed, should be using carpark_angle
-	move_forward_pid_cm((uint32_t)carpark_dist * 0.9f, true);
+	move_turn_forward_pid_degrees(move_homebound_lane, carpark_angle, false); // fixed, should be using carpark_angle
+	// move_forward_pid_cm((uint32_t)carpark_dist * 0.9f, true);
+	_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_STRAIGHT_MM_S, carpark_dist * 9, true);
 	_pid_stop(MotorDirForward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S, carpark_dist);
 
 	// park in front (disabled for now)

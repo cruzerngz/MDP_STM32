@@ -77,25 +77,31 @@
 #define MOVE_HIGH_SPEED_SLOW_STRAIGHT_MM_S 750
 #define MOVE_HIGH_SPEED_SLOW_TURN_MM_S 500
 
+// from r to l, straight less, turn right less
+// from r to r, turn tighter?
+// from l to l,
+// l to r, straught more, turn left less
+
 
 // fastest car macros
-#define MOVE_F_OP1_FAST_TURN_LEFT_A1 38
-#define MOVE_F_OP1_FAST_TURN_LEFT_A2 40
+#define MOVE_F_OP1_FAST_TURN_LEFT_A1 42
+#define MOVE_F_OP1_FAST_TURN_LEFT_A2 45
 
-#define MOVE_F_OP1_FAST_TURN_RIGHT_A1 36
-#define MOVE_F_OP1_FAST_TURN_RIGHT_A2 50
+#define MOVE_F_OP1_FAST_TURN_RIGHT_A1 38
+#define MOVE_F_OP1_FAST_TURN_RIGHT_A2 53
 
 #define MOVE_F_OP2_FAST_TURN_LEFT_A1 40
-#define MOVE_F_OP2_FAST_TURN_LEFT_A2 50
-#define MOVE_F_OP2_FAST_TURN_DISP 450
+#define MOVE_F_OP2_FAST_TURN_LEFT_A2 45
+#define MOVE_F_OP2_FAST_TURN_LDISP 450
 #define MOVE_F_OP2_FAST_TURN_LEFT_DISP 60
 
 #define MOVE_F_OP2_FAST_TURN_RIGHT_A1 55 // to calibrate
-#define MOVE_F_OP2_FAST_TURN_RIGHT_A2 70
-#define MOVE_F_OP2_FAST_TURN_RIGHT_DISP 60
+#define MOVE_F_OP2_FAST_TURN_RIGHT_A2 62
+#define MOVE_F_OP2_FAST_TURN_RDISP 500
+#define MOVE_F_OP2_FAST_TURN_RIGHT_DISP 55
 
-#define MOVE_F_UTURN_FAST_LEFT 180
-#define MOVE_F_UTURN_FAST_RIGHT 180
+#define MOVE_F_UTURN_FAST_LEFT 190
+#define MOVE_F_UTURN_FAST_RIGHT 190
 
 // fastest car macros - slower version
 #define MOVE_F_OP1_TURN_LEFT_A1 35
