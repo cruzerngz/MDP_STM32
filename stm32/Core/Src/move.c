@@ -764,7 +764,7 @@ void move_f_operation_1(uint16_t displacement, MoveDirection dir) {
 	}
 	MOVE_F_OBSTACLE_1_DISPLACEMENT = displacement; // store the obstacle displacement
 
-	uint32_t forward_dist = (uint32_t)displacement * 0.98f - 44;
+	uint32_t forward_dist = (uint32_t)displacement * 0.98f - 40;
 	switch(dir) {
 		case MoveDirLeft:
 			// move_turn_forward_pid_degrees(dir, 42, true);
@@ -798,10 +798,9 @@ void move_f_operation_1(uint16_t displacement, MoveDirection dir) {
 void move_f_operation_2(uint16_t displacement, MoveDirection dir) {
 	uint32_t forward_dist = displacement - 30;
 	MOVE_F_OBSTACLE_2_DISPLACEMENT = displacement; // store the obstacle displacment
-	MOVE_F_OUTBOUND_LANE = dir;
 
 	if(dir == MOVE_F_OUTBOUND_LANE || dir == MoveDirCenter) { // if already in the lane, do a small lane change
-		move_f_operation_1(displacement, dir); // change lane again by 25cm
+		move_f_operation_1(displacement + 10, dir); // change lane again by 25cm
 		return;
 
 	} else { // if in the wrong lane, do a big lane change (75cm)
@@ -812,14 +811,16 @@ void move_f_operation_2(uint16_t displacement, MoveDirection dir) {
 				_move_turn(dir, MotorDirForward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S, MOVE_F_OP2_TURN_LEFT_A1, true);
 
 				// move_forward_pid_cm(35, true);
-				_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S, 350, true);
+				_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S, MOVE_F_OP2_TURN_LDISP, true);
 
 				// move_turn_forward_pid_degrees(dir == MoveDirLeft ? MoveDirRight : MoveDirLeft, 70, true);
 				_move_turn(dir == MoveDirLeft ? MoveDirRight : MoveDirLeft, MotorDirForward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S, MOVE_F_OP2_TURN_LEFT_A2, true);
 
 				// motor_stop();
 				// servo_point_center();
-				move_forward_pid_cm((uint16_t)(displacement - MOVE_F_OP2_TURN_LEFT_DISP), false);
+				// move_forward_pid_cm((uint16_t)(displacement - MOVE_F_OP2_TURN_LEFT_DISP), true);
+				_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S, (displacement - MOVE_F_OP2_TURN_LEFT_DISP) * 9, true);
+				_pid_stop(MotorDirForward, MOVE_HIGH_SPEED_SLOW_STRAIGHT_MM_S, displacement - MOVE_F_OP2_TURN_LEFT_DISP);
 				// _move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S, displacement - MOVE_F_OP2_TURN_LEFT_DISP, true);
 				break;
 
@@ -828,19 +829,23 @@ void move_f_operation_2(uint16_t displacement, MoveDirection dir) {
 				_move_turn(dir, MotorDirForward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S, MOVE_F_OP2_TURN_RIGHT_A1, true);
 
 				// move_forward_pid_cm(35, true);
-				_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S, 350, true);
+				_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S, MOVE_F_OP2_TURN_RDISP, true);
 
 				// move_turn_forward_pid_degrees(dir == MoveDirLeft ? MoveDirRight : MoveDirLeft, 70, true);
 				_move_turn(dir == MoveDirLeft ? MoveDirRight : MoveDirLeft, MotorDirForward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S, MOVE_F_OP2_TURN_RIGHT_A2, true);
 
 				// motor_stop();
 				// servo_point_center();
-				move_forward_pid_cm((uint16_t)(displacement - MOVE_F_OP2_TURN_RIGHT_DISP), false);
-			break;
+				// move_forward_pid_cm((uint16_t)(displacement - MOVE_F_OP2_TURN_RIGHT_DISP), false);
+				_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S, (displacement - MOVE_F_OP2_TURN_RIGHT_DISP) * 9, true);
+				_pid_stop(MotorDirForward, MOVE_HIGH_SPEED_SLOW_STRAIGHT_MM_S, displacement - MOVE_F_OP2_TURN_RIGHT_DISP);
+				break;
 
 			default: break;
 		}
 	}
+
+	MOVE_F_OUTBOUND_LANE = dir;
 }
 
 void move_f_operation_u_turn(MoveDirection dir) {
@@ -870,12 +875,12 @@ void move_f_operation_3() {
 	move_f_operation_u_turn(move_homebound_lane);
 
 	if(MOVE_F_OBSTACLE_1_DISPLACEMENT + MOVE_F_OBSTACLE_2_DISPLACEMENT > 120) {
-		uint32_t dist = MOVE_F_OBSTACLE_1_DISPLACEMENT + MOVE_F_OBSTACLE_2_DISPLACEMENT - 120;
+		uint32_t dist = MOVE_F_OBSTACLE_1_DISPLACEMENT + MOVE_F_OBSTACLE_2_DISPLACEMENT - 100;
 		_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_SLOW_STRAIGHT_MM_S, dist * 9, true);
 		_pid_stop(MotorDirForward, MOVE_HIGH_SPEED_SLOW_STRAIGHT_MM_S, dist);
 	}
 
-	_move_turn(move_homebound_lane, MotorDirForward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S, 15, true);
+	_move_turn(move_homebound_lane, MotorDirForward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S >> 1, 18, true);
 	_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_SLOW_STRAIGHT_MM_S, 1000, true);
 	_pid_stop(MotorDirForward, MOVE_HIGH_SPEED_SLOW_STRAIGHT_MM_S, 100);
 
