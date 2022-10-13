@@ -16,7 +16,7 @@
 // #define MOVE_TURN_OVERDRIVE // define this to enable even tighter turns, uses the outer wheel TODO
 
 // small overdrive for left motor
-#define MOVE_LEFT_MOTOR_MULTIPLIER 1.025f
+#define MOVE_LEFT_MOTOR_MULTIPLIER 1.015f
 
 #ifdef MOVE_TURN_OVERDRIVE
 #define MOVE_OUTER_OVERDRIVE_RATIO 1.2f
@@ -58,7 +58,7 @@
 #else
 
 #define MOVE_KP 7.0f//4.0f//6.0f //4.0f
-#define MOVE_KI 20.0f//1.0f//6.0f //4.5f //40.0f
+#define MOVE_KI 16.0f//1.0f//6.0f //4.5f //40.0f
 #define MOVE_KD 0.0f//0.3f //0.2f //0.13f
 
 // default speeds
@@ -93,12 +93,12 @@
 #define MOVE_F_OP2_FAST_TURN_LEFT_A1 42
 #define MOVE_F_OP2_FAST_TURN_LEFT_A2 44
 #define MOVE_F_OP2_FAST_TURN_LDISP 450
-#define MOVE_F_OP2_FAST_TURN_LEFT_DISP 60
+#define MOVE_F_OP2_FAST_TURN_LEFT_DISP 59
 
 #define MOVE_F_OP2_FAST_TURN_RIGHT_A1 55 // to calibrate
-#define MOVE_F_OP2_FAST_TURN_RIGHT_A2 65
-#define MOVE_F_OP2_FAST_TURN_RDISP 450
-#define MOVE_F_OP2_FAST_TURN_RIGHT_DISP 70
+#define MOVE_F_OP2_FAST_TURN_RIGHT_A2 63
+#define MOVE_F_OP2_FAST_TURN_RDISP 475
+#define MOVE_F_OP2_FAST_TURN_RIGHT_DISP 59
 
 #define MOVE_F_UTURN_FAST_LEFT 200
 #define MOVE_F_UTURN_FAST_RIGHT 195
@@ -106,21 +106,24 @@
 // fastest car macros - slower version
 #define MOVE_F_OP1_TURN_LEFT_A1 35
 #define MOVE_F_OP1_TURN_LEFT_A2 38
+#define MOVE_F_OP1_TURN_LEFT_DISP 50
 
 #define MOVE_F_OP1_TURN_RIGHT_A1 35
 #define MOVE_F_OP1_TURN_RIGHT_A2 45
+#define MOVE_F_OP1_TURN_RIGHT_DISP 50
 
-#define MOVE_F_OP2_TURN_LEFT_A1 55
-#define MOVE_F_OP2_TURN_LEFT_A2 70
-#define MOVE_F_OP2_TURN_DISP 450
-#define MOVE_F_OP2_TURN_LEFT_DISP 60
+#define MOVE_F_OP2_TURN_LEFT_A1 40
+#define MOVE_F_OP2_TURN_LEFT_A2 42
+#define MOVE_F_OP2_TURN_LDISP 450
+#define MOVE_F_OP2_TURN_LEFT_DISP 60 ///
 
-#define MOVE_F_OP2_TURN_RIGHT_A1 55 // to calibrate
-#define MOVE_F_OP2_TURN_RIGHT_A2 70
-#define MOVE_F_OP2_TURN_RIGHT_DISP 60
+#define MOVE_F_OP2_TURN_RIGHT_A1 50 // to calibrate
+#define MOVE_F_OP2_TURN_RIGHT_A2 65
+#define MOVE_F_OP2_TURN_RDISP 450
+#define MOVE_F_OP2_TURN_RIGHT_DISP 60 ///
 
-#define MOVE_F_UTURN_LEFT 180
-#define MOVE_F_UTURN_RIGHT 180
+#define MOVE_F_UTURN_LEFT 195
+#define MOVE_F_UTURN_RIGHT 190
 
 
 

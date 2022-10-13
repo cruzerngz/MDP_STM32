@@ -298,3 +298,12 @@ void motor_stop() {
 
 }
 
+/**
+ * @brief Stop the motors,
+ * biased to back
+ *
+ */
+void motor_stop_backward() {
+	_motor_left_set_pwm(MotorDirBackward, 0);
+	_motor_right_set_pwm(MotorDirBackward, 0);
+}

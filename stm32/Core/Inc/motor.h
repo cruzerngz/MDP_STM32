@@ -48,5 +48,6 @@ void _motor_set_pwm(MotorDirection dir, MotorSide side, uint16_t pwm_val);
 void motor_forward(MotorSpeed speed);
 void motor_backward(MotorSpeed speed);
 void motor_stop();
+void motor_stop_backward();
 
 #endif /* INC_MOTOR_H_ */

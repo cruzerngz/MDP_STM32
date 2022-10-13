@@ -132,8 +132,8 @@ void _pid_stop(MotorDirection dir, uint32_t speed_mm_s, uint32_t dist_mm) {
 		curr_ticks = osKernelGetTickCount();
 
 		taskENTER_CRITICAL();
-		_set_motor_speed_pid(dir, MotorLeft, (uint32_t)speed_mm_s * MOVE_LEFT_MOTOR_MULTIPLIER * 1.025f);
-		_set_motor_speed_pid(dir, MotorRight, speed_mm_s);
+		_set_motor_speed_pid(dir, MotorLeft, (uint32_t)speed_mm_s * 1.2f);
+		_set_motor_speed_pid(dir, MotorRight, (uint32_t)speed_mm_s * 0.55f);
 		total_dist = (*ENCODER_LEFT + *ENCODER_RIGHT) >> 1;
 		taskEXIT_CRITICAL();
 
@@ -607,6 +607,11 @@ void move_f_operation_1_fast(uint16_t displacement, MoveDirection dir) {
 		MOVE_F_OUTBOUND_LANE = dir;
 	}
 	MOVE_F_OBSTACLE_1_DISPLACEMENT = displacement; // store the obstacle displacement
+	uint32_t diff = 0;
+	if(displacement < 75) {
+		diff = 75 - displacement;
+		displacement = 75;
+	}
 
 	uint32_t forward_dist = (uint32_t)displacement * 0.98f - 55;
 	switch(dir) {
@@ -631,10 +636,21 @@ void move_f_operation_1_fast(uint16_t displacement, MoveDirection dir) {
 
 			// move_forward_pid_cm((uint32_t)forward_dist * 0.9f, true); // multiplier accounts for "wheel slip"
 			_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_STRAIGHT_MM_S, forward_dist * 9, true);
-			_pid_stop(MotorDirForward, MOVE_HIGH_SPEED_TURN_MM_S, forward_dist != 0 ? forward_dist : 10);
+			_pid_stop(MotorDirForward, MOVE_HIGH_SPEED_TURN_MM_S, forward_dist);
+			// motor_stop_backward();
+			// if(forward_dist != 0){ // 60 cm case
+			// 	_pid_stop(MotorDirForward, MOVE_HIGH_SPEED_TURN_MM_S, forward_dist);
+			// } else {
+			// 	motor_stop_backward();
+			// }
+
 			break;
 
 		default: break;
+	}
+
+	if(diff != 0) {
+		_move_in_direction_speed(MotorDirBackward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S, diff * 10, false);
 	}
 }
 

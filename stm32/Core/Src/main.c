@@ -922,6 +922,7 @@ void movement(void *argument)
 //                move_backward_calc(mvmt_dist);
                 move_backward_pid_cm(mvmt_dist * 0.9, true);
                 _pid_stop(MotorDirBackward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S, mvmt_dist);
+                // motor_stop_backward();
                 // move_f_operation_1(50, MoveDirLeft);
                 USART3_SEND_AMP(); // algo needs this to know when to send the next command
             }
@@ -932,6 +933,7 @@ void movement(void *argument)
                 // move_f_operation_1(50, MoveDirRight);
                  move_forward_pid_cm(mvmt_dist * 0.9, true);
                  _pid_stop(MotorDirForward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S, mvmt_dist);
+                //  motor_stop_backward();
                 // move_f_operation_1(50, MoveDirLeft);
                  USART3_SEND_AMP();
 //                move_to_obstacle();
