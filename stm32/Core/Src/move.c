@@ -638,7 +638,6 @@ void move_f_operation_1_fast(uint16_t displacement, MoveDirection dir) {
 void move_f_operation_2_fast(uint16_t displacement, MoveDirection dir) {
 	uint32_t forward_dist = displacement - 30;
 	MOVE_F_OBSTACLE_2_DISPLACEMENT = displacement; // store the obstacle displacment
-	MOVE_F_OUTBOUND_LANE = dir;
 
 	if(dir == MOVE_F_OUTBOUND_LANE || dir == MoveDirCenter) { // if already in the lane, do a small lane change
 		move_f_operation_1_fast(displacement, dir); // change lane again by 25cm
@@ -680,6 +679,8 @@ void move_f_operation_2_fast(uint16_t displacement, MoveDirection dir) {
 			default: break;
 		}
 	}
+
+	MOVE_F_OUTBOUND_LANE = dir;
 }
 
 void move_f_operation_u_turn_fast(MoveDirection dir) {
