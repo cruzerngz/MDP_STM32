@@ -966,7 +966,6 @@ void movement(void *argument)
         }
 
         if(appr_obstacle == 1) {
-          // move_to_obstacle();
           appr_obstacle = 0;
           if(FLAG_LOW_GRIP) {move_f_operation_3();}
           else {move_f_operation_3_fast();}
@@ -985,6 +984,8 @@ void movement(void *argument)
           if(FLAG_LOW_GRIP) {move_f_operation_2(lane_dist, switch_dir == -1 ? MoveDirLeft : MoveDirRight);}
           else {move_f_operation_2_fast(lane_dist, switch_dir == -1 ? MoveDirLeft : MoveDirRight);}
           USART3_SEND_AMP();
+          // move_f_operation_3_fast();
+          // USART3_SEND_AMP();
           // FLAG_APPROACH_OBSTACLE ^= 1; // enable this for fully automatic movements after second operation
         }
 

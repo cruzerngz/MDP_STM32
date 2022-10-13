@@ -109,7 +109,7 @@ void _pid_reset(uint32_t time_ticks) {
 void _pid_stop(MotorDirection dir, uint32_t speed_mm_s, uint32_t dist_mm) {
 	uint32_t start_ticks = osKernelGetTickCount();
 	uint32_t curr_ticks = 0;
-	uint32_t iteration = 0; // out of 25
+	uint32_t iteration = 0; // out of 32
 	uint32_t speed_subtract_amount = speed_mm_s >> 5; // div 32
 
 	volatile uint32_t *ENCODER_LEFT;
@@ -139,7 +139,7 @@ void _pid_stop(MotorDirection dir, uint32_t speed_mm_s, uint32_t dist_mm) {
 
 		speed_mm_s -= speed_subtract_amount; // linear decrease in target speed
 
-		osDelayUntil(curr_ticks + 10); // 64 pid iterations at 100hz
+		osDelayUntil(curr_ticks + 10); // 32 pid iterations at 100hz
 	} while(curr_ticks - start_ticks < 320 || total_dist < dist_mm); // double stop conditions
 
 	motor_stop();
@@ -520,7 +520,7 @@ void _move_turn_wide(MoveDirection move_dir, MotorDirection dir, uint32_t speed_
 void move_f_to_obstacle(void) {
 	servo_point_center();
 
-	uint16_t TARGET_IR_READOUT = 750; // ir output at 50cm - calibrate!
+	uint16_t TARGET_IR_READOUT = 1900; // ir output at 50cm - calibrate!
 
 	uint32_t time_ticks = osKernelGetTickCount();
 	// uint32_t target = (uint32_t)dist_mm;
@@ -540,30 +540,34 @@ void move_f_to_obstacle(void) {
 		ir_diff = (int32_t)(TARGET_IR_READOUT - IR_ADC_AVERAGE_READOUT);
 
 		if(ir_diff < 0) {
-			taskENTER_CRITICAL();
-			_set_motor_speed_pid(MotorDirBackward, MotorLeft, (uint32_t)MOVE_DEFAULT_SPEED_STRAIGHT_MM_S * MOVE_LEFT_MOTOR_MULTIPLIER);
-			_set_motor_speed_pid(MotorDirBackward, MotorRight, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S);
-			// total_dist = (*ENCODER_LEFT + *ENCODER_RIGHT) >> 1;
-			taskEXIT_CRITICAL();
+			// this part turned off
+
+			// taskENTER_CRITICAL();
+			// _set_motor_speed_pid(MotorDirBackward, MotorLeft, (uint32_t)(MOVE_HIGH_SPEED_SLOW_TURN_MM_S >> 1) * MOVE_LEFT_MOTOR_MULTIPLIER);
+			// _set_motor_speed_pid(MotorDirBackward, MotorRight, MOVE_HIGH_SPEED_SLOW_TURN_MM_S >> 1);
+			// // total_dist = (*ENCODER_LEFT + *ENCODER_RIGHT) >> 1;
+			// taskEXIT_CRITICAL();
+
+			// this part turned off
+
 
 		} else if(ir_diff > 0) {
 			taskENTER_CRITICAL();
-			_set_motor_speed_pid(MotorDirForward, MotorLeft, (uint32_t)MOVE_DEFAULT_SPEED_STRAIGHT_MM_S * MOVE_LEFT_MOTOR_MULTIPLIER);
-			_set_motor_speed_pid(MotorDirForward, MotorRight, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S);
+			_set_motor_speed_pid(MotorDirForward, MotorLeft, (uint32_t)(MOVE_HIGH_SPEED_SLOW_TURN_MM_S >> 1) * MOVE_LEFT_MOTOR_MULTIPLIER);
+			_set_motor_speed_pid(MotorDirForward, MotorRight, MOVE_HIGH_SPEED_SLOW_TURN_MM_S >> 1);
 			// total_dist = (*ENCODER_LEFT + *ENCODER_RIGHT) >> 1;
 			taskEXIT_CRITICAL();
-
 		}
 
 		osDelayUntil(time_ticks + MOVE_PID_LOOP_PERIOD_TICKS);
-	} while(abs(ir_diff) > 20); // while still in delay loop
+	} while(abs(ir_diff) > 150); // while still in delay loop
 
 	motor_stop();
 }
 
 // move inside the carpark
 void move_f_to_carpark(void) {
-	uint32_t TARGET_IR_READOUT = 3000;
+	uint32_t TARGET_IR_READOUT = 1900;
 	int32_t ir_diff = 0;
 	int32_t ticks = 0;
 	MotorDirection dir;
@@ -588,7 +592,7 @@ void move_f_to_carpark(void) {
 		}
 		// osDelayUntil(ticks + 25);
 		osDelayUntil(ticks + MOVE_PID_LOOP_PERIOD_TICKS);
-	} while (abs(ir_diff) > 20);
+	} while (abs(ir_diff) > 100);
 
 	motor_stop();
 }
@@ -604,7 +608,7 @@ void move_f_operation_1_fast(uint16_t displacement, MoveDirection dir) {
 	}
 	MOVE_F_OBSTACLE_1_DISPLACEMENT = displacement; // store the obstacle displacement
 
-	uint32_t forward_dist = (uint32_t)displacement * 0.98f - 44;
+	uint32_t forward_dist = (uint32_t)displacement * 0.98f - 55;
 	switch(dir) {
 		case MoveDirLeft:
 			// move_turn_forward_pid_degrees(dir, 42, true);
@@ -627,7 +631,7 @@ void move_f_operation_1_fast(uint16_t displacement, MoveDirection dir) {
 
 			// move_forward_pid_cm((uint32_t)forward_dist * 0.9f, true); // multiplier accounts for "wheel slip"
 			_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_STRAIGHT_MM_S, forward_dist * 9, true);
-			_pid_stop(MotorDirForward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S, forward_dist);
+			_pid_stop(MotorDirForward, MOVE_HIGH_SPEED_TURN_MM_S, forward_dist != 0 ? forward_dist : 10);
 			break;
 
 		default: break;
@@ -639,8 +643,10 @@ void move_f_operation_2_fast(uint16_t displacement, MoveDirection dir) {
 	uint32_t forward_dist = displacement - 30;
 	MOVE_F_OBSTACLE_2_DISPLACEMENT = displacement; // store the obstacle displacment
 
+	// move forward by 5cm, slower speed
+	_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_TURN_MM_S, 5, true);
 	if(dir == MOVE_F_OUTBOUND_LANE || dir == MoveDirCenter) { // if already in the lane, do a small lane change
-		move_f_operation_1_fast(displacement, dir); // change lane again by 25cm
+		move_f_operation_1_fast(displacement + 20, dir); // change lane again by 25cm
 		return;
 
 	} else { // if in the wrong lane, do a big lane change (75cm)
@@ -706,17 +712,28 @@ void move_f_operation_3_fast() {
 
 	// u-turn
 	move_f_operation_u_turn_fast(move_homebound_lane);
-	// obstacle 1
-	_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_STRAIGHT_MM_S, MOVE_F_OBSTACLE_2_DISPLACEMENT * 5, true);
-	_move_in_direction_speed(MotorDirForward, MOVE_DEFAULT_SPEED_TURN_MM_S, MOVE_F_OBSTACLE_2_DISPLACEMENT * 5, true);
-	// go home
-	move_turn_forward_pid_degrees(move_homebound_lane, carpark_angle, false); // fixed, should be using carpark_angle
-	// move_forward_pid_cm((uint32_t)carpark_dist * 0.9f, true);
-	_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_STRAIGHT_MM_S, carpark_dist * 9, true);
-	_pid_stop(MotorDirForward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S, carpark_dist);
+
+	if(MOVE_F_OBSTACLE_1_DISPLACEMENT + MOVE_F_OBSTACLE_2_DISPLACEMENT > 120) {
+		uint32_t dist = MOVE_F_OBSTACLE_1_DISPLACEMENT + MOVE_F_OBSTACLE_2_DISPLACEMENT - 120;
+		_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_STRAIGHT_MM_S, dist * 9, true);
+		_pid_stop(MotorDirForward, MOVE_HIGH_SPEED_STRAIGHT_MM_S, dist);
+	}
+
+	_move_turn(move_homebound_lane, MotorDirForward, MOVE_HIGH_SPEED_TURN_MM_S, 15, true);
+	_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_STRAIGHT_MM_S, 1000, true);
+	// _pid_stop(MotorDirForward, MOVE_HIGH_SPEED_STRAIGHT_MM_S, 100);
+
+	// // obstacle 1
+	// _move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_STRAIGHT_MM_S, MOVE_F_OBSTACLE_2_DISPLACEMENT * 5, true);
+	// _move_in_direction_speed(MotorDirForward, MOVE_DEFAULT_SPEED_TURN_MM_S, MOVE_F_OBSTACLE_2_DISPLACEMENT * 5, true);
+	// // go home
+	// move_turn_forward_pid_degrees(move_homebound_lane, carpark_angle, false); // fixed, should be using carpark_angle
+	// // move_forward_pid_cm((uint32_t)carpark_dist * 0.9f, true);
+	// _move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_STRAIGHT_MM_S, carpark_dist * 9, true);
+	// _pid_stop(MotorDirForward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S, carpark_dist);
 
 	// park in front (disabled for now)
-	// move_f_to_obstacle();
+	move_f_to_obstacle();
 }
 
 
@@ -835,16 +852,28 @@ void move_f_operation_3() {
 
 	// u-turn
 	move_f_operation_u_turn(move_homebound_lane);
-	// obstacle 1
-	_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_SLOW_STRAIGHT_MM_S, MOVE_F_OBSTACLE_2_DISPLACEMENT * 5, true);
-	_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S, MOVE_F_OBSTACLE_2_DISPLACEMENT * 5, true);
-	// go home
-	move_turn_forward_pid_degrees(move_homebound_lane, carpark_angle << 1, true); // fixed, should be using carpark_angle
-	move_forward_pid_cm((uint32_t)carpark_dist * 0.9f, true);
-	_pid_stop(MotorDirForward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S, carpark_dist);
+
+	if(MOVE_F_OBSTACLE_1_DISPLACEMENT + MOVE_F_OBSTACLE_2_DISPLACEMENT > 120) {
+		uint32_t dist = MOVE_F_OBSTACLE_1_DISPLACEMENT + MOVE_F_OBSTACLE_2_DISPLACEMENT - 120;
+		_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_SLOW_STRAIGHT_MM_S, dist * 9, true);
+		_pid_stop(MotorDirForward, MOVE_HIGH_SPEED_SLOW_STRAIGHT_MM_S, dist);
+	}
+
+	_move_turn(move_homebound_lane, MotorDirForward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S, 15, true);
+	_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_SLOW_STRAIGHT_MM_S, 1000, true);
+	_pid_stop(MotorDirForward, MOVE_HIGH_SPEED_SLOW_STRAIGHT_MM_S, 100);
+
+	// // obstacle 1
+	// _move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_STRAIGHT_MM_S, MOVE_F_OBSTACLE_2_DISPLACEMENT * 5, true);
+	// _move_in_direction_speed(MotorDirForward, MOVE_DEFAULT_SPEED_TURN_MM_S, MOVE_F_OBSTACLE_2_DISPLACEMENT * 5, true);
+	// // go home
+	// move_turn_forward_pid_degrees(move_homebound_lane, carpark_angle, false); // fixed, should be using carpark_angle
+	// // move_forward_pid_cm((uint32_t)carpark_dist * 0.9f, true);
+	// _move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_STRAIGHT_MM_S, carpark_dist * 9, true);
+	// _pid_stop(MotorDirForward, MOVE_DEFAULT_SPEED_STRAIGHT_MM_S, carpark_dist);
 
 	// park in front (disabled for now)
-	// move_f_to_obstacle();
+	move_f_to_obstacle();
 }
 
 
