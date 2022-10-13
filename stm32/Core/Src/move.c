@@ -880,7 +880,7 @@ void move_f_operation_3() {
 		_pid_stop(MotorDirForward, MOVE_HIGH_SPEED_SLOW_STRAIGHT_MM_S, dist);
 	}
 
-	_move_turn(move_homebound_lane, MotorDirForward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S >> 1, 18, true);
+	_move_turn(move_homebound_lane, MotorDirForward, MOVE_HIGH_SPEED_SLOW_TURN_MM_S >> 1, 19, true);
 	_move_in_direction_speed(MotorDirForward, MOVE_HIGH_SPEED_SLOW_STRAIGHT_MM_S, 1000, true);
 	_pid_stop(MotorDirForward, MOVE_HIGH_SPEED_SLOW_STRAIGHT_MM_S, 100);
 
