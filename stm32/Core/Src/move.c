@@ -797,10 +797,12 @@ void move_f_operation_1(uint16_t displacement, MoveDirection dir) {
 // big lane change operation - faster version
 void move_f_operation_2(uint16_t displacement, MoveDirection dir) {
 	uint32_t forward_dist = displacement - 30;
-	MOVE_F_OBSTACLE_2_DISPLACEMENT = displacement; // store the obstacle displacment
+	MOVE_F_OBSTACLE_2_DISPLACEMENT = dir == MOVE_F_OUTBOUND_LANE ? displacement - 15 : displacement; // store the obstacle displacment
 
 	if(dir == MOVE_F_OUTBOUND_LANE || dir == MoveDirCenter) { // if already in the lane, do a small lane change
+		uint32_t temp_displacement = MOVE_F_OBSTACLE_1_DISPLACEMENT;
 		move_f_operation_1(displacement + 10, dir); // change lane again by 25cm
+		MOVE_F_OBSTACLE_1_DISPLACEMENT = temp_displacement;
 		return;
 
 	} else { // if in the wrong lane, do a big lane change (75cm)
