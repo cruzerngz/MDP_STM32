@@ -92,25 +92,22 @@ This mode is used to control the movement of the car as accurately as possible. 
 
 For now, all variable movements will need to have the number prefixed with `0` and postfixed with `00` due to some bug somwhere in the state machine.
 
-A move 100 cm command will be sent as:
+A move 100 cm command will be sent as: (dashes added for clarity)
 ```
 m-0-1-0-0-0-0-;
 ```
 
-A turn 45 degree command will be sent as:
+A turn 45 degree command will be sent as: (dashes added for clarity)
 ```
 t-0-4-5-0-0-;
 ```
 
 
-| UART sequence | Description |
-| --- | --- |
-| `m-[number sequence]-;` | Move the car forward by X centimeters |
-| `t-[number sequence]-;` | Turn the car clockwise by X degrees |
-<!-- | `m-< f / b >-[number sequence]-;` | Move the car forwards/backwards by X centimeters | -->
-<!-- | `t-< r / l >-[number sequence]-;` | Turn the car clockwise/anticlockwise by X degrees | -->
-<!-- | `i-f-[number sequence]-;` | In-place rotate by by X degrees (forward-backward) |
-| `i-b-[number sequence]-;` | In-place rotate by by X degrees (backward-forward) | -->
+| Name | UART sequence | Description |
+| --- | --- | --- |
+| Move | `m-< f / b >-[number sequence]-;` | Move the car forwards/backwards by X centimeters |
+| Turn | `t-< r / l >-[number sequence]-;` | Turn the car clockwise/anticlockwise by X degrees |
+| In-place rotate | `i-< f / b >-[number sequence]-;` | In-place rotate by by X degrees (forward-backward) |
 
 
 ### Predefined movements (also incomplete)
