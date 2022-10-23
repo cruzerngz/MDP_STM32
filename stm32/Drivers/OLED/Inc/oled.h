@@ -12,6 +12,8 @@
 //#include "system.h"
 #include "stm32f4xx_hal.h"
 
+#define OLED_MIN_REFRESH_MS 200 // approx, fastest the display can refresh
+
 //-----------------OLED Definition----------------
 #define OLED_SCL_Pin GPIO_PIN_5
 #define OLED_SCL_GPIO_Port GPIOE
@@ -47,6 +49,7 @@ void OLED_DrawPoint(uint8_t x,uint8_t y,uint8_t t);
 void OLED_ShowChar(uint8_t x,uint8_t y,uint8_t chr,uint8_t size,uint8_t mode);
 void OLED_ShowNumber(uint8_t x,uint8_t y,uint32_t num,uint8_t len,uint8_t size);
 void OLED_ShowString(uint8_t x,uint8_t y,const uint8_t *p);
+void OLED_ShowStringSized(uint8_t x,uint8_t y,const uint8_t *p,uint8_t size);
 void OLED_Set_Pos(unsigned char x, unsigned char y);
 
 #endif /* INC_OLED_H_ */
